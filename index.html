@@ -1423,6 +1423,40 @@
 
 
   <!-- =========================================
+       LOADING FAILSAFE
+  ========================================== -->
+  <script>
+    // Jika modul utama gagal dimuat, jangan biarkan halaman berhenti di "Memuat...".
+    // Failsafe ini hanya membuka halaman login; fitur lain tetap memakai kode utama.
+    window.__RDK_LOADING_DONE__ = false;
+
+    window.__RDK_FINISH_LOADING__ = function () {
+      window.__RDK_LOADING_DONE__ = true;
+      const loading = document.getElementById("loadingScreen");
+      if (loading) loading.style.display = "none";
+    };
+
+    window.setTimeout(function () {
+      if (window.__RDK_LOADING_DONE__) return;
+
+      const loading = document.getElementById("loadingScreen");
+      const login = document.getElementById("loginScreen");
+      const app = document.getElementById("app");
+
+      if (loading) loading.style.display = "none";
+      if (app) app.style.display = "none";
+      if (login) login.style.display = "flex";
+
+      const error = document.getElementById("loginError");
+      if (error) {
+        error.textContent = "Halaman gagal dimuat. Coba refresh halaman.";
+      }
+
+      console.error("Rojak DriveK1t: loading timeout / modul utama tidak selesai.");
+    }, 10000);
+  </script>
+
+  <!-- =========================================
        LOGIN
   ========================================== -->
 
@@ -2163,6 +2197,10 @@
 
     function showLogin() {
 
+      if (window.__RDK_FINISH_LOADING__) {
+        window.__RDK_FINISH_LOADING__();
+      }
+
       $("loadingScreen").style.display =
         "none";
 
@@ -2176,6 +2214,10 @@
 
 
     function showApp() {
+
+      if (window.__RDK_FINISH_LOADING__) {
+        window.__RDK_FINISH_LOADING__();
+      }
 
       $("loadingScreen").style.display =
         "none";
