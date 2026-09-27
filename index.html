@@ -1300,7 +1300,7 @@
     }
 
     /* ============================================================
-       TAMBAHAN: GLOBAL SVG SAFETY
+       GLOBAL SVG SAFETY
     ============================================================ */
 
     .rojak-ai-fab-icon svg {
@@ -1378,155 +1378,13 @@
       max-width: 100% !important;
       max-height: 100% !important;
     }
-
-    /* ============================================================
-       DIAGNOSTIC PANEL
-    ============================================================ */
-
-    .rdk-diag {
-      position: fixed;
-      left: 8px;
-      right: 8px;
-      bottom: 8px;
-
-      z-index: 99999;
-
-      max-height: 45vh;
-
-      display: none;
-      flex-direction: column;
-
-      border: 1px solid #4a3530;
-      border-radius: 8px;
-
-      background: #1a1310;
-
-      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
-
-      box-shadow: 0 12px 40px rgba(0, 0, 0, .65);
-
-      overflow: hidden;
-    }
-
-    .rdk-diag.rdk-diag-open {
-      display: flex;
-    }
-
-    .rdk-diag-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      padding: 8px 10px;
-
-      border-bottom: 1px solid #4a3530;
-
-      background: #201814;
-
-      color: #ffb896;
-
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .3px;
-    }
-
-    .rdk-diag-head-title {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .rdk-diag-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #ff8888;
-      animation: rdk-diag-pulse 1.4s infinite;
-    }
-
-    @keyframes rdk-diag-pulse {
-      0%, 100% { opacity: .4; }
-      50% { opacity: 1; }
-    }
-
-    .rdk-diag-actions {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .rdk-diag-btn {
-      height: 22px;
-      padding: 0 8px;
-
-      border: 1px solid #4a3530;
-      border-radius: 4px;
-
-      background: transparent;
-      color: #d0b8b0;
-
-      font: inherit;
-      font-size: 9px;
-
-      cursor: pointer;
-    }
-
-    .rdk-diag-btn:hover {
-      background: #2a1f1c;
-      color: #eeeeea;
-    }
-
-    .rdk-diag-body {
-      flex: 1 1 auto;
-      min-height: 0;
-
-      overflow-y: auto;
-
-      padding: 8px 10px;
-
-      color: #d0b8b0;
-
-      font-size: 9.5px;
-      line-height: 1.55;
-
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    .rdk-diag-line {
-      padding: 1px 0;
-    }
-
-    .rdk-diag-line.rdk-diag-ok { color: #8fd09a; }
-    .rdk-diag-line.rdk-diag-error { color: #ff8888; font-weight: 600; }
-    .rdk-diag-line.rdk-diag-warn { color: #f0c674; }
-    .rdk-diag-line.rdk-diag-info { color: #8ab8d0; }
   </style>
 
-  <!-- ROJAK AI STYLES -->
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
-
-  <!-- MUSIC PLAYER STYLES -->
   <link rel="stylesheet" href="./rojak-ai/music-player.css">
 </head>
 
 <body>
-
-  <!-- DIAGNOSTIC PANEL -->
-
-  <div id="rdkDiag" class="rdk-diag">
-    <div class="rdk-diag-head">
-      <div class="rdk-diag-head-title">
-        <span class="rdk-diag-dot"></span>
-        <span>Diagnostic — Login Debug</span>
-      </div>
-      <div class="rdk-diag-actions">
-        <button id="rdkDiagCopy" class="rdk-diag-btn" type="button">Copy</button>
-        <button id="rdkDiagClose" class="rdk-diag-btn" type="button">Hide</button>
-      </div>
-    </div>
-    <div id="rdkDiagBody" class="rdk-diag-body"></div>
-  </div>
 
   <!-- LOADING -->
 
@@ -1539,10 +1397,9 @@
     </div>
   </div>
 
-  <!-- LOADING FAILSAFE — 1 DETIK -->
+  <!-- LOADING FAILSAFE -->
   <script>
     window.__RDK_LOADING_DONE__ = false;
-    window.__RDK_LOADING_STARTED_AT__ = Date.now();
     window.__RDK_LOADING_HIDE_TIMER__ = null;
 
     window.__RDK_LOADING_HIDE_TIMER__ = window.setTimeout(function () {
@@ -1567,83 +1424,6 @@
       const loading = document.getElementById("loadingScreen");
       if (loading) loading.style.display = "none";
     };
-  </script>
-
-  <!-- DIAGNOSTIC LOGGER -->
-  <script>
-    window.RDK_DIAG = (function () {
-      const panel = document.getElementById("rdkDiag");
-      const body = document.getElementById("rdkDiagBody");
-      const btnClose = document.getElementById("rdkDiagClose");
-      const btnCopy = document.getElementById("rdkDiagCopy");
-
-      let opened = false;
-
-      function ensureOpen() {
-        if (opened) return;
-        opened = true;
-        if (panel) panel.classList.add("rdk-diag-open");
-      }
-
-      function log(msg, type) {
-        if (type === "error") console.error("[RDK]", msg);
-        else if (type === "warn") console.warn("[RDK]", msg);
-        else console.log("[RDK]", msg);
-
-        if (!body) return;
-        ensureOpen();
-
-        const line = document.createElement("div");
-        line.className = "rdk-diag-line" + (type ? " rdk-diag-" + type : "");
-        line.textContent = "› " + msg;
-        body.appendChild(line);
-        body.scrollTop = body.scrollHeight;
-      }
-
-      function copy() {
-        const text = body ? body.textContent : "";
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(text).then(() => {
-            log("Copy ke clipboard berhasil", "ok");
-          }).catch(() => {
-            log("Copy gagal", "error");
-          });
-        }
-      }
-
-      function close() {
-        opened = false;
-        if (panel) panel.classList.remove("rdk-diag-open");
-      }
-
-      if (btnClose) btnClose.addEventListener("click", close);
-      if (btnCopy) btnCopy.addEventListener("click", copy);
-
-      log("=== Diagnostic started ===", "info");
-      log("user-agent: " + navigator.userAgent.slice(0, 90), "info");
-      log("location: " + location.href, "info");
-      log("origin: " + location.origin, "info");
-
-      window.addEventListener("error", function (e) {
-        log("GLOBAL ERROR: " + (e.message || "unknown"), "error");
-        if (e.filename) {
-          log("  at " + e.filename + ":" + (e.lineno || "?"), "error");
-        }
-      });
-
-      window.addEventListener("unhandledrejection", function (e) {
-        const reason = e.reason;
-        let msg = "?";
-        if (reason) {
-          if (typeof reason === "string") msg = reason;
-          else if (reason.message) msg = reason.code ? reason.code + " — " + reason.message : reason.message;
-          else msg = String(reason);
-        }
-        log("UNHANDLED REJECTION: " + msg, "error");
-      });
-
-      return { log: log, copy: copy, close: close };
-    })();
   </script>
 
   <!-- LOGIN -->
@@ -1842,7 +1622,6 @@
   </div>
 
   <!-- GOOGLE API INITIALIZER -->
-
   <script>
     window.RDK_GOOGLE = {
       gapiInited: false,
@@ -1852,110 +1631,44 @@
 
     window.gapiLoaded = function () {
       console.log("Google API loaded");
-      if (window.RDK_DIAG) window.RDK_DIAG.log("gapi.js loaded", "ok");
-
       if (typeof window.gapi === "undefined") {
         console.error("Google API tidak tersedia.");
-        if (window.RDK_DIAG) window.RDK_DIAG.log("gapi undefined", "error");
         return;
       }
-
-      window.gapi.load("client", async function () {
-        try {
-          await window.gapi.client.init({
-            discoveryDocs: [
-              "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
-            ]
-          });
+      window.gapi.load("client", function () {
+        window.gapi.client.init({
+          discoveryDocs: [
+            "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
+          ]
+        }).then(function () {
           window.RDK_GOOGLE.gapiInited = true;
           console.log("Google Drive API siap.");
-          if (window.RDK_DIAG) window.RDK_DIAG.log("Google Drive API siap", "ok");
-        } catch (error) {
+        }).catch(function (error) {
           console.error("GAPI init error:", error);
-          if (window.RDK_DIAG) window.RDK_DIAG.log("GAPI init error: " + (error.message || error), "error");
-        }
+        });
       });
     };
 
     window.gisLoaded = function () {
       console.log("Google Identity Services loaded");
-      if (window.RDK_DIAG) window.RDK_DIAG.log("gis client loaded", "ok");
-
-      if (
-        !window.google ||
-        !window.google.accounts ||
-        !window.google.accounts.oauth2
-      ) {
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
         console.error("Google Identity Services tidak tersedia.");
-        if (window.RDK_DIAG) window.RDK_DIAG.log("GIS tidak tersedia", "error");
         return;
       }
-
-      window.RDK_GOOGLE.tokenClient =
-        window.google.accounts.oauth2.initTokenClient({
-          client_id:
-            "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
-          scope: "https://www.googleapis.com/auth/drive.file",
-          callback: ""
-        });
-
+      window.RDK_GOOGLE.tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
+        scope: "https://www.googleapis.com/auth/drive.file",
+        callback: ""
+      });
       window.RDK_GOOGLE.gisInited = true;
       console.log("Google OAuth siap.");
-      if (window.RDK_DIAG) window.RDK_DIAG.log("Google OAuth siap", "ok");
     };
   </script>
 
   <script src="https://apis.google.com/js/api.js" onload="window.gapiLoaded()"></script>
   <script src="https://accounts.google.com/gsi/client" onload="window.gisLoaded()"></script>
 
-  <!-- LOGIN MOBILE FALLBACK -->
-
-  <script>
-    window.setTimeout(function () {
-      const button = document.getElementById("loginButton");
-      if (!button || button.onclick) return;
-
-      if (window.RDK_DIAG) {
-        window.RDK_DIAG.log("Login fallback aktif (modul utama mungkin lambat)", "warn");
-      }
-
-      button.addEventListener("click", async function () {
-        const old = button.querySelector("span")?.textContent || "Continue with Google";
-        button.disabled = true;
-        const label = button.querySelector("span");
-        if (label) label.textContent = "Membuka Google...";
-
-        if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: klik login → load Firebase...", "info");
-
-        try {
-          const firebase = await import("./firebase-config.js");
-          if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: firebase-config.js loaded", "ok");
-
-          const authModule = await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js");
-          if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: firebase-auth.js loaded", "ok");
-
-          const provider = new authModule.GoogleAuthProvider();
-          provider.setCustomParameters({ prompt: "select_account" });
-
-          if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: memanggil signInWithRedirect...", "info");
-
-          await authModule.signInWithRedirect(firebase.auth, provider);
-        } catch (error) {
-          console.error("Login fallback error:", error);
-          if (window.RDK_DIAG) {
-            window.RDK_DIAG.log("Fallback ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
-          }
-          const errorBox = document.getElementById("loginError");
-          if (errorBox) errorBox.textContent = "Login gagal: " + (error.code || error.message || "coba lagi");
-          button.disabled = false;
-          if (label) label.textContent = old;
-        }
-      });
-    }, 1500);
-  </script>
-
   <!-- JAVASCRIPT MODULE -->
-
   <script type="module">
 
     import { auth, db } from "./firebase-config.js";
@@ -1984,22 +1697,15 @@
     let currentRole = "member";
 
     const googleState = window.RDK_GOOGLE;
-    const D = window.RDK_DIAG;
-
-    if (D) D.log("Module utama loaded", "ok");
-
-    /* SCREEN */
 
     function hideLoading() {
+      if (window.__RDK_FINISH_LOADING__) {
+        window.__RDK_FINISH_LOADING__();
+      }
       const loading = $("loadingScreen");
-      if (!loading) return;
-      if (loading.dataset.hidden === "1") return;
-      loading.dataset.hidden = "1";
-      loading.style.transition = "opacity .2s ease";
-      loading.style.opacity = "0";
-      setTimeout(() => {
+      if (loading && loading.style.display !== "none") {
         loading.style.display = "none";
-      }, 200);
+      }
     }
 
     function showLogin() {
@@ -2028,256 +1734,191 @@
       $("driveDot").className = "drive-dot " + type;
     }
 
-    /* PROFILE */
-
-    async function ensureProfile(user) {
-      if (D) D.log("ensureProfile: cek dokumen di Firestore...", "info");
-
+    function ensureProfile(user) {
       const ref = doc(db, "users", user.uid);
-      const snapshot = await getDoc(ref);
-
-      if (!snapshot.exists()) {
-        if (D) D.log("ensureProfile: user baru — buat dokumen", "info");
-
-        await setDoc(ref, {
-          uid: user.uid,
-          name: user.displayName || "User",
-          email: user.email || "",
-          photoURL: user.photoURL || "",
-          role: "member",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-
-        if (D) D.log("ensureProfile: dokumen berhasil dibuat", "ok");
-        return "member";
-      }
-
-      const data = snapshot.data();
-      const role = data.role === "admin" ? "admin" : "member";
-      if (D) D.log("ensureProfile: user sudah ada, role = " + role, "ok");
-      return role;
+      return getDoc(ref).then(function (snapshot) {
+        if (!snapshot.exists()) {
+          return setDoc(ref, {
+            uid: user.uid,
+            name: user.displayName || "User",
+            email: user.email || "",
+            photoURL: user.photoURL || "",
+            role: "member",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }).then(function () {
+            return "member";
+          });
+        }
+        const data = snapshot.data();
+        return data.role === "admin" ? "admin" : "member";
+      });
     }
 
-    async function loadProfile(user) {
+    function loadProfile(user) {
       currentUser = user;
-      currentRole = await ensureProfile(user);
+      return ensureProfile(user).then(function (role) {
+        currentRole = role;
 
-      const avatar = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
-      $("topAvatar").src = avatar;
-      $("profileAvatar").src = avatar;
+        const avatar = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
+        $("topAvatar").src = avatar;
+        $("profileAvatar").src = avatar;
 
-      const displayName = user.displayName || user.email?.split("@")[0] || "User";
+        const displayName = user.displayName || (user.email ? user.email.split("@")[0] : "User");
 
-      $("profileName").value = displayName;
-      $("profileEmail").value = user.email || "";
-      $("profileUserName").textContent = displayName;
-      $("profileUserEmail").textContent = user.email || "-";
-      $("profileRole").textContent = currentRole.toUpperCase();
-      $("adminButton").style.display = currentRole === "admin" ? "block" : "none";
+        $("profileName").value = displayName;
+        $("profileEmail").value = user.email || "";
+        $("profileUserName").textContent = displayName;
+        $("profileUserEmail").textContent = user.email || "-";
+        $("profileRole").textContent = currentRole.toUpperCase();
+        $("adminButton").style.display = currentRole === "admin" ? "block" : "none";
 
-      showApp();
+        showApp();
+      });
     }
 
-    /* LOGIN */
-
-    async function loginGoogle() {
+    function loginGoogle() {
       const button = $("loginButton");
 
-      try {
-        loginError("");
-        if (D) D.log("--- KLIK LOGIN GOOGLE ---", "info");
+      loginError("");
+      button.disabled = true;
+      button.querySelector("span").textContent = "Membuka Google...";
 
-        button.disabled = true;
-        button.querySelector("span")?.textContent = "Membuka Google...";
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
 
-        if (D) D.log("Membuat GoogleAuthProvider...", "info");
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
 
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
+      if (isMobile) {
+        signInWithRedirect(auth, provider).catch(function (error) {
+          console.error("Login error:", error);
+          loginError("Login gagal: " + (error.code || error.message));
+          button.disabled = false;
+          button.querySelector("span").textContent = "Continue with Google";
+        });
+        return;
+      }
 
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
-        if (D) D.log("isMobile: " + isMobile, "info");
-
-        if (isMobile) {
-          if (D) D.log("Memanggil signInWithRedirect (mobile)...", "info");
-          await signInWithRedirect(auth, provider);
-          if (D) D.log("signInWithRedirect selesai — tunggu balik dari Google...", "ok");
-          return;
-        }
-
-        if (D) D.log("Memanggil signInWithPopup (desktop)...", "info");
-        await signInWithPopup(auth, provider);
-        if (D) D.log("signInWithPopup selesai", "ok");
-
-      } catch (error) {
+      signInWithPopup(auth, provider).catch(function (error) {
         console.error("Login error:", error);
-        if (D) {
-          D.log("LOGIN ERROR", "error");
-          D.log("  code: " + (error.code || "(no code)"), "error");
-          D.log("  message: " + (error.message || "(no message)"), "error");
-        }
 
         if (error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user") {
-          try {
-            if (D) D.log("Mencoba fallback signInWithRedirect...", "warn");
-            await signInWithRedirect(auth, new GoogleAuthProvider());
-            return;
-          } catch (redirectError) {
-            console.error(redirectError);
-            if (D) D.log("Redirect fallback error: " + redirectError.message, "error");
-          }
+          signInWithRedirect(auth, new GoogleAuthProvider());
+          return;
         }
 
         if (error.code === "auth/unauthorized-domain") {
           loginError("Domain website belum diizinkan di Firebase Authorized domains.");
-          if (D) D.log("→ Fix: tambah domain di Firebase Console → Auth → Authorized domains", "error");
-        } else if (error.code === "auth/redirect-uri-mismatch") {
-          loginError("Redirect URI belum didaftarkan di Google Cloud Console.");
-          if (D) D.log("→ Fix: tambah redirect URI di Google Cloud Console", "error");
         } else {
           loginError("Login gagal: " + (error.code || error.message));
         }
 
-      } finally {
         button.disabled = false;
-        const label = button.querySelector("span");
-        if (label) label.textContent = "Continue with Google";
-      }
+        button.querySelector("span").textContent = "Continue with Google";
+      });
     }
 
     $("loginButton").onclick = loginGoogle;
 
-    /* AUTH STATE */
-
-    onAuthStateChanged(auth, async user => {
+    onAuthStateChanged(auth, function (user) {
       if (!user) {
-        if (D) D.log("onAuthStateChanged: user NULL → showLogin", "warn");
         showLogin();
         return;
       }
 
-      if (D) {
-        D.log("onAuthStateChanged: USER MASUK", "ok");
-        D.log("  uid: " + user.uid, "ok");
-        D.log("  email: " + (user.email || "-"), "ok");
-      }
-
       $("loadingText").textContent = "Memuat profil...";
 
-      try {
-        await loadProfile(user);
-        if (D) D.log("loadProfile BERHASIL → showApp", "ok");
-      } catch (error) {
+      loadProfile(user).catch(function (error) {
         console.error(error);
-        if (D) {
-          D.log("loadProfile GAGAL", "error");
-          D.log("  code: " + (error.code || "(no code)"), "error");
-          D.log("  message: " + (error.message || "(no message)"), "error");
-        }
-
-        if (error.code === "permission-denied") {
-          if (D) D.log("→ Fix: Firestore Rules tolak akses. Buka Firebase Console → Firestore → Rules", "error");
-        } else if (error.code === "unavailable") {
-          if (D) D.log("→ Fix: Firestore tidak bisa diakses. Cek koneksi / Firestore status.", "error");
-        }
-
         showLogin();
-      }
+      });
     });
 
-    /* GET REDIRECT RESULT — dibungkus IIFE biar tidak top-level await */
+    getRedirectResult(auth).catch(function (error) {
+      console.error("Redirect result:", error);
+    });
 
-    (async () => {
-      try {
-        if (D) D.log("Memanggil getRedirectResult...", "info");
-        await getRedirectResult(auth);
-        if (D) D.log("getRedirectResult selesai", "ok");
-      } catch (error) {
-        console.error("Redirect result:", error);
-        if (D) {
-          D.log("getRedirectResult ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
-        }
-      }
-    })();
-
-    /* WAIT GOOGLE */
-
-    async function waitForGoogle(timeout = 10000) {
+    function waitForGoogle(timeout) {
+      timeout = timeout || 10000;
       const start = Date.now();
-      while (Date.now() - start < timeout) {
-        if (googleState.gapiInited && googleState.gisInited && googleState.tokenClient) {
-          return true;
+
+      return new Promise(function (resolve) {
+        function check() {
+          if (googleState.gapiInited && googleState.gisInited && googleState.tokenClient) {
+            resolve(true);
+            return;
+          }
+          if (Date.now() - start > timeout) {
+            resolve(false);
+            return;
+          }
+          setTimeout(check, 200);
         }
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      return false;
+        check();
+      });
     }
 
-    /* CONNECT DRIVE */
-
-    async function connectDrive() {
+    function connectDrive() {
       const button = $("connectDriveButton");
 
       button.disabled = true;
       button.textContent = "Loading...";
       setDriveStatus("Menghubungkan...", "loading");
 
-      const ready = await waitForGoogle();
-
-      if (!ready) {
-        button.disabled = false;
-        button.textContent = "Connect Drive";
-        setDriveStatus("Google belum siap", "error");
-        setStatus("Google Drive gagal dimuat. Coba refresh halaman.", "error");
-        return false;
-      }
-
-      return new Promise(resolve => {
-        googleState.tokenClient.callback = response => {
-          console.log("Drive OAuth:", response);
-          button.disabled = false;
-
-          if (response.error || !response.access_token) {
-            button.textContent = "Connect Drive";
-            button.classList.remove("connected");
-            accessToken = null;
-            setDriveStatus("Belum terhubung", "error");
-            setStatus("Izin Google Drive tidak diberikan.", "error");
-            resolve(false);
-            return;
-          }
-
-          accessToken = response.access_token;
-          window.gapi.client.setToken({ access_token: accessToken });
-          button.textContent = "Connected";
-          button.classList.add("connected");
-          setDriveStatus("Connected", "connected");
-          setStatus("Google Drive berhasil terhubung.", "success");
-          resolve(true);
-        };
-
-        try {
-          googleState.tokenClient.requestAccessToken({ prompt: "consent" });
-        } catch (error) {
-          console.error(error);
+      return waitForGoogle().then(function (ready) {
+        if (!ready) {
           button.disabled = false;
           button.textContent = "Connect Drive";
-          setDriveStatus("Belum terhubung", "error");
-          setStatus("Gagal membuka Google Drive.", "error");
-          resolve(false);
+          setDriveStatus("Google belum siap", "error");
+          setStatus("Google Drive gagal dimuat. Coba refresh halaman.", "error");
+          return false;
         }
+
+        return new Promise(function (resolve) {
+          googleState.tokenClient.callback = function (response) {
+            console.log("Drive OAuth:", response);
+            button.disabled = false;
+
+            if (response.error || !response.access_token) {
+              button.textContent = "Connect Drive";
+              button.classList.remove("connected");
+              accessToken = null;
+              setDriveStatus("Belum terhubung", "error");
+              setStatus("Izin Google Drive tidak diberikan.", "error");
+              resolve(false);
+              return;
+            }
+
+            accessToken = response.access_token;
+            window.gapi.client.setToken({ access_token: accessToken });
+            button.textContent = "Connected";
+            button.classList.add("connected");
+            setDriveStatus("Connected", "connected");
+            setStatus("Google Drive berhasil terhubung.", "success");
+            resolve(true);
+          };
+
+          try {
+            googleState.tokenClient.requestAccessToken({ prompt: "consent" });
+          } catch (error) {
+            console.error(error);
+            button.disabled = false;
+            button.textContent = "Connect Drive";
+            setDriveStatus("Belum terhubung", "error");
+            setStatus("Gagal membuka Google Drive.", "error");
+            resolve(false);
+          }
+        });
       });
     }
 
-    $("connectDriveButton").onclick = async () => {
-      const connected = await connectDrive();
-      if (connected) await loadRecentFiles();
+    $("connectDriveButton").onclick = function () {
+      connectDrive().then(function (connected) {
+        if (connected) loadRecentFiles();
+      });
     };
 
-    /* CREATE TXT */
-
-    async function createTXT() {
+    function createTXT() {
       let name = $("fileName").value.trim();
       const content = $("fileContent").value;
 
@@ -2293,156 +1934,151 @@
         return;
       }
 
-      if (!accessToken) {
-        const connected = await connectDrive();
-        if (!connected) return;
-      }
+      const doCreate = function () {
+        if (!name.toLowerCase().endsWith(".txt")) name += ".txt";
 
-      if (!name.toLowerCase().endsWith(".txt")) name += ".txt";
+        const metadata = { name: name, mimeType: "text/plain" };
+        const boundary = "-------314159265358979323846";
+        const delimiter = "\r\n--" + boundary + "\r\n";
+        const closeDelimiter = "\r\n--" + boundary + "--";
 
-      const metadata = { name: name, mimeType: "text/plain" };
-      const boundary = "-------314159265358979323846";
-      const delimiter = "\r\n--" + boundary + "\r\n";
-      const closeDelimiter = "\r\n--" + boundary + "--";
+        const body =
+          delimiter +
+          "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+          JSON.stringify(metadata) +
+          delimiter +
+          "Content-Type: text/plain\r\n\r\n" +
+          content +
+          closeDelimiter;
 
-      const body =
-        delimiter +
-        "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
-        JSON.stringify(metadata) +
-        delimiter +
-        "Content-Type: text/plain\r\n\r\n" +
-        content +
-        closeDelimiter;
-
-      try {
         $("createButton").disabled = true;
         setStatus("Menyimpan file...");
 
-        const response = await fetch(
-          "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,modifiedTime,webViewLink",
-          {
-            method: "POST",
-            headers: {
-              Authorization: "Bearer " + accessToken,
-              "Content-Type": "multipart/related; boundary=" + boundary
-            },
-            body: body
+        fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,modifiedTime,webViewLink", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + accessToken,
+            "Content-Type": "multipart/related; boundary=" + boundary
+          },
+          body: body
+        }).then(function (response) {
+          if (response.status === 401) {
+            accessToken = null;
+            window.gapi.client.setToken(null);
+            $("connectDriveButton").classList.remove("connected");
+            $("connectDriveButton").textContent = "Connect Drive";
+            setDriveStatus("Belum terhubung", "error");
+            setStatus("Sesi Google Drive habis. Hubungkan kembali.", "error");
+            throw new Error("Sesi habis");
           }
-        );
 
-        if (response.status === 401) {
-          accessToken = null;
-          window.gapi.client.setToken(null);
-          $("connectDriveButton").classList.remove("connected");
-          $("connectDriveButton").textContent = "Connect Drive";
-          setDriveStatus("Belum terhubung", "error");
-          setStatus("Sesi Google Drive habis. Hubungkan kembali.", "error");
-          return;
-        }
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(errorText);
-          throw new Error("HTTP " + response.status);
-        }
+          return response.json();
+        }).then(function () {
+          setStatus("File berhasil dibuat dan disimpan ke Google Drive.", "success");
+          $("fileName").value = "";
+          $("fileContent").value = "";
+          return loadRecentFiles();
+        }).catch(function (error) {
+          console.error(error);
+          setStatus("Gagal membuat file: " + error.message, "error");
+        }).finally(function () {
+          $("createButton").disabled = false;
+        });
+      };
 
-        await response.json();
-
-        setStatus("File berhasil dibuat dan disimpan ke Google Drive.", "success");
-        $("fileName").value = "";
-        $("fileContent").value = "";
-        await loadRecentFiles();
-
-      } catch (error) {
-        console.error(error);
-        setStatus("Gagal membuat file: " + error.message, "error");
-      } finally {
-        $("createButton").disabled = false;
+      if (!accessToken) {
+        connectDrive().then(function (connected) {
+          if (connected) doCreate();
+        });
+      } else {
+        doCreate();
       }
     }
 
     $("createButton").onclick = createTXT;
 
-    $("clearButton").onclick = () => {
+    $("clearButton").onclick = function () {
       $("fileName").value = "";
       $("fileContent").value = "";
       setStatus("");
     };
 
-    /* RECENT FILES */
-
-    async function loadRecentFiles() {
+    function loadRecentFiles() {
       if (!accessToken) {
-        $("filesList").innerHTML = `<div class="empty">Hubungkan Google Drive terlebih dahulu.</div>`;
-        return;
+        $("filesList").innerHTML = '<div class="empty">Hubungkan Google Drive terlebih dahulu.</div>';
+        return Promise.resolve();
       }
 
-      try {
-        $("filesList").innerHTML = `<div class="empty">Memuat file...</div>`;
+      $("filesList").innerHTML = '<div class="empty">Memuat file...</div>';
 
-        const response = await window.gapi.client.drive.files.list({
-          pageSize: 10,
-          orderBy: "modifiedTime desc",
-          fields: "files(id,name,mimeType,modifiedTime,webViewLink)",
-          q: "trashed = false"
-        });
-
+      return window.gapi.client.drive.files.list({
+        pageSize: 10,
+        orderBy: "modifiedTime desc",
+        fields: "files(id,name,mimeType,modifiedTime,webViewLink)",
+        q: "trashed = false"
+      }).then(function (response) {
         const files = response.result.files || [];
 
         if (!files.length) {
-          $("filesList").innerHTML = `<div class="empty">Belum ada file.</div>`;
+          $("filesList").innerHTML = '<div class="empty">Belum ada file.</div>';
           return;
         }
 
-        $("filesList").innerHTML = files.map(file => {
+        $("filesList").innerHTML = files.map(function (file) {
           const date = file.modifiedTime
             ? new Date(file.modifiedTime).toLocaleString("id-ID")
             : "-";
-          return `
-            <div class="file-row">
-              <div class="file-info">
-                <div class="file-name">${escapeHTML(file.name)}</div>
-                <div class="file-date">Modified ${escapeHTML(date)}</div>
-              </div>
-              <button class="open-file" type="button" data-file-id="${escapeHTML(file.id)}">Open</button>
-            </div>
-          `;
+          return '<div class="file-row">' +
+            '<div class="file-info">' +
+              '<div class="file-name">' + escapeHTML(file.name) + '</div>' +
+              '<div class="file-date">Modified ' + escapeHTML(date) + '</div>' +
+            '</div>' +
+            '<button class="open-file" type="button" data-file-id="' + escapeHTML(file.id) + '">Open</button>' +
+          '</div>';
         }).join("");
 
-        document.querySelectorAll("[data-file-id]").forEach(button => {
-          button.onclick = () => openFile(button.dataset.fileId);
+        document.querySelectorAll("[data-file-id]").forEach(function (button) {
+          button.onclick = function () {
+            openFile(button.dataset.fileId);
+          };
         });
-
-      } catch (error) {
+      }).catch(function (error) {
         console.error(error);
-        $("filesList").innerHTML = `<div class="empty">Gagal memuat file.</div>`;
-      }
+        $("filesList").innerHTML = '<div class="empty">Gagal memuat file.</div>';
+      });
     }
 
-    $("refreshFilesButton").onclick = async () => {
-      await loadRecentFiles();
+    $("refreshFilesButton").onclick = function () {
+      loadRecentFiles();
     };
 
-    async function openFile(fileId) {
-      try {
-        const response = await window.gapi.client.drive.files.get({
-          fileId: fileId,
-          fields: "id,name,mimeType,webViewLink"
-        });
+    function openFile(fileId) {
+      window.gapi.client.drive.files.get({
+        fileId: fileId,
+        fields: "id,name,mimeType,webViewLink"
+      }).then(function (response) {
         const file = response.result;
-        window.open(file.webViewLink || "https://drive.google.com/file/d/" + fileId + "/view", "_blank");
-      } catch (error) {
+        window.open(file.webViewLink || ("https://drive.google.com/file/d/" + fileId + "/view"), "_blank");
+      }).catch(function (error) {
         console.error(error);
         alert("Gagal membuka file.");
-      }
+      });
     }
 
-    $("openDriveButton").onclick = async () => {
+    $("openDriveButton").onclick = function () {
       if (!accessToken) {
-        const connected = await connectDrive();
-        if (!connected) return;
+        connectDrive().then(function (connected) {
+          if (connected) {
+            window.open("https://drive.google.com/drive/my-drive", "_blank");
+          }
+        });
+      } else {
+        window.open("https://drive.google.com/drive/my-drive", "_blank");
       }
-      window.open("https://drive.google.com/drive/my-drive", "_blank");
     };
 
     function openProfile() { $("profileModal").classList.add("open"); }
@@ -2455,8 +2091,9 @@
     $("closeProfile").onclick = closeProfile;
     $("closeProfile2").onclick = closeProfile;
 
-    $("saveProfile").onclick = async () => {
+    $("saveProfile").onclick = function () {
       if (!currentUser) return;
+
       const name = $("profileName").value.trim();
 
       if (!name) {
@@ -2465,78 +2102,70 @@
         return;
       }
 
-      try {
-        $("saveProfile").disabled = true;
-        $("saveProfile").textContent = "Saving...";
+      $("saveProfile").disabled = true;
+      $("saveProfile").textContent = "Saving...";
 
-        await updateDoc(
-          doc(db, "users", currentUser.uid),
-          { name: name, updatedAt: serverTimestamp() }
-        );
-
+      updateDoc(doc(db, "users", currentUser.uid), {
+        name: name,
+        updatedAt: serverTimestamp()
+      }).then(function () {
         $("profileUserName").textContent = name;
         $("profileStatus").textContent = "Profil berhasil disimpan.";
         $("profileStatus").className = "status success";
-      } catch (error) {
+      }).catch(function (error) {
         console.error(error);
         $("profileStatus").textContent = "Gagal menyimpan profil.";
         $("profileStatus").className = "status error";
-      } finally {
+      }).finally(function () {
         $("saveProfile").disabled = false;
         $("saveProfile").textContent = "Save Changes";
-      }
+      });
     };
 
-    $("adminButton").onclick = () => {
+    $("adminButton").onclick = function () {
       window.location.href = "./admin.html";
     };
 
-    $("logoutButton").onclick = async () => {
-      try {
-        if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
-          try {
-            window.google.accounts.oauth2.revoke(accessToken, () => {});
-          } catch (error) { console.error(error); }
-        }
-
-        accessToken = null;
-
-        if (window.gapi && window.gapi.client) {
-          window.gapi.client.setToken(null);
-        }
-
-        $("connectDriveButton").classList.remove("connected");
-        $("connectDriveButton").textContent = "Connect Drive";
-        setDriveStatus("Belum terhubung");
-
-        await signOut(auth);
-      } catch (error) {
-        console.error(error);
+    $("logoutButton").onclick = function () {
+      if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
+        try { window.google.accounts.oauth2.revoke(accessToken, function () {}); } catch (e) {}
       }
+
+      accessToken = null;
+
+      if (window.gapi && window.gapi.client) {
+        window.gapi.client.setToken(null);
+      }
+
+      $("connectDriveButton").classList.remove("connected");
+      $("connectDriveButton").textContent = "Connect Drive";
+      setDriveStatus("Belum terhubung");
+
+      signOut(auth);
     };
 
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.addEventListener("click", async () => {
-        document.querySelectorAll(".tab").forEach(item => item.classList.remove("active"));
-        document.querySelectorAll(".panel").forEach(panel => panel.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        document.querySelectorAll(".tab").forEach(function (item) { item.classList.remove("active"); });
+        document.querySelectorAll(".panel").forEach(function (panel) { panel.classList.remove("active"); });
         tab.classList.add("active");
 
         const name = tab.dataset.tab;
         $(name + "Panel").classList.add("active");
 
-        if (name === "recent") await loadRecentFiles();
+        if (name === "recent") loadRecentFiles();
       });
     });
 
-    $("profileModal").addEventListener("click", event => {
+    $("profileModal").addEventListener("click", function (event) {
       if (event.target === $("profileModal")) closeProfile();
     });
 
-    document.addEventListener("keydown", event => {
+    document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") closeProfile();
     });
 
-    $("fileContent").addEventListener("keydown", event => {
+    $("fileContent").addEventListener("keydown", function (event) {
       if (event.ctrlKey && event.key === "Enter") {
         event.preventDefault();
         createTXT();
@@ -2554,10 +2183,7 @@
 
   </script>
 
-  <!-- ROJAK AI WIDGET -->
   <script src="./rojak-ai/rojak-ai.js" defer></script>
-
-  <!-- MUSIC PLAYER -->
   <script src="./rojak-ai/music-player.js" defer></script>
 
 </body>
