@@ -38,7 +38,7 @@
   const WAVE_ENVELOPE_POWER = 1.4;
 
   // Konfigurasi gain (volume boost)
-  const GAIN_BOOST = 2.5;   // 1.0 = normal, 2.5 = 2.5x lipat
+  const GAIN_BOOST = 3.0;   // 1.0 = normal, 2.5 = 2.5x lipat
 
   const state = {
     audio: null,
