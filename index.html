@@ -2413,35 +2413,33 @@
 
     async function loginGoogle() {
 
+      const button = $("loginButton");
+
       try {
 
         loginError("");
 
+        button.disabled = true;
+        button.querySelector("span")?.textContent = "Membuka Google...";
 
-        $("loginButton").disabled =
-          true;
-
-
-        $("loginButton").textContent =
-          "Membuka Google...";
-
-
-        const provider =
-          new GoogleAuthProvider();
-
+        const provider = new GoogleAuthProvider();
 
         provider.setCustomParameters({
-
-          prompt:
-            "select_account"
-
+          prompt: "select_account"
         });
 
-
-        await signInWithPopup(
-          auth,
-          provider
+        // Pada Android/iPhone, Firebase popup kadang berhenti setelah
+        // pengguna memilih akun. Redirect lebih stabil untuk perangkat mobile.
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(
+          navigator.userAgent || ""
         );
+
+        if (isMobile) {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+
+        await signInWithPopup(auth, provider);
 
 
       } catch (error) {
@@ -2503,12 +2501,10 @@
 
       } finally {
 
-        $("loginButton").disabled =
-          false;
+        button.disabled = false;
 
-
-        $("loginButton").textContent =
-          "Continue with Google";
+        const label = button.querySelector("span");
+        if (label) label.textContent = "Continue with Google";
 
       }
 
