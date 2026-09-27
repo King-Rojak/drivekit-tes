@@ -1698,6 +1698,10 @@
 
     const googleState = window.RDK_GOOGLE;
 
+    const DRIVE_TOKEN_KEY = "rdk_drive_token";
+    const DRIVE_TOKEN_TIME_KEY = "rdk_drive_token_time";
+    const DRIVE_TOKEN_MAX_AGE = 55 * 60 * 1000; // 55 menit
+
     function hideLoading() {
       if (window.__RDK_FINISH_LOADING__) {
         window.__RDK_FINISH_LOADING__();
@@ -1733,6 +1737,79 @@
       $("driveStatus").textContent = text;
       $("driveDot").className = "drive-dot " + type;
     }
+
+    /* ---------- DRIVE TOKEN PERSIST ---------- */
+
+    function saveDriveToken(token) {
+      try {
+        sessionStorage.setItem(DRIVE_TOKEN_KEY, token);
+        sessionStorage.setItem(DRIVE_TOKEN_TIME_KEY, String(Date.now()));
+      } catch (e) {
+        console.warn("Gagal simpan token:", e);
+      }
+    }
+
+    function clearDriveToken() {
+      try {
+        sessionStorage.removeItem(DRIVE_TOKEN_KEY);
+        sessionStorage.removeItem(DRIVE_TOKEN_TIME_KEY);
+      } catch (e) {}
+    }
+
+    function loadDriveToken() {
+      try {
+        const token = sessionStorage.getItem(DRIVE_TOKEN_KEY);
+        const time = Number(sessionStorage.getItem(DRIVE_TOKEN_TIME_KEY) || 0);
+        if (!token) return null;
+        if (Date.now() - time > DRIVE_TOKEN_MAX_AGE) {
+          clearDriveToken();
+          return null;
+        }
+        return token;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function applyDriveConnectedUI() {
+      const button = $("connectDriveButton");
+      if (button) {
+        button.textContent = "Connected";
+        button.classList.add("connected");
+      }
+      setDriveStatus("Connected", "connected");
+    }
+
+    function restoreDriveToken() {
+      const saved = loadDriveToken();
+      if (!saved) return false;
+
+      accessToken = saved;
+
+      function trySetGapiToken() {
+        if (window.gapi && window.gapi.client) {
+          window.gapi.client.setToken({ access_token: accessToken });
+          return true;
+        }
+        return false;
+      }
+
+      if (!trySetGapiToken()) {
+        let attempts = 0;
+        const interval = setInterval(function () {
+          attempts++;
+          if (trySetGapiToken() || attempts > 30) {
+            clearInterval(interval);
+          }
+        }, 300);
+      }
+
+      applyDriveConnectedUI();
+      console.log("[Drive] Token restored");
+      return true;
+    }
+
+    /* ---------- PROFILE ---------- */
 
     function ensureProfile(user) {
       const ref = doc(db, "users", user.uid);
@@ -1777,6 +1854,8 @@
       });
     }
 
+    /* ---------- LOGIN ---------- */
+
     function loginGoogle() {
       const button = $("loginButton");
 
@@ -1820,6 +1899,8 @@
 
     $("loginButton").onclick = loginGoogle;
 
+    /* ---------- AUTH STATE ---------- */
+
     onAuthStateChanged(auth, function (user) {
       if (!user) {
         showLogin();
@@ -1828,7 +1909,13 @@
 
       $("loadingText").textContent = "Memuat profil...";
 
-      loadProfile(user).catch(function (error) {
+      loadProfile(user).then(function () {
+        // Setelah profile load, coba restore Drive token
+        const restored = restoreDriveToken();
+        if (!restored) {
+          console.log("[Drive] Tidak ada token tersimpan");
+        }
+      }).catch(function (error) {
         console.error(error);
         showLogin();
       });
@@ -1837,6 +1924,8 @@
     getRedirectResult(auth).catch(function (error) {
       console.error("Redirect result:", error);
     });
+
+    /* ---------- WAIT GOOGLE ---------- */
 
     function waitForGoogle(timeout) {
       timeout = timeout || 10000;
@@ -1857,6 +1946,8 @@
         check();
       });
     }
+
+    /* ---------- CONNECT DRIVE ---------- */
 
     function connectDrive() {
       const button = $("connectDriveButton");
@@ -1883,6 +1974,7 @@
               button.textContent = "Connect Drive";
               button.classList.remove("connected");
               accessToken = null;
+              clearDriveToken();
               setDriveStatus("Belum terhubung", "error");
               setStatus("Izin Google Drive tidak diberikan.", "error");
               resolve(false);
@@ -1891,6 +1983,10 @@
 
             accessToken = response.access_token;
             window.gapi.client.setToken({ access_token: accessToken });
+
+            // Simpan token ke sessionStorage
+            saveDriveToken(accessToken);
+
             button.textContent = "Connected";
             button.classList.add("connected");
             setDriveStatus("Connected", "connected");
@@ -1917,6 +2013,8 @@
         if (connected) loadRecentFiles();
       });
     };
+
+    /* ---------- CREATE TXT ---------- */
 
     function createTXT() {
       let name = $("fileName").value.trim();
@@ -1965,6 +2063,7 @@
           if (response.status === 401) {
             accessToken = null;
             window.gapi.client.setToken(null);
+            clearDriveToken();
             $("connectDriveButton").classList.remove("connected");
             $("connectDriveButton").textContent = "Connect Drive";
             setDriveStatus("Belum terhubung", "error");
@@ -2007,6 +2106,8 @@
       setStatus("");
     };
 
+    /* ---------- RECENT FILES ---------- */
+
     function loadRecentFiles() {
       if (!accessToken) {
         $("filesList").innerHTML = '<div class="empty">Hubungkan Google Drive terlebih dahulu.</div>';
@@ -2048,6 +2149,18 @@
         });
       }).catch(function (error) {
         console.error(error);
+
+        // Kalau 401, token expired
+        if (error && error.status === 401) {
+          accessToken = null;
+          clearDriveToken();
+          $("connectDriveButton").classList.remove("connected");
+          $("connectDriveButton").textContent = "Connect Drive";
+          setDriveStatus("Belum terhubung", "error");
+          $("filesList").innerHTML = '<div class="empty">Sesi habis. Hubungkan Drive kembali.</div>';
+          return;
+        }
+
         $("filesList").innerHTML = '<div class="empty">Gagal memuat file.</div>';
       });
     }
@@ -2080,6 +2193,8 @@
         window.open("https://drive.google.com/drive/my-drive", "_blank");
       }
     };
+
+    /* ---------- PROFILE MODAL ---------- */
 
     function openProfile() { $("profileModal").classList.add("open"); }
     function closeProfile() {
@@ -2122,9 +2237,13 @@
       });
     };
 
+    /* ---------- ADMIN ---------- */
+
     $("adminButton").onclick = function () {
       window.location.href = "./admin.html";
     };
+
+    /* ---------- LOGOUT ---------- */
 
     $("logoutButton").onclick = function () {
       if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
@@ -2132,6 +2251,9 @@
       }
 
       accessToken = null;
+
+      // Hapus token dari sessionStorage
+      clearDriveToken();
 
       if (window.gapi && window.gapi.client) {
         window.gapi.client.setToken(null);
@@ -2143,6 +2265,8 @@
 
       signOut(auth);
     };
+
+    /* ---------- TABS ---------- */
 
     document.querySelectorAll(".tab").forEach(function (tab) {
       tab.addEventListener("click", function () {
@@ -2157,13 +2281,19 @@
       });
     });
 
+    /* ---------- MODAL CLICK OUTSIDE ---------- */
+
     $("profileModal").addEventListener("click", function (event) {
       if (event.target === $("profileModal")) closeProfile();
     });
 
+    /* ---------- ESCAPE ---------- */
+
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") closeProfile();
     });
+
+    /* ---------- CTRL + ENTER ---------- */
 
     $("fileContent").addEventListener("keydown", function (event) {
       if (event.ctrlKey && event.key === "Enter") {
@@ -2171,6 +2301,8 @@
         createTXT();
       }
     });
+
+    /* ---------- ESCAPE HTML ---------- */
 
     function escapeHTML(value) {
       return String(value)
