@@ -42,10 +42,6 @@
     button, select, input { font: inherit; }
     button { cursor: pointer; }
 
-    /* ================================
-       LOADING
-    ================================= */
-
     .loading-screen {
       position: fixed;
       inset: 0;
@@ -68,21 +64,9 @@
       background: var(--panel);
     }
 
-    .loading-logo img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-    }
+    .loading-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
-    .loading-text {
-      color: var(--muted);
-      font-size: 9px;
-    }
-
-    /* ================================
-       LOGIN (Admin)
-    ================================= */
+    .loading-text { color: var(--muted); font-size: 9px; }
 
     .login-screen {
       min-height: 100vh;
@@ -136,10 +120,7 @@
       box-shadow: 0 0 0 3px rgba(228, 86, 50, .12);
     }
 
-    .login-version {
-      color: var(--muted-2);
-      font-size: 8px;
-    }
+    .login-version { color: var(--muted-2); font-size: 8px; }
 
     .login-header {
       display: flex;
@@ -159,12 +140,7 @@
       box-shadow: 0 8px 24px rgba(0,0,0,.28);
     }
 
-    .login-logo img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-    }
+    .login-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
     .login-heading { min-width: 0; }
 
@@ -204,11 +180,7 @@
     .google-login:active { transform: translateY(1px); }
     .google-login:disabled { opacity: .6; cursor: wait; }
 
-    .google-icon {
-      width: 16px;
-      height: 16px;
-      flex: 0 0 16px;
-    }
+    .google-icon { width: 16px; height: 16px; flex: 0 0 16px; }
 
     .login-error {
       min-height: 15px;
@@ -219,13 +191,7 @@
       text-align: center;
     }
 
-    /* ================================
-       APP
-    ================================= */
-
     .app { display: none; min-height: 100vh; }
-
-    /* Topbar */
 
     .topbar {
       height: 58px;
@@ -237,12 +203,7 @@
       background: #10110f;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      min-width: 0;
-    }
+    .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
 
     .brand-logo {
       width: 35px;
@@ -254,19 +215,9 @@
       background: var(--panel);
     }
 
-    .brand-logo img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-    }
+    .brand-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
-    .brand-text {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: -.2px;
-    }
-
+    .brand-text { font-size: 11px; font-weight: 700; letter-spacing: -.2px; }
     .brand-text .accent { color: var(--orange); }
 
     .brand-badge {
@@ -285,11 +236,7 @@
       text-transform: uppercase;
     }
 
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
+    .top-actions { display: flex; align-items: center; gap: 5px; }
 
     .top-button {
       height: 30px;
@@ -303,12 +250,7 @@
       transition: background .12s ease, color .12s ease;
     }
 
-    .top-button:hover {
-      background: var(--panel-2);
-      color: var(--text);
-    }
-
-    /* Container */
+    .top-button:hover { background: var(--panel-2); color: var(--text); }
 
     .container {
       width: min(880px, calc(100% - 20px));
@@ -316,13 +258,7 @@
       padding: 24px 0 45px;
     }
 
-    /* ================================
-       PAGE HEAD
-    ================================= */
-
-    .page-head {
-      margin-bottom: 18px;
-    }
+    .page-head { margin-bottom: 18px; }
 
     .page-head h1 {
       margin: 0;
@@ -337,10 +273,6 @@
       font-size: 10px;
       line-height: 1.5;
     }
-
-    /* ================================
-       SUMMARY CARDS
-    ================================= */
 
     .summary {
       display: grid;
@@ -392,13 +324,61 @@
       line-height: 1;
     }
 
-    /* ================================
-       SECTION
-    ================================= */
-
-    .section {
-      margin-top: 4px;
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
     }
+
+    .search-wrap {
+      flex: 1 1 200px;
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      color: var(--muted-2);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px 0 34px;
+      outline: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--input);
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    .search-input::placeholder { color: #595a55; }
+    .search-input:focus { border-color: #3b3c38; }
+
+    .filter-select {
+      height: 38px;
+      padding: 0 12px;
+      outline: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--input);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .filter-select:focus { border-color: #3b3c38; }
+
+    .section { margin-top: 4px; }
 
     .section-head {
       display: flex;
@@ -415,20 +395,9 @@
       letter-spacing: -.2px;
     }
 
-    .section-info {
-      color: var(--muted);
-      font-size: 9px;
-    }
+    .section-info { color: var(--muted); font-size: 9px; }
 
-    /* ================================
-       USER LIST
-    ================================= */
-
-    .user-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .user-list { display: flex; flex-direction: column; gap: 8px; }
 
     .user-card {
       padding: 14px 16px;
@@ -464,10 +433,7 @@
       background: var(--panel-2);
     }
 
-    .user-info {
-      min-width: 0;
-      flex: 1 1 auto;
-    }
+    .user-info { min-width: 0; flex: 1 1 auto; }
 
     .user-name {
       display: flex;
@@ -511,8 +477,6 @@
       white-space: nowrap;
     }
 
-    /* Role */
-
     .role-badge {
       flex: 0 0 auto;
       display: inline-flex;
@@ -542,16 +506,59 @@
       color: var(--green);
     }
 
-    /* UID row */
+    .role-select {
+      width: 120px;
+      height: 30px;
+      padding: 0 8px;
+      outline: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .role-select:hover { border-color: #454640; }
+    .role-select:focus { border-color: var(--orange); }
+    .role-select:disabled { opacity: .5; cursor: not-allowed; }
+
+    .user-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .meta-item svg {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 12px;
+      opacity: .7;
+    }
+
+    .meta-value {
+      color: var(--text);
+      font-weight: 600;
+    }
 
     .uid-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      margin-top: 11px;
-      padding-top: 11px;
-      border-top: 1px solid var(--border-soft);
+      margin-top: 8px;
     }
 
     .uid-label {
@@ -574,40 +581,6 @@
       white-space: nowrap;
     }
 
-    /* Role select (self) */
-
-    .role-select {
-      width: 120px;
-      height: 30px;
-      padding: 0 8px;
-      outline: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: border-color .12s ease;
-    }
-
-    .role-select:hover {
-      border-color: #454640;
-    }
-
-    .role-select:focus {
-      border-color: var(--orange);
-    }
-
-    .role-select:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    /* ================================
-       MESSAGE
-    ================================= */
-
     .message {
       padding: 40px 15px;
       text-align: center;
@@ -616,10 +589,6 @@
     }
 
     .message.error { color: var(--red); }
-
-    /* ================================
-       STATUS
-    ================================= */
 
     .status {
       min-height: 16px;
@@ -631,68 +600,25 @@
     .status.success { color: var(--green); }
     .status.error { color: var(--red); }
 
-    /* ================================
-       MOBILE
-    ================================= */
-
     @media (max-width: 700px) {
-      .topbar {
-        height: 54px;
-        padding: 0 12px;
-      }
-
-      .brand-logo {
-        width: 33px;
-        height: 33px;
-        flex-basis: 33px;
-      }
-
+      .topbar { height: 54px; padding: 0 12px; }
+      .brand-logo { width: 33px; height: 33px; flex-basis: 33px; }
       .brand-text { font-size: 10.5px; }
-
-      .top-button {
-        height: 28px;
-        padding: 0 9px;
-        font-size: 8.5px;
-      }
-
-      .container {
-        width: calc(100% - 20px);
-        padding: 20px 0 40px;
-      }
-
+      .top-button { height: 28px; padding: 0 9px; font-size: 8.5px; }
+      .container { width: calc(100% - 20px); padding: 20px 0 40px; }
       .page-head h1 { font-size: 20px; }
       .page-head p { font-size: 9.5px; }
-
-      .summary {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
-        margin-bottom: 20px;
-      }
-
-      .summary-card {
-        padding: 11px 10px;
-      }
-
+      .summary { gap: 6px; margin-bottom: 20px; }
+      .summary-card { padding: 11px 10px; }
       .summary-label { font-size: 8px; margin-bottom: 6px; }
       .summary-value { font-size: 22px; }
-
-      .user-card {
-        padding: 12px 13px;
-      }
-
-      .avatar {
-        width: 40px;
-        height: 40px;
-        flex-basis: 40px;
-      }
-
+      .user-card { padding: 12px 13px; }
+      .avatar { width: 40px; height: 40px; flex-basis: 40px; }
       .user-name-text { font-size: 12.5px; }
       .user-email { font-size: 9.5px; }
-
-      .role-select {
-        width: 100%;
-        margin-top: 12px;
-      }
+      .role-select { width: 100%; margin-top: 12px; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .filter-select { width: 100%; }
     }
 
     @media (max-width: 380px) {
@@ -703,7 +629,6 @@
 
 <body>
 
-  <!-- LOADING -->
   <div id="loadingScreen" class="loading-screen">
     <div class="loading-box">
       <div class="loading-logo">
@@ -713,7 +638,6 @@
     </div>
   </div>
 
-  <!-- LOGIN -->
   <section id="loginScreen" class="login-screen">
     <div class="login-box">
       <div class="login-topline">
@@ -748,7 +672,6 @@
     </div>
   </section>
 
-  <!-- APP -->
   <section id="app" class="app">
     <header class="topbar">
       <div class="brand">
@@ -788,10 +711,38 @@
         </div>
       </div>
 
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            id="searchInput"
+            class="search-input"
+            type="text"
+            placeholder="Cari nama atau email..."
+            autocomplete="off"
+          >
+        </div>
+
+        <select id="filterRole" class="filter-select">
+          <option value="all">Semua Role</option>
+          <option value="admin">Admin</option>
+          <option value="member">Member</option>
+        </select>
+
+        <select id="sortBy" class="filter-select">
+          <option value="name">Sort: Nama</option>
+          <option value="lastLogin">Sort: Last Login</option>
+          <option value="joinDate">Sort: Join Date</option>
+        </select>
+      </div>
+
       <section class="section">
         <div class="section-head">
           <h2 class="section-title">Daftar Pengguna</h2>
-          <span class="section-info">Role dapat diubah</span>
+          <span id="resultCount" class="section-info">0 user</span>
         </div>
 
         <div id="usersList" class="user-list">
@@ -825,6 +776,7 @@
 
     const $ = id => document.getElementById(id);
     let currentUser = null;
+    let allUsers = [];
 
     function showLogin(message = "") {
       $("loadingScreen").style.display = "none";
@@ -853,6 +805,47 @@
         .replaceAll("'", "&#039;");
     }
 
+    function timeAgo(date) {
+      if (!date) return "Belum pernah";
+
+      const now = Date.now();
+      const past = date.getTime();
+      const diffSec = Math.floor((now - past) / 1000);
+
+      if (diffSec < 60) return "Baru saja";
+
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return diffMin + " menit lalu";
+
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return diffHour + " jam lalu";
+
+      const diffDay = Math.floor(diffHour / 24);
+      if (diffDay < 7) return diffDay + " hari lalu";
+
+      const diffWeek = Math.floor(diffDay / 7);
+      if (diffWeek < 4) return diffWeek + " minggu lalu";
+
+      const diffMonth = Math.floor(diffDay / 30);
+      if (diffMonth < 12) return diffMonth + " bulan lalu";
+
+      return Math.floor(diffDay / 365) + " tahun lalu";
+    }
+
+    function formatDate(date) {
+      if (!date) return "-";
+      const bulan = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+      return date.getDate() + " " + bulan[date.getMonth()] + " " + date.getFullYear();
+    }
+
+    function toDate(ts) {
+      if (!ts) return null;
+      if (ts.toDate) return ts.toDate();
+      if (ts.seconds) return new Date(ts.seconds * 1000);
+      if (typeof ts === "number") return new Date(ts);
+      return null;
+    }
+
     async function getRole(uid) {
       const snap = await getDoc(doc(db, "users", uid));
       if (!snap.exists()) return null;
@@ -868,7 +861,6 @@
       try {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: "select_account" });
-
         await signInWithPopup(auth, provider);
       } catch (error) {
         console.error(error);
@@ -894,85 +886,160 @@
       }
     }
 
+    function applyFiltersAndRender() {
+      const keyword = ($("searchInput").value || "").trim().toLowerCase();
+      const roleFilter = $("filterRole").value;
+      const sortBy = $("sortBy").value;
+
+      let filtered = allUsers.filter(function (u) {
+        const role = u.role === "admin" ? "admin" : "member";
+        if (roleFilter !== "all" && role !== roleFilter) return false;
+
+        if (keyword) {
+          const name = (u.name || "").toLowerCase();
+          const email = (u.email || "").toLowerCase();
+          if (name.indexOf(keyword) === -1 && email.indexOf(keyword) === -1) return false;
+        }
+
+        return true;
+      });
+
+      filtered.sort(function (a, b) {
+        if (sortBy === "lastLogin") {
+          const aDate = toDate(a.lastLoginAt);
+          const bDate = toDate(b.lastLoginAt);
+          const aTime = aDate ? aDate.getTime() : 0;
+          const bTime = bDate ? bDate.getTime() : 0;
+          return bTime - aTime;
+        }
+
+        if (sortBy === "joinDate") {
+          const aDate = toDate(a.createdAt);
+          const bDate = toDate(b.createdAt);
+          const aTime = aDate ? aDate.getTime() : 0;
+          const bTime = bDate ? bDate.getTime() : 0;
+          return bTime - aTime;
+        }
+
+        return (a.name || a.email || "").localeCompare(b.name || b.email || "");
+      });
+
+      $("resultCount").textContent = filtered.length + " user";
+
+      if (!filtered.length) {
+        $("usersList").innerHTML = '<div class="message">Tidak ada user yang cocok.</div>';
+        return;
+      }
+
+      $("usersList").innerHTML = filtered.map(function (user) {
+        const self = user.id === currentUser.uid;
+        const name = user.name || (user.email ? user.email.split("@")[0] : "User");
+        const email = user.email || "-";
+        const photo = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
+        const role = user.role === "admin" ? "admin" : "member";
+
+        const lastLoginDate = toDate(user.lastLoginAt);
+        const createdDate = toDate(user.createdAt);
+
+        const lastLoginText = lastLoginDate ? timeAgo(lastLoginDate) : "Belum pernah";
+        const joinedText = createdDate ? formatDate(createdDate) : "-";
+
+        return `
+          <div class="user-card${self ? " self" : ""}">
+            <div class="user-row-top">
+              <img class="avatar" src="${escapeHTML(photo)}" alt="Profile">
+              <div class="user-info">
+                <div class="user-name">
+                  <span class="user-name-text">${escapeHTML(name)}</span>
+                  ${self ? '<span class="user-you-badge">You</span>' : ''}
+                </div>
+                <div class="user-email">${escapeHTML(email)}</div>
+              </div>
+              ${self
+                ? `<span class="role-badge ${role}">${role === "admin" ? "Admin" : "Member"}</span>`
+                : `<select class="role-select" data-user-id="${escapeHTML(user.id)}" data-old-role="${role}">
+                     <option value="member" ${role === "member" ? "selected" : ""}>Member</option>
+                     <option value="admin" ${role === "admin" ? "selected" : ""}>Admin</option>
+                   </select>`
+              }
+            </div>
+
+            <div class="user-meta">
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Login terakhir: <span class="meta-value">${escapeHTML(lastLoginText)}</span></span>
+              </div>
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span>Bergabung: <span class="meta-value">${escapeHTML(joinedText)}</span></span>
+              </div>
+            </div>
+
+            <div class="uid-row">
+              <span class="uid-label">UID</span>
+              <span class="uid-value" title="${escapeHTML(user.id)}">${escapeHTML(user.id)}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".role-select").forEach(function (select) {
+        select.addEventListener("change", async function () {
+          const userId = select.dataset.userId;
+          const oldRole = select.dataset.oldRole;
+          const newRole = select.value;
+          if (newRole === oldRole) return;
+          if (!confirm(`Ubah role menjadi ${newRole.toUpperCase()}?`)) {
+            select.value = oldRole;
+            return;
+          }
+
+          select.disabled = true;
+          setStatus("Menyimpan perubahan role...");
+
+          try {
+            await updateDoc(doc(db, "users", userId), { role: newRole });
+            setStatus("Role berhasil diubah.", "success");
+
+            const target = allUsers.find(u => u.id === userId);
+            if (target) target.role = newRole;
+
+            updateSummary();
+            applyFiltersAndRender();
+          } catch (error) {
+            console.error(error);
+            select.value = oldRole;
+            setStatus("Gagal mengubah role. Periksa Firestore Rules.", "error");
+            select.disabled = false;
+          }
+        });
+      });
+    }
+
+    function updateSummary() {
+      const admins = allUsers.filter(u => u.role === "admin").length;
+      $("totalUsers").textContent = allUsers.length;
+      $("totalAdmins").textContent = admins;
+      $("totalMembers").textContent = allUsers.length - admins;
+    }
+
     async function loadUsers() {
       $("usersList").innerHTML = '<div class="message">Memuat pengguna...</div>';
 
       try {
         const snapshot = await getDocs(collection(db, "users"));
-        const users = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-        users.sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || ""));
+        allUsers = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
 
-        const admins = users.filter(u => u.role === "admin").length;
-        $("totalUsers").textContent = users.length;
-        $("totalAdmins").textContent = admins;
-        $("totalMembers").textContent = users.length - admins;
-
-        if (!users.length) {
-          $("usersList").innerHTML = '<div class="message">Belum ada pengguna.</div>';
-          return;
-        }
-
-        $("usersList").innerHTML = users.map(user => {
-          const self = user.id === currentUser.uid;
-          const name = user.name || (user.email ? user.email.split("@")[0] : "User");
-          const email = user.email || "-";
-          const photo = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
-          const role = user.role === "admin" ? "admin" : "member";
-
-          return `
-            <div class="user-card${self ? " self" : ""}">
-              <div class="user-row-top">
-                <img class="avatar" src="${escapeHTML(photo)}" alt="Profile">
-                <div class="user-info">
-                  <div class="user-name">
-                    <span class="user-name-text">${escapeHTML(name)}</span>
-                    ${self ? '<span class="user-you-badge">You</span>' : ''}
-                  </div>
-                  <div class="user-email">${escapeHTML(email)}</div>
-                </div>
-                ${self
-                  ? `<span class="role-badge ${role}">${role === "admin" ? "Admin" : "Member"}</span>`
-                  : `<select class="role-select" data-user-id="${escapeHTML(user.id)}" data-old-role="${role}">
-                       <option value="member" ${role === "member" ? "selected" : ""}>Member</option>
-                       <option value="admin" ${role === "admin" ? "selected" : ""}>Admin</option>
-                     </select>`
-                }
-              </div>
-              <div class="uid-row">
-                <span class="uid-label">UID</span>
-                <span class="uid-value" title="${escapeHTML(user.id)}">${escapeHTML(user.id)}</span>
-              </div>
-            </div>
-          `;
-        }).join("");
-
-        document.querySelectorAll(".role-select").forEach(select => {
-          select.addEventListener("change", async () => {
-            const userId = select.dataset.userId;
-            const oldRole = select.dataset.oldRole;
-            const newRole = select.value;
-            if (newRole === oldRole) return;
-            if (!confirm(`Ubah role menjadi ${newRole.toUpperCase()}?`)) {
-              select.value = oldRole;
-              return;
-            }
-
-            select.disabled = true;
-            setStatus("Menyimpan perubahan role...");
-
-            try {
-              await updateDoc(doc(db, "users", userId), { role: newRole });
-              setStatus("Role berhasil diubah.", "success");
-              await loadUsers();
-            } catch (error) {
-              console.error(error);
-              select.value = oldRole;
-              setStatus("Gagal mengubah role. Periksa Firestore Rules.", "error");
-              select.disabled = false;
-            }
-          });
-        });
-
+        updateSummary();
+        applyFiltersAndRender();
       } catch (error) {
         console.error(error);
         $("usersList").innerHTML = '<div class="message error">Gagal memuat pengguna.</div>';
@@ -988,6 +1055,10 @@
       await signOut(auth);
       window.location.href = "./index.html";
     };
+
+    $("searchInput").addEventListener("input", applyFiltersAndRender);
+    $("filterRole").addEventListener("change", applyFiltersAndRender);
+    $("sortBy").addEventListener("change", applyFiltersAndRender);
 
     onAuthStateChanged(auth, async user => {
       if (!user) {
