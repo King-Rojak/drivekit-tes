@@ -124,7 +124,7 @@
     }
 
     /* ================================
-       LOGIN
+       LOGIN (UPGRADED)
     ================================= */
 
     .login-screen {
@@ -132,27 +132,32 @@
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 22px;
+      padding: 24px 20px;
       background:
-        radial-gradient(900px 360px at 50% -18%, rgba(228, 86, 50, .08), transparent 65%),
+        radial-gradient(900px 380px at 50% -15%, rgba(228, 86, 50, .09), transparent 65%),
+        radial-gradient(700px 300px at 50% 115%, rgba(105, 184, 121, .04), transparent 65%),
         var(--bg);
     }
 
     .login-box {
       width: min(420px, 100%);
-      padding: 28px;
+      padding: 26px 24px 22px;
       border: 1px solid #30312e;
-      border-radius: 10px;
+      border-radius: 14px;
       background: #121310;
-      box-shadow: 0 24px 70px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255,255,255,.025);
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, .5),
+        inset 0 1px 0 rgba(255, 255, 255, .03);
     }
+
+    /* --- TOPLINE --- */
 
     .login-topline {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 26px;
+      margin-bottom: 22px;
     }
 
     .login-badge {
@@ -160,11 +165,11 @@
       align-items: center;
       gap: 6px;
       height: 24px;
-      padding: 0 8px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
+      padding: 0 9px;
+      border: 1px solid #2c2d29;
+      border-radius: 999px;
       background: #0d0e0b;
-      color: var(--muted);
+      color: #8b8c86;
       font-size: 7px;
       font-weight: 700;
       letter-spacing: .55px;
@@ -176,29 +181,31 @@
       height: 5px;
       border-radius: 50%;
       background: var(--green);
+      box-shadow: 0 0 0 3px rgba(105, 184, 121, .12);
     }
 
     .login-version {
-      color: var(--muted-2);
-      font-size: 7px;
+      color: #555650;
+      font-size: 8px;
+      font-weight: 500;
     }
 
-    .login-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    /* --- HERO --- */
+
+    .login-hero {
+      text-align: center;
       margin-bottom: 22px;
     }
 
     .login-logo {
-      width: 58px;
-      height: 58px;
-      flex: 0 0 58px;
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 14px;
       overflow: hidden;
       border: 1px solid #30312e;
-      border-radius: 10px;
+      border-radius: 16px;
       background: var(--panel-2);
-      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
     }
 
     .login-logo img {
@@ -208,72 +215,106 @@
       object-fit: cover;
     }
 
-    .login-heading {
-      min-width: 0;
-    }
-
     .login-box h1 {
       margin: 0;
       font-size: 22px;
       font-weight: 800;
-      letter-spacing: -.7px;
+      letter-spacing: -.6px;
+      line-height: 1.2;
     }
 
-    .login-box p {
-      margin: 5px 0 0;
+    .login-tagline {
+      margin: 6px auto 0;
       color: var(--muted);
-      font-size: 9px;
+      font-size: 10px;
       line-height: 1.55;
+      max-width: 280px;
     }
+
+    /* --- FEATURES --- */
 
     .login-features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      display: flex;
+      flex-direction: column;
       gap: 6px;
       margin-bottom: 18px;
     }
 
     .login-feature {
-      min-width: 0;
-      padding: 10px 8px;
-      border: 1px solid var(--border-soft);
-      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 12px;
+      border: 1px solid #1f1f1d;
+      border-radius: 8px;
       background: #0d0e0b;
     }
 
-    .login-feature strong {
-      display: block;
-      margin-bottom: 3px;
-      color: var(--text);
-      font-size: 8px;
+    .login-feature-icon {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #2c2d29;
+      border-radius: 7px;
+      background: linear-gradient(135deg, rgba(228, 86, 50, .1), rgba(228, 86, 50, .02));
+      color: var(--orange);
     }
 
-    .login-feature span {
+    .login-feature-icon svg {
+      width: 14px;
+      height: 14px;
+      max-width: 14px;
+      max-height: 14px;
+    }
+
+    .login-feature-text {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .login-feature-text strong {
       display: block;
-      color: var(--muted-2);
-      font-size: 7px;
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: -.1px;
+      line-height: 1.3;
+    }
+
+    .login-feature-text span {
+      display: block;
+      margin-top: 2px;
+      color: #6a6b64;
+      font-size: 8px;
       line-height: 1.4;
     }
 
+    /* --- GOOGLE BUTTON --- */
+
     .google-login {
       width: 100%;
-      height: 42px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 9px;
+      gap: 10px;
       border: 1px solid #363733;
-      border-radius: 6px;
-      background: #1a1b18;
-      color: var(--text);
-      font-size: 9px;
+      border-radius: 8px;
+      background: #f5f5f4;
+      color: #1a1a1a;
+      font-size: 11px;
       font-weight: 700;
-      transition: background .15s ease, border-color .15s ease, transform .1s ease;
+      letter-spacing: -.1px;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, transform .1s ease, box-shadow .15s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
     }
 
     .google-login:hover {
-      background: #20211e;
-      border-color: #454640;
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
     }
 
     .google-login:active {
@@ -281,44 +322,61 @@
     }
 
     .google-login:disabled {
-      opacity: .5;
+      opacity: .6;
       cursor: wait;
     }
 
     .google-icon {
-      width: 15px;
-      height: 15px;
-      flex: 0 0 15px;
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
     }
 
-    .login-note {
-      margin: 12px 0 0;
-      color: #555650;
-      font-size: 7px;
-      line-height: 1.5;
-      text-align: center;
-    }
+    /* --- ERROR --- */
 
     .login-error {
       min-height: 15px;
-      margin-top: 9px;
+      margin-top: 10px;
       color: var(--red);
-      font-size: 8px;
+      font-size: 8.5px;
       line-height: 1.4;
       text-align: center;
     }
+
+    /* --- NOTE --- */
+
+    .login-note {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #1f1f1d;
+      color: #555650;
+      font-size: 8px;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    /* --- MOBILE --- */
 
     @media (max-width: 430px) {
       .login-box {
         padding: 22px 18px 18px;
       }
 
-      .login-features {
-        grid-template-columns: 1fr;
+      .login-logo {
+        width: 64px;
+        height: 64px;
+      }
+
+      .login-box h1 {
+        font-size: 20px;
+      }
+
+      .login-tagline {
+        font-size: 9.5px;
       }
 
       .login-feature {
-        padding: 9px;
+        padding: 9px 11px;
       }
     }
 
@@ -1429,6 +1487,7 @@
   <!-- LOGIN -->
 
   <section id="loginScreen" class="login-screen">
+
     <div class="login-box">
 
       <div class="login-topline">
@@ -1439,28 +1498,50 @@
         <div class="login-version">DriveK1t / Web</div>
       </div>
 
-      <div class="login-header">
+      <div class="login-hero">
         <div class="login-logo">
           <img src="https://files.catbox.moe/brdrmx.png" alt="Rojak DriveK1t">
         </div>
-        <div class="login-heading">
-          <h1>Rojak DriveK1t</h1>
-          <p>Small tools for Google Drive and your daily Excel workflow.</p>
-        </div>
+        <h1>Rojak DriveK1t</h1>
+        <p class="login-tagline">Small tools for Google Drive and your daily Excel workflow.</p>
       </div>
 
       <div class="login-features">
         <div class="login-feature">
-          <strong>Google Drive</strong>
-          <span>Simpan file TXT langsung.</span>
+          <div class="login-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="login-feature-text">
+            <strong>Google Drive</strong>
+            <span>Simpan file TXT langsung.</span>
+          </div>
         </div>
+
         <div class="login-feature">
-          <strong>Excel Tools</strong>
-          <span>Siapkan rumus lebih cepat.</span>
+          <div class="login-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 11H3v10h6zM21 3h-6v18h6zM15 7H9v14h6z"/>
+            </svg>
+          </div>
+          <div class="login-feature-text">
+            <strong>Excel Tools</strong>
+            <span>Siapkan rumus lebih cepat.</span>
+          </div>
         </div>
+
         <div class="login-feature">
-          <strong>Rojak AI</strong>
-          <span>Bantuan rumus & penggunaan.</span>
+          <div class="login-feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="login-feature-text">
+            <strong>Rojak AI</strong>
+            <span>Bantuan rumus & penggunaan.</span>
+          </div>
         </div>
       </div>
 
@@ -1481,6 +1562,7 @@
       </div>
 
     </div>
+
   </section>
 
   <!-- APP -->
@@ -1700,7 +1782,7 @@
 
     const DRIVE_TOKEN_KEY = "rdk_drive_token";
     const DRIVE_TOKEN_TIME_KEY = "rdk_drive_token_time";
-    const DRIVE_TOKEN_MAX_AGE = 55 * 60 * 1000; // 55 menit
+    const DRIVE_TOKEN_MAX_AGE = 55 * 60 * 1000;
 
     function hideLoading() {
       if (window.__RDK_FINISH_LOADING__) {
@@ -1910,7 +1992,6 @@
       $("loadingText").textContent = "Memuat profil...";
 
       loadProfile(user).then(function () {
-        // Setelah profile load, coba restore Drive token
         const restored = restoreDriveToken();
         if (!restored) {
           console.log("[Drive] Tidak ada token tersimpan");
@@ -1984,7 +2065,6 @@
             accessToken = response.access_token;
             window.gapi.client.setToken({ access_token: accessToken });
 
-            // Simpan token ke sessionStorage
             saveDriveToken(accessToken);
 
             button.textContent = "Connected";
@@ -2150,7 +2230,6 @@
       }).catch(function (error) {
         console.error(error);
 
-        // Kalau 401, token expired
         if (error && error.status === 401) {
           accessToken = null;
           clearDriveToken();
@@ -2251,8 +2330,6 @@
       }
 
       accessToken = null;
-
-      // Hapus token dari sessionStorage
       clearDriveToken();
 
       if (window.gapi && window.gapi.client) {
