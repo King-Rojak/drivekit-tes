@@ -6,12 +6,12 @@
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Model vision-capable gratis dari OpenRouter.
-// Kalau model ini habis limit, ganti ke alternatif di bawah.
-const MODEL = "google/gemini-2.0-flash-exp:free";
-// Alternatif:
+// Model vision gratis yang MASIH ADA di OpenRouter.
+// Kalau satu error, ganti ke berikutnya (urut prioritas).
+const MODEL = "meta-llama/llama-3.2-11b-vision-instruct:free";
+// Alternatif (uncomment kalau utama error):
 // const MODEL = "qwen/qwen-2-vl-7b-instruct:free";
-// const MODEL = "meta-llama/llama-3.2-11b-vision-instruct:free";
+// const MODEL = "google/gemini-flash-1.5-8b:free";
 
 const SYSTEM_PROMPT = `
 Kamu adalah "Rojak AI", asisten khusus untuk Rojak DriveK1t.
@@ -112,13 +112,43 @@ ATURAN MEMBACA FOTO TABEL EXCEL:
 function isValidImageDataUrl(str) {
   if (typeof str !== "string") return false;
   if (!str.startsWith("data:image/")) return false;
-  if (str.length > 6 * 1024 * 1024) return false; // ~4.5MB binary
+  if (str.length > 6 * 1024 * 1024) return false;
   return /^data:image\/(png|jpe?g|webp|gif);base64,/.test(str);
 }
 
 function safeText(str, max) {
   if (typeof str !== "string") return "";
   return str.slice(0, max || 4000);
+}
+
+/**
+ * Ekstrak reply dari response OpenRouter.
+ * Handle semua format yang mungkin: string, array parts, dll.
+ */
+function extractReply(choices) {
+  if (!choices || !choices.length) return "";
+
+  const msg = choices[0].message;
+  if (!msg) return "";
+
+  const content = msg.content;
+
+  // Format 1: string langsung
+  if (typeof content === "string") return content.trim();
+
+  // Format 2: array of parts (multimodal)
+  if (Array.isArray(content)) {
+    return content
+      .map(p => {
+        if (typeof p === "string") return p;
+        if (p && typeof p === "object") return p.text || "";
+        return "";
+      })
+      .join("")
+      .trim();
+  }
+
+  return "";
 }
 
 /* ---------- HANDLER ---------- */
@@ -188,12 +218,10 @@ module.exports = async function handler(req, res) {
 
   if (imageIn && isValidImageDataUrl(imageIn) && lastUserIdx >= 0) {
     const textContent = messages[lastUserIdx].content || "Tolong baca gambar ini.";
-
     messages[lastUserIdx].content = [
       { type: "text", text: textContent },
       { type: "image_url", image_url: { url: imageIn } }
     ];
-
     console.log("[Rojak AI] Vision mode — image size:", Math.round(imageIn.length / 1024), "KB");
   }
 
@@ -236,7 +264,7 @@ module.exports = async function handler(req, res) {
     } else if (upstreamRes.status === 401 || upstreamRes.status === 403) {
       message = "Rojak AI belum dikonfigurasi dengan benar. Hubungi admin.";
     } else if (upstreamRes.status === 404) {
-      message = "Model AI tidak tersedia. Hubungi admin untuk cek konfigurasi.";
+      message = "Model AI tidak tersedia. Coba lagi nanti atau hubungi admin.";
     }
 
     return res.status(502).json({
@@ -264,13 +292,20 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const reply = (
-    (choices[0].message && choices[0].message.content) || ""
-  ).trim();
+  const reply = extractReply(choices);
 
   if (!reply) {
     return res.status(200).json({
       reply: "Maaf, Rojak AI tidak menghasilkan jawaban. Coba lagi ya."
+    });
+  }
+
+  // Filter aneh: kalau reply cuma berisi "User Safety: safe / Response Safety: safe",
+  // berarti model fallback ngirim metadata. Kasih pesan ke user.
+  if (/user safety.*safe.*response safety.*safe/i.test(reply) && reply.length < 100) {
+    console.warn("[Rojak AI] Detected safety metadata as reply, filtering");
+    return res.status(200).json({
+      reply: "Maaf, Rojak AI sedang error. Coba lagi sebentar ya."
     });
   }
 
