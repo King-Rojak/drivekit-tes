@@ -1,13 +1,10 @@
 /* ============================================================
    ROJAK DRIVEK1T — Music Player + DIAGNOSTIC MODE
+   FIX: tidak autoplay saat halaman load
 ============================================================ */
 
 (function () {
   "use strict";
-
-  /* ---------------------------------------------------------
-     🎵 CONFIG
-  --------------------------------------------------------- */
 
   const PLAYLIST_INFO = {
     name: "My Playlist — King Rojak",
@@ -33,7 +30,7 @@
     }
   ];
 
-  const DIAGNOSTIC_MODE = true;
+  const DIAGNOSTIC_MODE = false;
 
   const state = {
     audio: null,
@@ -321,7 +318,7 @@
     });
   }
 
-  async function playTrack(index) {
+  async function playTrack(index, autoplay) {
     if (!PLAYLIST[index]) return;
     const track = PLAYLIST[index];
     state.currentIndex = index;
@@ -332,6 +329,10 @@
     logDiag("─── playTrack #" + (index + 1) + " ───");
     logDiag("title: " + track.title);
     logDiag("src: " + track.src);
+    logDiag("autoplay: " + (autoplay !== false));
+
+    // PAUSE dulu sebelum ganti src — biar tidak autoplay di background
+    try { audio.pause(); } catch (e) {}
 
     audio.src = track.src;
     audio.load();
@@ -342,16 +343,18 @@
 
     updateNowBar();
 
+    // Kalau autoplay === false, jangan play — cukup set src
+    if (autoplay === false) {
+      logDiag("autoplay=false → skip play()", "warn");
+      return;
+    }
+
     try {
       const res = await fetch(track.src, { method: "HEAD" });
       if (res.ok) {
         logDiag("✓ file ditemukan (HTTP " + res.status + ")", "ok");
-        logDiag("  content-type: " + (res.headers.get("content-type") || "-"));
-        logDiag("  content-length: " + (res.headers.get("content-length") || "-"));
       } else {
         logDiag("✗ file TIDAK ditemukan (HTTP " + res.status + ")", "error");
-        logDiag("  Cek nama file di GitHub folder music/", "error");
-        logDiag("  URL: " + new URL(track.src, location.href).href, "error");
         return;
       }
     } catch (err) {
@@ -368,14 +371,6 @@
     } catch (err) {
       logDiag("✗ play() error: " + err.name, "error");
       logDiag("  message: " + err.message, "error");
-
-      if (err.name === "NotAllowedError") {
-        logDiag("  → Browser blok autoplay. Coba klik sekali lagi.", "warn");
-      } else if (err.name === "NotSupportedError") {
-        logDiag("  → Format MP3 tidak didukung / file korup.", "error");
-      } else if (err.name === "AbortError") {
-        logDiag("  → Load dibatalkan.", "warn");
-      }
     }
   }
 
@@ -574,11 +569,11 @@
     document.body.appendChild(mini);
 
     logDiag("=== Rojak Music Player start ===");
-    logDiag("user-agent: " + navigator.userAgent.slice(0, 80));
     logDiag("location: " + location.href);
 
     const audio = new Audio();
-    audio.preload = "metadata";
+    audio.preload = "none";
+    audio.autoplay = false;
     audio.muted = false;
     audio.volume = 1.0;
     state.audio = audio;
@@ -636,9 +631,6 @@
         msg = err.message || "(no message)";
       }
       logDiag("✗ event: error — code: " + code + " msg: " + msg, "error");
-      if (code === 4) logDiag("  → File tidak ketemu / format MP3 tidak didukung", "error");
-      if (code === 3) logDiag("  → File korup / gagal decode", "error");
-      if (code === 2) logDiag("  → Network error", "error");
     });
 
     const playBtn = document.getElementById("rdkMusicPlay");
@@ -689,6 +681,10 @@
     setupMiniVisibility();
     renderTrackList();
     updateNowBar();
+
+    // Pastikan tidak autoplay
+    try { audio.pause(); } catch (e) {}
+    logDiag("mount selesai — audio pause");
   }
 
   function init() {
