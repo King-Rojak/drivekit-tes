@@ -1,17 +1,11 @@
 /* ============================================================
    ROJAK DRIVEK1T — Music Player
-   Clean, professional dark UI. No volume slider.
+   Main player + Sticky Mini Player (muncul saat scroll)
 ============================================================ */
 
-/* ---------- RESET LOKAL ---------- */
-.rdk-music-section *,
-.rdk-music-section *::before,
-.rdk-music-section *::after {
-  box-sizing: border-box;
-}
-
 /* ---------- SVG SAFETY ---------- */
-.rdk-music-section svg {
+.rdk-music-section svg,
+.rdk-music-mini svg {
   display: block;
   width: 100%;
   height: 100%;
@@ -19,57 +13,42 @@
   max-height: 20px;
 }
 
-/* ---------- CARD ---------- */
+/* ============================================================
+   MAIN PLAYER
+============================================================ */
+
 .rdk-music-section {
   margin-top: 8px;
   overflow: hidden;
   border: 1px solid #292a27;
   border-radius: 8px;
   background: #151614;
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ============================================================
-   HEADER
-============================================================ */
+/* HEADER */
 
 .rdk-music-header {
   display: flex;
   align-items: center;
   gap: 12px;
-
   padding: 14px 16px;
-
   border-bottom: 1px solid #292a27;
   background: #10110f;
 }
-
-/* ICON */
 
 .rdk-music-icon {
   width: 36px;
   height: 36px;
   flex: 0 0 36px;
-
   display: grid;
   place-items: center;
-
   border: 1px solid #2c2d29;
   border-radius: 8px;
-
   background:
     linear-gradient(135deg, rgba(228, 86, 50, .12), rgba(228, 86, 50, .02)),
     #0b0c0a;
-
   color: #e45632;
 }
 
@@ -80,8 +59,6 @@
   max-height: 16px;
 }
 
-/* META */
-
 .rdk-music-meta {
   min-width: 0;
   flex: 1 1 auto;
@@ -90,12 +67,10 @@
 .rdk-music-title {
   overflow: hidden;
   color: #eeeeea;
-
   font-size: 12px;
   font-weight: 700;
   letter-spacing: -.15px;
   line-height: 1.3;
-
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -103,18 +78,13 @@
 .rdk-music-artist {
   overflow: hidden;
   margin-top: 3px;
-
   color: #8b8c86;
-
   font-size: 9px;
   font-weight: 500;
   letter-spacing: .1px;
-
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-/* HEADER ACTIONS */
 
 .rdk-music-header-actions {
   display: flex;
@@ -123,33 +93,21 @@
   flex: 0 0 auto;
 }
 
-/* ============================================================
-   BUTTONS
-============================================================ */
+/* BUTTONS */
 
 .rdk-music-btn {
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
-
   display: grid;
   place-items: center;
-
   padding: 0;
-
   border: 1px solid #292a27;
   border-radius: 8px;
-
   background: transparent;
   color: #b4b5af;
-
   cursor: pointer;
-
-  transition:
-    background .15s ease,
-    color .15s ease,
-    border-color .15s ease,
-    transform .1s ease;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
 }
 
 .rdk-music-btn:hover {
@@ -180,19 +138,14 @@
   background: rgba(228, 86, 50, .08);
 }
 
-/* PLAY BUTTON */
-
 .rdk-music-play {
   width: 38px;
   height: 38px;
   flex: 0 0 38px;
-
   border: 1px solid #e45632;
   border-radius: 50%;
-
   background: #e45632;
   color: #ffffff;
-
   box-shadow:
     0 4px 14px rgba(228, 86, 50, .28),
     inset 0 1px 0 rgba(255, 255, 255, .1);
@@ -202,7 +155,6 @@
   background: #f0643f;
   border-color: #f0643f;
   color: #ffffff;
-
   box-shadow:
     0 6px 18px rgba(228, 86, 50, .38),
     inset 0 1px 0 rgba(255, 255, 255, .12);
@@ -224,23 +176,14 @@
   max-height: 15px;
 }
 
-/* ============================================================
-   WAVE
-============================================================ */
+/* WAVE */
 
 .rdk-music-wave-wrap {
   position: relative;
-
   height: 210px;
-
   padding: 22px 20px;
-
   background:
-    radial-gradient(
-      700px 240px at 50% 45%,
-      rgba(228, 86, 50, .055),
-      transparent 70%
-    ),
+    radial-gradient(700px 240px at 50% 45%, rgba(228, 86, 50, .055), transparent 70%),
     #131412;
 }
 
@@ -255,19 +198,13 @@
 .rdk-music-wave-empty {
   position: absolute;
   inset: 0;
-
   display: grid;
   place-items: center;
-
   padding: 0 20px;
-
   color: #676861;
-
   font-size: 10px;
   letter-spacing: .2px;
-
   text-align: center;
-
   pointer-events: none;
 }
 
@@ -275,49 +212,32 @@
   display: none;
 }
 
-/* ============================================================
-   LIRIK
-============================================================ */
+/* LIRIK */
 
 .rdk-music-lyric-wrap {
   padding: 14px 20px 18px;
-
   border-top: 1px solid #292a27;
   background: #10110f;
 }
 
 .rdk-music-lyric-title {
   margin-bottom: 10px;
-
   color: #50514c;
-
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 1.2px;
-
   text-transform: uppercase;
 }
 
 .rdk-music-lyric-line {
   display: flex;
   align-items: center;
-
   min-height: 28px;
-
-  font-family:
-    ui-monospace,
-    "SF Mono",
-    Menlo,
-    Monaco,
-    Consolas,
-    monospace;
-
+  font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -.2px;
-
   color: #eeeeea;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -330,19 +250,208 @@
 
 .rdk-music-cursor {
   display: inline-block;
-
   margin-left: 3px;
-
   color: #e45632;
-
   font-weight: 400;
-
   animation: rdk-music-blink 1s steps(1) infinite;
 }
 
 @keyframes rdk-music-blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
+}
+
+/* ============================================================
+   MINI PLAYER (STICKY)
+============================================================ */
+
+.rdk-music-mini {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 7500;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+
+  border-top: 1px solid #292a27;
+  background: rgba(16, 17, 15, .96);
+
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Hidden state */
+  transform: translateY(110%);
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    transform .25s cubic-bezier(.4, 0, .2, 1),
+    opacity .2s ease;
+
+  /* Beri ruang Rojak AI di kanan bawah */
+  padding-right: 96px;
+}
+
+.rdk-music-mini.rdk-music-mini-open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rdk-music-mini-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #2c2d29;
+  border-radius: 6px;
+  background: #0b0c0a;
+  color: #e45632;
+}
+
+.rdk-music-mini-icon svg {
+  width: 15px;
+  height: 15px;
+  max-width: 15px;
+  max-height: 15px;
+}
+
+.rdk-music-mini-meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.rdk-music-mini-title {
+  overflow: hidden;
+  color: #eeeeea;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -.1px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdk-music-mini-artist {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #8b8c86;
+  font-size: 8px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mini waveform */
+
+.rdk-music-mini-wave {
+  display: block;
+  width: 46px;
+  height: 22px;
+  flex: 0 0 46px;
+  max-width: none;
+  max-height: none;
+  opacity: .9;
+}
+
+/* Mini controls */
+
+.rdk-music-mini-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.rdk-music-mini-btn {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #292a27;
+  border-radius: 6px;
+  background: transparent;
+  color: #b4b5af;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.rdk-music-mini-btn:hover {
+  background: #1e1f1c;
+  color: #eeeeea;
+  border-color: #3b3c38;
+}
+
+.rdk-music-mini-btn:active {
+  transform: scale(.94);
+}
+
+.rdk-music-mini-btn svg {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+}
+
+.rdk-music-mini-btn.rdk-music-btn-active {
+  color: #e45632;
+  border-color: rgba(228, 86, 50, .5);
+  background: rgba(228, 86, 50, .08);
+}
+
+.rdk-music-mini-play {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid #e45632;
+  border-radius: 50%;
+  background: #e45632;
+  color: white;
+}
+
+.rdk-music-mini-play:hover {
+  background: #f0643f;
+  border-color: #f0643f;
+  color: white;
+}
+
+.rdk-music-mini-play svg {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+}
+
+.rdk-music-mini-close {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #292a27;
+  border-radius: 6px;
+  background: transparent;
+  color: #8b8c86;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+
+.rdk-music-mini-close:hover {
+  background: #1e1f1c;
+  color: #eeeeea;
 }
 
 /* ============================================================
@@ -362,13 +471,8 @@
     flex-basis: 34px;
   }
 
-  .rdk-music-title {
-    font-size: 11.5px;
-  }
-
-  .rdk-music-artist {
-    font-size: 8.5px;
-  }
+  .rdk-music-title { font-size: 11.5px; }
+  .rdk-music-artist { font-size: 8.5px; }
 
   .rdk-music-play {
     width: 36px;
@@ -394,5 +498,37 @@
   .rdk-music-lyric-line {
     font-size: 13px;
     min-height: 24px;
+  }
+
+  /* Mini di mobile: sembunyikan waveform, ringkas */
+  .rdk-music-mini {
+    padding: 8px 10px 8px 10px;
+    padding-right: 78px;
+    gap: 8px;
+  }
+
+  .rdk-music-mini-icon {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+
+  .rdk-music-mini-title { font-size: 10.5px; }
+  .rdk-music-mini-artist { font-size: 7.5px; }
+
+  .rdk-music-mini-wave {
+    display: none;
+  }
+
+  .rdk-music-mini-btn {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+
+  .rdk-music-mini-play {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
   }
 }
