@@ -1436,7 +1436,7 @@
       if (window.__RDK_LOADING_DONE__) return;
 
       const elapsed = Date.now() - window.__RDK_LOADING_STARTED_AT__;
-      const remaining = Math.max(0, 1000 - elapsed);
+      const remaining = Math.max(0, 250 - elapsed);
 
       clearTimeout(window.__RDK_LOADING_HIDE_TIMER__);
 
