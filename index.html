@@ -610,6 +610,102 @@
     .rdk-music-play svg { width: 14px !important; height: 14px !important; max-width: 14px !important; max-height: 14px !important; }
     .rdk-music-volume svg { width: 13px !important; height: 13px !important; max-width: 13px !important; max-height: 13px !important; }
     .rdk-music-wave { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; }
+
+    /* ============================================================
+       DIAGNOSTIC PANEL
+    ============================================================ */
+
+    .rdk-diag {
+      position: fixed;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      z-index: 99999;
+      max-height: 50vh;
+      display: none;
+      flex-direction: column;
+      border: 1px solid #4a3530;
+      border-radius: 8px;
+      background: #1a1310;
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .65);
+      overflow: hidden;
+    }
+
+    .rdk-diag.rdk-diag-open { display: flex; }
+
+    .rdk-diag-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-bottom: 1px solid #4a3530;
+      background: #201814;
+      color: #ffb896;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+
+    .rdk-diag-head-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rdk-diag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ff8888;
+      animation: rdk-diag-pulse 1.4s infinite;
+    }
+
+    @keyframes rdk-diag-pulse {
+      0%, 100% { opacity: .4; }
+      50% { opacity: 1; }
+    }
+
+    .rdk-diag-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .rdk-diag-btn {
+      height: 22px;
+      padding: 0 8px;
+      border: 1px solid #4a3530;
+      border-radius: 4px;
+      background: transparent;
+      color: #d0b8b0;
+      font: inherit;
+      font-size: 9px;
+      cursor: pointer;
+    }
+
+    .rdk-diag-btn:hover {
+      background: #2a1f1c;
+      color: #eeeeea;
+    }
+
+    .rdk-diag-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 8px 10px;
+      color: #d0b8b0;
+      font-size: 9.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .rdk-diag-line { padding: 1px 0; }
+    .rdk-diag-line.rdk-diag-ok { color: #8fd09a; }
+    .rdk-diag-line.rdk-diag-error { color: #ff8888; font-weight: 600; }
+    .rdk-diag-line.rdk-diag-warn { color: #f0c674; }
+    .rdk-diag-line.rdk-diag-info { color: #8ab8d0; }
   </style>
 
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
@@ -617,6 +713,22 @@
 </head>
 
 <body>
+
+  <!-- DIAGNOSTIC PANEL -->
+
+  <div id="rdkDiag" class="rdk-diag">
+    <div class="rdk-diag-head">
+      <div class="rdk-diag-head-title">
+        <span class="rdk-diag-dot"></span>
+        <span>Diagnostic — Login Debug</span>
+      </div>
+      <div class="rdk-diag-actions">
+        <button id="rdkDiagCopy" class="rdk-diag-btn" type="button">Copy</button>
+        <button id="rdkDiagClose" class="rdk-diag-btn" type="button">Hide</button>
+      </div>
+    </div>
+    <div id="rdkDiagBody" class="rdk-diag-body"></div>
+  </div>
 
   <!-- LOADING -->
 
@@ -655,6 +767,84 @@
       const loading = document.getElementById("loadingScreen");
       if (loading) loading.style.display = "none";
     };
+  </script>
+
+  <!-- DIAGNOSTIC LOGGER -->
+
+  <script>
+    window.RDK_DIAG = (function () {
+      const panel = document.getElementById("rdkDiag");
+      const body = document.getElementById("rdkDiagBody");
+      const btnClose = document.getElementById("rdkDiagClose");
+      const btnCopy = document.getElementById("rdkDiagCopy");
+
+      let opened = false;
+
+      function ensureOpen() {
+        if (opened) return;
+        opened = true;
+        if (panel) panel.classList.add("rdk-diag-open");
+      }
+
+      function log(msg, type) {
+        if (type === "error") console.error("[RDK]", msg);
+        else if (type === "warn") console.warn("[RDK]", msg);
+        else console.log("[RDK]", msg);
+
+        if (!body) return;
+        ensureOpen();
+
+        const line = document.createElement("div");
+        line.className = "rdk-diag-line" + (type ? " rdk-diag-" + type : "");
+        line.textContent = "› " + msg;
+        body.appendChild(line);
+        body.scrollTop = body.scrollHeight;
+      }
+
+      function copy() {
+        const text = body ? body.textContent : "";
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(function () {
+            log("Copy ke clipboard berhasil", "ok");
+          }).catch(function () {
+            log("Copy gagal", "error");
+          });
+        }
+      }
+
+      function close() {
+        opened = false;
+        if (panel) panel.classList.remove("rdk-diag-open");
+      }
+
+      if (btnClose) btnClose.addEventListener("click", close);
+      if (btnCopy) btnCopy.addEventListener("click", copy);
+
+      log("=== Diagnostic started ===", "info");
+      log("user-agent: " + navigator.userAgent.slice(0, 90), "info");
+      log("location: " + location.href, "info");
+      log("origin: " + location.origin, "info");
+
+      window.addEventListener("error", function (e) {
+        log("GLOBAL ERROR: " + (e.message || "unknown"), "error");
+        if (e.filename) {
+          log("  at " + e.filename + ":" + (e.lineno || "?"), "error");
+        }
+      });
+
+      window.addEventListener("unhandledrejection", function (e) {
+        const reason = e.reason;
+        let msg = "?";
+        if (reason) {
+          if (typeof reason === "string") msg = reason;
+          else if (reason.message) msg = reason.code ? reason.code + " — " + reason.message : reason.message;
+          else msg = String(reason);
+        }
+        log("UNHANDLED REJECTION: " + msg, "error");
+      });
+
+      return { log: log, copy: copy, close: close };
+    })();
   </script>
 
   <!-- LOGIN -->
@@ -881,10 +1071,14 @@
 
     window.gapiLoaded = function () {
       console.log("Google API loaded");
+      if (window.RDK_DIAG) window.RDK_DIAG.log("gapi.js loaded", "ok");
+
       if (typeof window.gapi === "undefined") {
         console.error("Google API tidak tersedia.");
+        if (window.RDK_DIAG) window.RDK_DIAG.log("gapi undefined", "error");
         return;
       }
+
       window.gapi.load("client", function () {
         window.gapi.client.init({
           discoveryDocs: [
@@ -893,25 +1087,33 @@
         }).then(function () {
           window.RDK_GOOGLE.gapiInited = true;
           console.log("Google Drive API siap.");
+          if (window.RDK_DIAG) window.RDK_DIAG.log("Google Drive API siap", "ok");
         }).catch(function (error) {
           console.error("GAPI init error:", error);
+          if (window.RDK_DIAG) window.RDK_DIAG.log("GAPI init error: " + (error.message || error), "error");
         });
       });
     };
 
     window.gisLoaded = function () {
       console.log("Google Identity Services loaded");
+      if (window.RDK_DIAG) window.RDK_DIAG.log("gis client loaded", "ok");
+
       if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
         console.error("Google Identity Services tidak tersedia.");
+        if (window.RDK_DIAG) window.RDK_DIAG.log("GIS tidak tersedia", "error");
         return;
       }
+
       window.RDK_GOOGLE.tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
         scope: "https://www.googleapis.com/auth/drive.file",
         callback: ""
       });
+
       window.RDK_GOOGLE.gisInited = true;
       console.log("Google OAuth siap.");
+      if (window.RDK_DIAG) window.RDK_DIAG.log("Google OAuth siap", "ok");
     };
   </script>
 
@@ -942,6 +1144,7 @@
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     const $ = id => document.getElementById(id);
+    const D = window.RDK_DIAG;
 
     let accessToken = null;
     let currentUser = null;
@@ -952,6 +1155,8 @@
     const DRIVE_TOKEN_KEY = "rdk_drive_token";
     const DRIVE_TOKEN_TIME_KEY = "rdk_drive_token_time";
     const DRIVE_TOKEN_MAX_AGE = 55 * 60 * 1000;
+
+    if (D) D.log("Module utama loaded", "ok");
 
     function hideLoading() {
       if (window.__RDK_FINISH_LOADING__) {
@@ -964,12 +1169,14 @@
     }
 
     function showLogin() {
+      if (D) D.log("showLogin()", "warn");
       hideLoading();
       $("app").style.display = "none";
       $("loginScreen").style.display = "flex";
     }
 
     function showApp() {
+      if (D) D.log("showApp() → masuk app", "ok");
       hideLoading();
       $("loginScreen").style.display = "none";
       $("app").style.display = "block";
@@ -1056,16 +1263,22 @@
       }
 
       applyDriveConnectedUI();
-      console.log("[Drive] Token restored");
+      if (D) D.log("Drive token restored", "ok");
       return true;
     }
 
     /* PROFILE */
 
     function ensureProfile(user) {
+      if (D) D.log("ensureProfile: getDoc users/" + user.uid.slice(0, 8) + "...");
       const ref = doc(db, "users", user.uid);
+
       return getDoc(ref).then(function (snapshot) {
+        if (D) D.log("getDoc OK — exists: " + snapshot.exists(), "ok");
+
         if (!snapshot.exists()) {
+          if (D) D.log("User baru — setDoc...");
+
           return setDoc(ref, {
             uid: user.uid,
             name: user.displayName || "User",
@@ -1075,16 +1288,26 @@
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           }).then(function () {
+            if (D) D.log("setDoc OK — user dibuat", "ok");
             return "member";
           });
         }
+
         const data = snapshot.data();
-        return data.role === "admin" ? "admin" : "member";
+        const role = data.role === "admin" ? "admin" : "member";
+        if (D) D.log("role user: " + role, "ok");
+        return role;
       });
     }
 
     function loadProfile(user) {
       currentUser = user;
+      if (D) {
+        D.log("loadProfile: uid=" + user.uid.slice(0, 8) + "...");
+        D.log("  email: " + (user.email || "-"));
+        D.log("  name: " + (user.displayName || "-"));
+      }
+
       return ensureProfile(user).then(function (role) {
         currentRole = role;
 
@@ -1101,13 +1324,14 @@
         $("profileRole").textContent = currentRole.toUpperCase();
         $("adminButton").style.display = currentRole === "admin" ? "block" : "none";
 
+        if (D) D.log("loadProfile selesai → showApp", "ok");
         showApp();
       });
     }
 
-    /* MANUAL FALLBACK (tanpa Firestore) */
-
     function loadProfileFallback(user) {
+      if (D) D.log("FALLBACK: pakai Firebase Auth tanpa Firestore", "warn");
+
       currentUser = user;
       currentRole = "member";
 
@@ -1133,6 +1357,8 @@
       const button = $("loginButton");
 
       loginError("");
+      if (D) D.log("=== KLIK LOGIN GOOGLE ===", "info");
+
       button.disabled = true;
       const label = button.querySelector("span");
       if (label) label.textContent = "Membuka Google...";
@@ -1141,10 +1367,13 @@
       provider.setCustomParameters({ prompt: "select_account" });
 
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+      if (D) D.log("isMobile: " + isMobile);
 
       if (isMobile) {
+        if (D) D.log("Pakai signInWithRedirect...");
         signInWithRedirect(auth, provider).catch(function (error) {
           console.error("Login error:", error);
+          if (D) D.log("signInWithRedirect ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
           loginError("Login gagal: " + (error.code || error.message));
           button.disabled = false;
           if (label) label.textContent = "Continue with Google";
@@ -1152,16 +1381,24 @@
         return;
       }
 
+      if (D) D.log("Pakai signInWithPopup...");
       signInWithPopup(auth, provider).catch(function (error) {
         console.error("Login error:", error);
+        if (D) {
+          D.log("LOGIN ERROR", "error");
+          D.log("  code: " + (error.code || "(no code)"), "error");
+          D.log("  message: " + (error.message || "(no message)"), "error");
+        }
 
         if (error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user") {
+          if (D) D.log("Fallback ke signInWithRedirect...", "warn");
           signInWithRedirect(auth, new GoogleAuthProvider());
           return;
         }
 
         if (error.code === "auth/unauthorized-domain") {
           loginError("Domain website belum diizinkan di Firebase Authorized domains.");
+          if (D) D.log("→ Fix: tambah domain di Firebase → Auth → Authorized domains", "error");
         } else {
           loginError("Login gagal: " + (error.code || error.message));
         }
@@ -1177,40 +1414,49 @@
 
     onAuthStateChanged(auth, function (user) {
       if (!user) {
+        if (D) D.log("onAuthStateChanged: user NULL", "warn");
         showLogin();
         return;
+      }
+
+      if (D) {
+        D.log("onAuthStateChanged: USER MASUK", "ok");
+        D.log("  uid: " + user.uid.slice(0, 8) + "...");
+        D.log("  email: " + (user.email || "-"));
       }
 
       $("loadingText").textContent = "Memuat profil...";
 
       loadProfile(user).then(function () {
         const restored = restoreDriveToken();
-        if (!restored) {
-          console.log("[Drive] Tidak ada token tersimpan");
-        }
+        if (!restored && D) D.log("Tidak ada Drive token tersimpan");
       }).catch(function (error) {
         console.error("[Auth] loadProfile error:", error);
+        if (D) {
+          D.log("loadProfile GAGAL", "error");
+          D.log("  code: " + (error.code || "(no code)"), "error");
+          D.log("  message: " + (error.message || "(no message)"), "error");
+        }
 
-        // Kalau Firestore error (permission / unavailable),
-        // tetap masuk app dengan data minimal dari Firebase Auth
         if (error && (
           error.code === "permission-denied" ||
           error.code === "unavailable" ||
           error.code === "failed-precondition" ||
           error.code === "deadline-exceeded"
         )) {
-          console.warn("[Auth] Firestore error — pakai fallback tanpa Firestore");
+          if (D) D.log("→ Firestore error, pakai fallback", "warn");
           loadProfileFallback(user);
           return;
         }
 
-        // Error lain → tampilkan login
+        if (D) D.log("→ Error tidak dikenali, showLogin", "error");
         showLogin();
       });
     });
 
     getRedirectResult(auth).catch(function (error) {
       console.error("Redirect result:", error);
+      if (D) D.log("getRedirectResult ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
     });
 
     /* WAIT GOOGLE */
@@ -1520,13 +1766,9 @@
       });
     };
 
-    /* ADMIN */
-
     $("adminButton").onclick = function () {
       window.location.href = "./admin.html";
     };
-
-    /* LOGOUT */
 
     $("logoutButton").onclick = function () {
       if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
@@ -1547,8 +1789,6 @@
       signOut(auth);
     };
 
-    /* TABS */
-
     document.querySelectorAll(".tab").forEach(function (tab) {
       tab.addEventListener("click", function () {
         document.querySelectorAll(".tab").forEach(function (item) { item.classList.remove("active"); });
@@ -1562,19 +1802,13 @@
       });
     });
 
-    /* MODAL CLICK OUTSIDE */
-
     $("profileModal").addEventListener("click", function (event) {
       if (event.target === $("profileModal")) closeProfile();
     });
 
-    /* ESCAPE */
-
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") closeProfile();
     });
-
-    /* CTRL + ENTER */
 
     $("fileContent").addEventListener("keydown", function (event) {
       if (event.ctrlKey && event.key === "Enter") {
@@ -1582,8 +1816,6 @@
         createTXT();
       }
     });
-
-    /* ESCAPE HTML */
 
     function escapeHTML(value) {
       return String(value)
