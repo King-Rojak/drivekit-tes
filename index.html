@@ -65,17 +65,9 @@
       background: var(--panel);
     }
 
-    .loading-logo img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-    }
+    .loading-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
-    .loading-text {
-      color: var(--muted);
-      font-size: 9px;
-    }
+    .loading-text { color: var(--muted); font-size: 9px; }
 
     /* LOGIN */
 
@@ -132,16 +124,9 @@
       box-shadow: 0 0 0 3px rgba(105, 184, 121, .12);
     }
 
-    .login-version {
-      color: #555650;
-      font-size: 8px;
-      font-weight: 500;
-    }
+    .login-version { color: #555650; font-size: 8px; font-weight: 500; }
 
-    .login-hero {
-      text-align: center;
-      margin-bottom: 22px;
-    }
+    .login-hero { text-align: center; margin-bottom: 22px; }
 
     .login-logo {
       width: 72px;
@@ -154,12 +139,7 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
     }
 
-    .login-logo img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-    }
+    .login-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
     .login-box h1 {
       margin: 0;
@@ -206,24 +186,15 @@
       color: var(--orange);
     }
 
-    .login-feature-icon svg {
-      width: 14px;
-      height: 14px;
-      max-width: 14px;
-      max-height: 14px;
-    }
+    .login-feature-icon svg { width: 14px; height: 14px; max-width: 14px; max-height: 14px; }
 
-    .login-feature-text {
-      min-width: 0;
-      flex: 1 1 auto;
-    }
+    .login-feature-text { min-width: 0; flex: 1 1 auto; }
 
     .login-feature-text strong {
       display: block;
       color: var(--text);
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: -.1px;
       line-height: 1.3;
     }
 
@@ -248,25 +219,16 @@
       color: #1a1a1a;
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: -.1px;
       cursor: pointer;
-      transition: background .15s ease, border-color .15s ease, transform .1s ease, box-shadow .15s ease;
+      transition: background .15s ease, transform .1s ease;
       box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
     }
 
-    .google-login:hover {
-      background: #ffffff;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
-    }
-
+    .google-login:hover { background: #ffffff; }
     .google-login:active { transform: translateY(1px); }
     .google-login:disabled { opacity: .6; cursor: wait; }
 
-    .google-icon {
-      width: 16px;
-      height: 16px;
-      flex: 0 0 16px;
-    }
+    .google-icon { width: 16px; height: 16px; flex: 0 0 16px; }
 
     .login-error {
       min-height: 15px;
@@ -293,6 +255,174 @@
       .login-box h1 { font-size: 20px; }
       .login-tagline { font-size: 9.5px; }
       .login-feature { padding: 9px 11px; }
+    }
+
+    /* ============================================================
+       BROADCAST NOTIFICATION
+    ============================================================ */
+
+    .broadcast-notif {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 99990;
+
+      max-width: 440px;
+      margin: 0 auto;
+
+      display: none;
+      flex-direction: column;
+
+      border: 1px solid rgba(228, 86, 50, .5);
+      border-radius: 12px;
+
+      background: rgba(20, 17, 15, .98);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, .65),
+        0 0 0 1px rgba(228, 86, 50, .15) inset;
+
+      overflow: hidden;
+    }
+
+    .broadcast-notif.open {
+      display: flex;
+      animation: broadcastSlideDown .35s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    @keyframes broadcastSlideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .broadcast-notif.hiding {
+      animation: broadcastSlideUp .25s ease forwards;
+    }
+
+    @keyframes broadcastSlideUp {
+      to {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
+    .broadcast-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid rgba(228, 86, 50, .15);
+    }
+
+    .broadcast-icon {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(228, 86, 50, .4);
+      border-radius: 8px;
+      background: rgba(228, 86, 50, .12);
+      color: var(--orange);
+    }
+
+    .broadcast-icon svg { width: 16px; height: 16px; max-width: 16px; max-height: 16px; }
+
+    .broadcast-titles {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .broadcast-title {
+      color: var(--orange);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .broadcast-time {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 8px;
+    }
+
+    .broadcast-close {
+      width: 26px;
+      height: 26px;
+      flex: 0 0 26px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease;
+    }
+
+    .broadcast-close:hover {
+      background: rgba(228, 86, 50, .15);
+      color: var(--text);
+    }
+
+    .broadcast-body {
+      padding: 12px 14px 14px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.55;
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    /* Progress bar auto-hide */
+    .broadcast-progress {
+      height: 2px;
+      background: rgba(228, 86, 50, .2);
+      overflow: hidden;
+    }
+
+    .broadcast-progress-bar {
+      height: 100%;
+      width: 100%;
+      background: var(--orange);
+      transform-origin: left center;
+    }
+
+    .broadcast-notif.open .broadcast-progress-bar {
+      animation: broadcastCountdown 8s linear forwards;
+    }
+
+    @keyframes broadcastCountdown {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+
+    @media (max-width: 480px) {
+      .broadcast-notif {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+      }
+
+      .broadcast-body {
+        font-size: 12.5px;
+        padding: 11px 13px 13px;
+      }
     }
 
     /* APP */
@@ -618,6 +748,30 @@
 
 <body>
 
+  <!-- BROADCAST NOTIFICATION -->
+
+  <div id="broadcastNotif" class="broadcast-notif">
+    <div class="broadcast-header">
+      <div class="broadcast-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11l18-5v12L3 14v-3z"/>
+          <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+        </svg>
+      </div>
+      <div class="broadcast-titles">
+        <div class="broadcast-title">Pengumuman</div>
+        <div class="broadcast-time" id="broadcastTime"></div>
+      </div>
+      <button id="broadcastClose" class="broadcast-close" type="button" aria-label="Tutup">×</button>
+    </div>
+    <div class="broadcast-body" id="broadcastBody"></div>
+    <div class="broadcast-progress">
+      <div class="broadcast-progress-bar"></div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+
   <div id="loadingScreen" class="loading-screen">
     <div class="loading-box">
       <div class="loading-logo">
@@ -929,7 +1083,13 @@
       getDoc,
       setDoc,
       updateDoc,
-      serverTimestamp
+      serverTimestamp,
+      collection,
+      getDocs,
+      query,
+      orderBy,
+      limit,
+      onSnapshot
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     const $ = id => document.getElementById(id);
@@ -943,6 +1103,12 @@
     const DRIVE_TOKEN_KEY = "rdk_drive_token";
     const DRIVE_TOKEN_TIME_KEY = "rdk_drive_token_time";
     const DRIVE_TOKEN_MAX_AGE = 55 * 60 * 1000;
+
+    const BROADCAST_DISMISS_KEY = "rdk_broadcast_dismissed";
+    const BROADCAST_AUTO_HIDE_MS = 8000;
+
+    let broadcastUnsub = null;
+    let broadcastAutoHideTimer = null;
 
     setPersistence(auth, browserLocalPersistence).catch(function () {});
 
@@ -1048,6 +1214,174 @@
       return true;
     }
 
+    /* BROADCAST NOTIFICATION */
+
+    function getDismissedBroadcasts() {
+      try {
+        const raw = localStorage.getItem(BROADCAST_DISMISS_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function dismissBroadcast(id) {
+      try {
+        const list = getDismissedBroadcasts();
+        if (list.indexOf(id) === -1) {
+          list.push(id);
+          const trimmed = list.slice(-30);
+          localStorage.setItem(BROADCAST_DISMISS_KEY, JSON.stringify(trimmed));
+        }
+      } catch (e) {}
+    }
+
+    function toBroadcastDate(ts) {
+      if (!ts) return null;
+      if (ts.toDate) return ts.toDate();
+      if (ts.seconds) return new Date(ts.seconds * 1000);
+      if (typeof ts === "number") return new Date(ts);
+      return null;
+    }
+
+    function timeAgoNotif(date) {
+      if (!date) return "";
+      const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diff < 10) return "Baru saja";
+      if (diff < 60) return diff + " detik lalu";
+      if (diff < 3600) return Math.floor(diff / 60) + " menit lalu";
+      if (diff < 86400) return Math.floor(diff / 3600) + " jam lalu";
+      return Math.floor(diff / 86400) + " hari lalu";
+    }
+
+    function hideBroadcastNotif(instant) {
+      const notif = $("broadcastNotif");
+      if (!notif) return;
+
+      if (broadcastAutoHideTimer) {
+        clearTimeout(broadcastAutoHideTimer);
+        broadcastAutoHideTimer = null;
+      }
+
+      if (instant) {
+        notif.classList.remove("open");
+        notif.classList.remove("hiding");
+        return;
+      }
+
+      notif.classList.add("hiding");
+      setTimeout(function () {
+        notif.classList.remove("open");
+        notif.classList.remove("hiding");
+      }, 250);
+    }
+
+    function showBroadcastNotif(broadcast) {
+      const notif = $("broadcastNotif");
+      const bodyEl = $("broadcastBody");
+      const timeEl = $("broadcastTime");
+      const closeBtn = $("broadcastClose");
+
+      if (!notif || !bodyEl) return;
+
+      // Cek sudah di-dismiss
+      const dismissed = getDismissedBroadcasts();
+      if (dismissed.indexOf(broadcast.id) !== -1) return;
+
+      // Set isi
+      bodyEl.textContent = broadcast.message || "";
+      const date = toBroadcastDate(broadcast.createdAt);
+      timeEl.textContent = date ? timeAgoNotif(date) : "";
+
+      // Tampilkan
+      notif.classList.remove("open");
+      notif.classList.remove("hiding");
+      // Force reflow biar animasi restart
+      void notif.offsetWidth;
+      notif.classList.add("open");
+
+      // Auto-hide
+      if (broadcastAutoHideTimer) clearTimeout(broadcastAutoHideTimer);
+      broadcastAutoHideTimer = setTimeout(function () {
+        hideBroadcastNotif(false);
+      }, BROADCAST_AUTO_HIDE_MS);
+
+      // Close button handler (sekali)
+      if (closeBtn && !closeBtn.dataset.bound) {
+        closeBtn.dataset.bound = "1";
+        closeBtn.addEventListener("click", function () {
+          hideBroadcastNotif(false);
+          // Tandai dismiss broadcast saat ini
+          const currentId = notif.dataset.broadcastId;
+          if (currentId) dismissBroadcast(currentId);
+        });
+      }
+
+      // Simpan ID broadcast aktif di dataset
+      notif.dataset.broadcastId = broadcast.id;
+    }
+
+    function startBroadcastListener() {
+      if (broadcastUnsub) {
+        try { broadcastUnsub(); } catch (e) {}
+        broadcastUnsub = null;
+      }
+
+      if (D && D.log) D.log("Broadcast listener: start");
+
+      try {
+        const broadcastsRef = collection(db, "broadcasts");
+        const q = query(broadcastsRef, orderBy("createdAt", "desc"), limit(5));
+
+        broadcastUnsub = onSnapshot(q, function (snapshot) {
+          if (snapshot.empty) return;
+
+          // Cari broadcast aktif terbaru
+          let latest = null;
+          snapshot.forEach(function (doc) {
+            if (latest) return;
+            const data = doc.data();
+            if (data.active === true) {
+              latest = { id: doc.id, ...data };
+            }
+          });
+
+          if (!latest) return;
+
+          // Cek sudah di-dismiss
+          const dismissed = getDismissedBroadcasts();
+          if (dismissed.indexOf(latest.id) !== -1) return;
+
+          // Cek apakah notif sudah menampilkan broadcast ini
+          const notif = $("broadcastNotif");
+          if (notif && notif.dataset.broadcastId === latest.id && notif.classList.contains("open")) {
+            return;
+          }
+
+          // Tampilkan
+          showBroadcastNotif(latest);
+        }, function (error) {
+          console.warn("[Broadcast] Listener error:", error);
+        });
+
+      } catch (error) {
+        console.warn("[Broadcast] Gagal setup listener:", error);
+      }
+    }
+
+    function stopBroadcastListener() {
+      if (broadcastUnsub) {
+        try { broadcastUnsub(); } catch (e) {}
+        broadcastUnsub = null;
+      }
+      if (broadcastAutoHideTimer) {
+        clearTimeout(broadcastAutoHideTimer);
+        broadcastAutoHideTimer = null;
+      }
+    }
+
     /* PROFILE */
 
     function ensureProfile(user) {
@@ -1072,7 +1406,6 @@
         const data = snapshot.data();
         const role = data.role === "admin" ? "admin" : "member";
 
-        // Update lastLoginAt (fire and forget)
         updateDoc(ref, {
           lastLoginAt: serverTimestamp(),
           updatedAt: serverTimestamp()
@@ -1160,6 +1493,8 @@
 
     onAuthStateChanged(auth, function (user) {
       if (!user) {
+        stopBroadcastListener();
+        hideBroadcastNotif(true);
         showLogin();
         return;
       }
@@ -1168,6 +1503,7 @@
 
       loadProfile(user).then(function () {
         restoreDriveToken();
+        startBroadcastListener();
       }).catch(function (error) {
         console.error("[Auth] loadProfile error:", error);
 
@@ -1178,6 +1514,7 @@
           error.code === "deadline-exceeded"
         )) {
           loadProfileFallback(user);
+          startBroadcastListener();
           return;
         }
 
@@ -1508,6 +1845,9 @@
 
       accessToken = null;
       clearDriveToken();
+
+      stopBroadcastListener();
+      hideBroadcastNotif(true);
 
       if (window.gapi && window.gapi.client) {
         window.gapi.client.setToken(null);

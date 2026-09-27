@@ -36,6 +36,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           "name",
           "photoURL",
+          "lastLoginAt",
           "updatedAt"
         ]);
 
@@ -50,6 +51,24 @@ service cloud.firestore {
       // Admin tidak dapat menghapus dirinya sendiri.
       allow delete: if isAdmin()
         && request.auth.uid != userId;
+    }
+
+    // ============================================================
+    // BROADCASTS — untuk fitur pengumuman
+    // ============================================================
+
+    match /broadcasts/{broadcastId} {
+      // Semua user login bisa BACA
+      allow read: if signedIn();
+
+      // Cuma admin bisa BUAT broadcast
+      allow create: if isAdmin();
+
+      // Cuma admin bisa UPDATE (untuk aktifkan/nonaktifkan)
+      allow update: if isAdmin();
+
+      // Cuma admin bisa HAPUS
+      allow delete: if isAdmin();
     }
   }
 }

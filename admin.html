@@ -39,8 +39,10 @@
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    button, select, input { font: inherit; }
+    button, select, input, textarea { font: inherit; }
     button { cursor: pointer; }
+
+    /* LOADING */
 
     .loading-screen {
       position: fixed;
@@ -67,6 +69,8 @@
     .loading-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
     .loading-text { color: var(--muted); font-size: 9px; }
+
+    /* LOGIN */
 
     .login-screen {
       min-height: 100vh;
@@ -191,6 +195,8 @@
       text-align: center;
     }
 
+    /* APP */
+
     .app { display: none; min-height: 100vh; }
 
     .topbar {
@@ -252,11 +258,52 @@
 
     .top-button:hover { background: var(--panel-2); color: var(--text); }
 
+    .top-button.active {
+      background: rgba(228, 86, 50, .12);
+      border-color: rgba(228, 86, 50, .4);
+      color: var(--orange);
+    }
+
     .container {
       width: min(880px, calc(100% - 20px));
       margin: 0 auto;
       padding: 24px 0 45px;
     }
+
+    /* TABS */
+
+    .admin-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 22px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+
+    .admin-tab {
+      height: 38px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .admin-tab:hover { color: var(--text); }
+
+    .admin-tab.active {
+      background: #242521;
+      color: var(--text);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     .page-head { margin-bottom: 18px; }
 
@@ -273,6 +320,8 @@
       font-size: 10px;
       line-height: 1.5;
     }
+
+    /* SUMMARY */
 
     .summary {
       display: grid;
@@ -323,6 +372,8 @@
       letter-spacing: -.8px;
       line-height: 1;
     }
+
+    /* TOOLBAR */
 
     .toolbar {
       display: flex;
@@ -378,6 +429,8 @@
 
     .filter-select:focus { border-color: #3b3c38; }
 
+    /* SECTION */
+
     .section { margin-top: 4px; }
 
     .section-head {
@@ -396,6 +449,8 @@
     }
 
     .section-info { color: var(--muted); font-size: 9px; }
+
+    /* USER LIST */
 
     .user-list { display: flex; flex-direction: column; gap: 8px; }
 
@@ -581,6 +636,199 @@
       white-space: nowrap;
     }
 
+    /* BROADCAST PANEL */
+
+    .broadcast-form {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      margin-bottom: 20px;
+    }
+
+    .broadcast-form label {
+      display: block;
+      margin-bottom: 8px;
+      color: #b4b5af;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .broadcast-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      outline: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--input);
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    .broadcast-textarea::placeholder { color: #595a55; }
+    .broadcast-textarea:focus { border-color: #3b3c38; }
+
+    .broadcast-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .broadcast-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .broadcast-send {
+      flex: 1;
+      height: 42px;
+      border: 1px solid var(--orange);
+      border-radius: 8px;
+      background: var(--orange);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+
+    .broadcast-send:hover { background: var(--orange-hover); }
+    .broadcast-send:disabled { opacity: .5; cursor: wait; }
+
+    .broadcast-clear {
+      height: 42px;
+      padding: 0 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .broadcast-clear:hover { background: var(--panel-2); color: var(--text); }
+
+    /* BROADCAST LIST */
+
+    .broadcast-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .broadcast-item {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      transition: border-color .15s ease;
+    }
+
+    .broadcast-item.active-broadcast {
+      border-color: rgba(105, 184, 121, .35);
+      background: linear-gradient(135deg, rgba(105, 184, 121, .04), transparent 60%), var(--panel);
+    }
+
+    .broadcast-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .broadcast-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 22px;
+      padding: 0 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    .broadcast-status.active {
+      border-color: rgba(105, 184, 121, .35);
+      background: rgba(105, 184, 121, .1);
+      color: var(--green);
+    }
+
+    .broadcast-status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .broadcast-time-item {
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+
+    .broadcast-item-text {
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .broadcast-item-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .broadcast-action-btn {
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease, border-color .12s ease;
+    }
+
+    .broadcast-action-btn:hover {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .broadcast-action-btn.danger:hover {
+      border-color: rgba(217, 101, 92, .5);
+      color: var(--red);
+      background: rgba(217, 101, 92, .08);
+    }
+
+    .broadcast-action-btn.primary:hover {
+      border-color: rgba(228, 86, 50, .5);
+      color: var(--orange);
+      background: rgba(228, 86, 50, .08);
+    }
+
+    /* MESSAGE */
+
     .message {
       padding: 40px 15px;
       text-align: center;
@@ -589,6 +837,8 @@
     }
 
     .message.error { color: var(--red); }
+
+    /* STATUS */
 
     .status {
       min-height: 16px;
@@ -599,6 +849,8 @@
 
     .status.success { color: var(--green); }
     .status.error { color: var(--red); }
+
+    /* MOBILE */
 
     @media (max-width: 700px) {
       .topbar { height: 54px; padding: 0 12px; }
@@ -619,6 +871,7 @@
       .role-select { width: 100%; margin-top: 12px; }
       .toolbar { flex-direction: column; align-items: stretch; }
       .filter-select { width: 100%; }
+      .broadcast-form { padding: 14px; }
     }
 
     @media (max-width: 380px) {
@@ -691,66 +944,113 @@
     </header>
 
     <main class="container">
-      <div class="page-head">
-        <h1>User Management</h1>
-        <p>Kelola akses pengguna Rojak DriveK1t.</p>
+
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="users" type="button">Users</button>
+        <button class="admin-tab" data-tab="broadcast" type="button">Broadcast</button>
       </div>
 
-      <div class="summary">
-        <div class="summary-card total">
-          <span class="summary-label">Total Users</span>
-          <span id="totalUsers" class="summary-value">0</span>
+      <!-- TAB: USERS -->
+
+      <div id="tabUsers" class="tab-panel active">
+        <div class="page-head">
+          <h1>User Management</h1>
+          <p>Kelola akses pengguna Rojak DriveK1t.</p>
         </div>
-        <div class="summary-card admin">
-          <span class="summary-label">Admin</span>
-          <span id="totalAdmins" class="summary-value">0</span>
+
+        <div class="summary">
+          <div class="summary-card total">
+            <span class="summary-label">Total Users</span>
+            <span id="totalUsers" class="summary-value">0</span>
+          </div>
+          <div class="summary-card admin">
+            <span class="summary-label">Admin</span>
+            <span id="totalAdmins" class="summary-value">0</span>
+          </div>
+          <div class="summary-card member">
+            <span class="summary-label">Member</span>
+            <span id="totalMembers" class="summary-value">0</span>
+          </div>
         </div>
-        <div class="summary-card member">
-          <span class="summary-label">Member</span>
-          <span id="totalMembers" class="summary-value">0</span>
+
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input id="searchInput" class="search-input" type="text" placeholder="Cari nama atau email..." autocomplete="off">
+          </div>
+
+          <select id="filterRole" class="filter-select">
+            <option value="all">Semua Role</option>
+            <option value="admin">Admin</option>
+            <option value="member">Member</option>
+          </select>
+
+          <select id="sortBy" class="filter-select">
+            <option value="name">Sort: Nama</option>
+            <option value="lastLogin">Sort: Last Login</option>
+            <option value="joinDate">Sort: Join Date</option>
+          </select>
         </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Daftar Pengguna</h2>
+            <span id="resultCount" class="section-info">0 user</span>
+          </div>
+
+          <div id="usersList" class="user-list">
+            <div class="message">Memuat pengguna...</div>
+          </div>
+
+          <div id="status" class="status"></div>
+        </section>
       </div>
 
-      <div class="toolbar">
-        <div class="search-wrap">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input
-            id="searchInput"
-            class="search-input"
-            type="text"
-            placeholder="Cari nama atau email..."
-            autocomplete="off"
-          >
+      <!-- TAB: BROADCAST -->
+
+      <div id="tabBroadcast" class="tab-panel">
+        <div class="page-head">
+          <h1>Broadcast</h1>
+          <p>Kirim pengumuman yang muncul langsung di layar user yang online.</p>
         </div>
 
-        <select id="filterRole" class="filter-select">
-          <option value="all">Semua Role</option>
-          <option value="admin">Admin</option>
-          <option value="member">Member</option>
-        </select>
+        <div class="broadcast-form">
+          <label for="broadcastMessage">Isi Pengumuman</label>
+          <textarea
+            id="broadcastMessage"
+            class="broadcast-textarea"
+            placeholder="Contoh: Maintenance jam 10 malam, mohon simpan pekerjaan dulu."
+            maxlength="500"
+          ></textarea>
 
-        <select id="sortBy" class="filter-select">
-          <option value="name">Sort: Nama</option>
-          <option value="lastLogin">Sort: Last Login</option>
-          <option value="joinDate">Sort: Join Date</option>
-        </select>
+          <div class="broadcast-info">
+            <span>Notifikasi muncul 8 detik lalu hilang otomatis</span>
+            <span id="broadcastCount">0 / 500</span>
+          </div>
+
+          <div class="broadcast-actions">
+            <button id="broadcastSend" class="broadcast-send" type="button">Kirim Pengumuman</button>
+            <button id="broadcastClear" class="broadcast-clear" type="button">Clear</button>
+          </div>
+
+          <div id="broadcastStatus" class="status"></div>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Riwayat Broadcast</h2>
+            <span id="broadcastCountInfo" class="section-info">0 broadcast</span>
+          </div>
+
+          <div id="broadcastList" class="broadcast-list">
+            <div class="message">Memuat broadcast...</div>
+          </div>
+        </section>
       </div>
 
-      <section class="section">
-        <div class="section-head">
-          <h2 class="section-title">Daftar Pengguna</h2>
-          <span id="resultCount" class="section-info">0 user</span>
-        </div>
-
-        <div id="usersList" class="user-list">
-          <div class="message">Memuat pengguna...</div>
-        </div>
-
-        <div id="status" class="status"></div>
-      </section>
     </main>
   </section>
 
@@ -771,12 +1071,18 @@
       getDoc,
       getDocs,
       doc,
-      updateDoc
+      updateDoc,
+      addDoc,
+      deleteDoc,
+      query,
+      orderBy,
+      serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     const $ = id => document.getElementById(id);
     let currentUser = null;
     let allUsers = [];
+    let allBroadcasts = [];
 
     function showLogin(message = "") {
       $("loadingScreen").style.display = "none";
@@ -794,6 +1100,11 @@
     function setStatus(message, type = "") {
       $("status").textContent = message;
       $("status").className = "status " + type;
+    }
+
+    function setBroadcastStatus(message, type = "") {
+      $("broadcastStatus").textContent = message;
+      $("broadcastStatus").className = "status " + type;
     }
 
     function escapeHTML(value) {
@@ -886,6 +1197,8 @@
       }
     }
 
+    /* ================= USERS ================= */
+
     function applyFiltersAndRender() {
       const keyword = ($("searchInput").value || "").trim().toLowerCase();
       const roleFilter = $("filterRole").value;
@@ -908,19 +1221,13 @@
         if (sortBy === "lastLogin") {
           const aDate = toDate(a.lastLoginAt);
           const bDate = toDate(b.lastLoginAt);
-          const aTime = aDate ? aDate.getTime() : 0;
-          const bTime = bDate ? bDate.getTime() : 0;
-          return bTime - aTime;
+          return (bDate ? bDate.getTime() : 0) - (aDate ? aDate.getTime() : 0);
         }
-
         if (sortBy === "joinDate") {
           const aDate = toDate(a.createdAt);
           const bDate = toDate(b.createdAt);
-          const aTime = aDate ? aDate.getTime() : 0;
-          const bTime = bDate ? bDate.getTime() : 0;
-          return bTime - aTime;
+          return (bDate ? bDate.getTime() : 0) - (aDate ? aDate.getTime() : 0);
         }
-
         return (a.name || a.email || "").localeCompare(b.name || b.email || "");
       });
 
@@ -1047,6 +1354,182 @@
       }
     }
 
+    /* ================= BROADCAST ================= */
+
+    async function sendBroadcast() {
+      const textarea = $("broadcastMessage");
+      const message = (textarea.value || "").trim();
+
+      if (!message) {
+        setBroadcastStatus("Isi pengumuman dulu.", "error");
+        textarea.focus();
+        return;
+      }
+
+      if (message.length > 500) {
+        setBroadcastStatus("Pesan terlalu panjang (max 500 karakter).", "error");
+        return;
+      }
+
+      const button = $("broadcastSend");
+      button.disabled = true;
+      setBroadcastStatus("Mengirim broadcast...");
+
+      try {
+        // Nonaktifkan semua broadcast lama dulu
+        const existingSnap = await getDocs(collection(db, "broadcasts"));
+        const deactivatePromises = [];
+        existingSnap.forEach(function (docSnap) {
+          if (docSnap.data().active === true) {
+            deactivatePromises.push(
+              updateDoc(doc(db, "broadcasts", docSnap.id), { active: false })
+            );
+          }
+        });
+
+        if (deactivatePromises.length) {
+          await Promise.all(deactivatePromises);
+        }
+
+        // Buat broadcast baru yang aktif
+        await addDoc(collection(db, "broadcasts"), {
+          message: message,
+          active: true,
+          createdAt: serverTimestamp(),
+          createdBy: currentUser.uid,
+          createdByName: currentUser.displayName || currentUser.email || "Admin"
+        });
+
+        setBroadcastStatus("Broadcast berhasil dikirim!", "success");
+        textarea.value = "";
+        updateBroadcastCount();
+        await loadBroadcasts();
+
+      } catch (error) {
+        console.error(error);
+        setBroadcastStatus("Gagal mengirim broadcast: " + (error.code || error.message), "error");
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function deleteBroadcast(id) {
+      if (!confirm("Hapus broadcast ini? User tidak akan lihat lagi.")) return;
+
+      try {
+        await deleteDoc(doc(db, "broadcasts", id));
+        setBroadcastStatus("Broadcast dihapus.", "success");
+        await loadBroadcasts();
+      } catch (error) {
+        console.error(error);
+        setBroadcastStatus("Gagal menghapus: " + (error.code || error.message), "error");
+      }
+    }
+
+    async function toggleBroadcastActive(id, currentActive) {
+      try {
+        if (!currentActive) {
+          // Aktifkan ini — nonaktifkan yang lain dulu
+          const existingSnap = await getDocs(collection(db, "broadcasts"));
+          const deactivatePromises = [];
+          existingSnap.forEach(function (docSnap) {
+            if (docSnap.id !== id && docSnap.data().active === true) {
+              deactivatePromises.push(
+                updateDoc(doc(db, "broadcasts", docSnap.id), { active: false })
+              );
+            }
+          });
+          if (deactivatePromises.length) await Promise.all(deactivatePromises);
+        }
+
+        await updateDoc(doc(db, "broadcasts", id), { active: !currentActive });
+        setBroadcastStatus(currentActive ? "Broadcast dinonaktifkan." : "Broadcast diaktifkan.", "success");
+        await loadBroadcasts();
+      } catch (error) {
+        console.error(error);
+        setBroadcastStatus("Gagal update: " + (error.code || error.message), "error");
+      }
+    }
+
+    async function loadBroadcasts() {
+      $("broadcastList").innerHTML = '<div class="message">Memuat broadcast...</div>';
+
+      try {
+        const q = query(collection(db, "broadcasts"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        allBroadcasts = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+
+        $("broadcastCountInfo").textContent = allBroadcasts.length + " broadcast";
+
+        if (!allBroadcasts.length) {
+          $("broadcastList").innerHTML = '<div class="message">Belum ada broadcast.</div>';
+          return;
+        }
+
+        $("broadcastList").innerHTML = allBroadcasts.map(function (b) {
+          const isActive = b.active === true;
+          const date = toDate(b.createdAt);
+          const timeText = date ? timeAgo(date) : "-";
+
+          return `
+            <div class="broadcast-item${isActive ? " active-broadcast" : ""}">
+              <div class="broadcast-item-head">
+                <span class="broadcast-status${isActive ? " active" : ""}">
+                  <span class="broadcast-status-dot"></span>
+                  ${isActive ? "Aktif" : "Nonaktif"}
+                </span>
+                <span class="broadcast-time-item">${escapeHTML(timeText)}</span>
+              </div>
+              <div class="broadcast-item-text">${escapeHTML(b.message || "")}</div>
+              <div class="broadcast-item-actions">
+                <button
+                  class="broadcast-action-btn ${isActive ? "" : "primary"}"
+                  type="button"
+                  data-toggle-id="${escapeHTML(b.id)}"
+                  data-active="${isActive}"
+                >
+                  ${isActive ? "Nonaktifkan" : "Aktifkan"}
+                </button>
+                <button
+                  class="broadcast-action-btn danger"
+                  type="button"
+                  data-delete-id="${escapeHTML(b.id)}"
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        // Attach handlers
+        document.querySelectorAll("[data-toggle-id]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            const id = btn.dataset.toggleId;
+            const isActive = btn.dataset.active === "true";
+            toggleBroadcastActive(id, isActive);
+          });
+        });
+
+        document.querySelectorAll("[data-delete-id]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            deleteBroadcast(btn.dataset.deleteId);
+          });
+        });
+
+      } catch (error) {
+        console.error(error);
+        $("broadcastList").innerHTML = '<div class="message error">Gagal memuat broadcast.</div>';
+      }
+    }
+
+    function updateBroadcastCount() {
+      const len = ($("broadcastMessage").value || "").length;
+      $("broadcastCount").textContent = len + " / 500";
+    }
+
+    /* ================= INIT ================= */
+
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
     $("loginButton").onclick = loginGoogle;
@@ -1056,10 +1539,36 @@
       window.location.href = "./index.html";
     };
 
+    // Tabs
+    document.querySelectorAll(".admin-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        const tabName = tab.dataset.tab;
+        document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        tab.classList.add("active");
+        $("tab" + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add("active");
+
+        if (tabName === "broadcast") {
+          loadBroadcasts();
+        }
+      });
+    });
+
+    // User filters
     $("searchInput").addEventListener("input", applyFiltersAndRender);
     $("filterRole").addEventListener("change", applyFiltersAndRender);
     $("sortBy").addEventListener("change", applyFiltersAndRender);
 
+    // Broadcast actions
+    $("broadcastSend").onclick = sendBroadcast;
+    $("broadcastClear").onclick = function () {
+      $("broadcastMessage").value = "";
+      updateBroadcastCount();
+      setBroadcastStatus("");
+    };
+    $("broadcastMessage").addEventListener("input", updateBroadcastCount);
+
+    // Auth
     onAuthStateChanged(auth, async user => {
       if (!user) {
         showLogin();
