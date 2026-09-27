@@ -1,7 +1,6 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player (Tanpa AudioContext)
-   Audio element langsung ke speaker — tidak pakai GainNode
-   supaya suara PASTI keluar.
+   ROJAK DRIVEK1T — Music Player
+   Fix: no autoplay, no muted, volume normal, no AudioContext
 ============================================================ */
 
 (function () {
@@ -94,7 +93,6 @@
       id: "rdkMusicSection"
     });
 
-    /* HEADER PLAYLIST */
     const playlistCoverWrap = el("div", { class: "rdk-music-playlist-cover" });
     if (PLAYLIST_INFO.cover) {
       const img = el("img", {
@@ -127,7 +125,6 @@
       class: "rdk-music-playlist-header"
     }, [playlistCoverWrap, playlistMeta]);
 
-    /* PLAYLIST */
     const trackList = el("div", {
       class: "rdk-music-tracklist",
       id: "rdkMusicTrackList"
@@ -135,7 +132,6 @@
 
     const list = el("div", { class: "rdk-music-list" }, [trackList]);
 
-    /* NOW BAR */
     const barTitle = el("div", {
       class: "rdk-music-nowbar-title",
       id: "rdkMusicBarTitle"
@@ -195,10 +191,6 @@
 
     return section;
   }
-
-  /* ---------------------------------------------------------
-     BUILD MINI PLAYER
-  --------------------------------------------------------- */
 
   function buildMiniPlayer() {
     const mini = el("div", {
@@ -262,10 +254,6 @@
     return mini;
   }
 
-  /* ---------------------------------------------------------
-     RENDER PLAYLIST
-  --------------------------------------------------------- */
-
   function renderTrackList() {
     const container = document.getElementById("rdkMusicTrackList");
     if (!container) return;
@@ -323,7 +311,7 @@
   }
 
   /* ---------------------------------------------------------
-     PLAY TRACK — langsung pakai audio element
+     PLAY TRACK — FIX: pastikan unmute + volume max
   --------------------------------------------------------- */
 
   function playTrack(index) {
@@ -334,20 +322,27 @@
     const audio = state.audio;
     if (!audio) return;
 
-    console.log("[Music] playTrack:", track.title, "src:", track.src);
+    // Set src baru (kalau beda)
+    if (!audio.src.endsWith(track.src)) {
+      audio.src = track.src;
+      audio.load();
+    }
 
-    // Pastikan volume element = 1 (maksimum)
-    audio.volume = 1.0;
+    // PASTIKAN unmuted & volume max
     audio.muted = false;
-
-    audio.src = track.src;
-    audio.load();
+    audio.volume = 1.0;
 
     updateNowBar();
 
+    // Play dengan user gesture handler
     const p = audio.play();
     if (p && typeof p.catch === "function") {
-      p.catch(err => console.error("[Music] Play error:", err.name, err.message));
+      p.catch(err => {
+        console.error("[Music] Play error:", err.name, err.message);
+        if (err.name === "NotAllowedError") {
+          console.warn("[Music] Autoplay diblokir — klik lagi tombol play");
+        }
+      });
     }
 
     state.currentTime = 0;
@@ -360,8 +355,11 @@
     if (!audio) return;
 
     if (audio.paused) {
-      audio.volume = 1.0;
+      // FIX: unmute + volume max setiap play
       audio.muted = false;
+      audio.volume = 1.0;
+      console.log("[Music] play() — muted:", audio.muted, "volume:", audio.volume);
+
       const p = audio.play();
       if (p && typeof p.catch === "function") {
         p.catch(err => console.error("[Music] Play error:", err.name, err.message));
@@ -421,10 +419,6 @@
     }
     playTrack(prevIndex);
   }
-
-  /* ---------------------------------------------------------
-     PROGRESS
-  --------------------------------------------------------- */
 
   function updateProgressUI() {
     const dur = state.duration || 0;
@@ -493,10 +487,6 @@
     document.addEventListener("touchend", endDrag);
   }
 
-  /* ---------------------------------------------------------
-     MINI VISIBILITY
-  --------------------------------------------------------- */
-
   function setupMiniVisibility() {
     const section = document.getElementById("rdkMusicSection");
     if (!section) return;
@@ -545,7 +535,7 @@
   }
 
   /* ---------------------------------------------------------
-     MOUNT
+     MOUNT — FIX: TANPA AUTOPLAY
   --------------------------------------------------------- */
 
   function mount() {
@@ -566,12 +556,13 @@
     const mini = buildMiniPlayer();
     document.body.appendChild(mini);
 
-    /* AUDIO — element biasa, langsung ke speaker */
+    /* AUDIO — TANPA AUTOPLAY */
     const audio = new Audio();
-    audio.preload = "metadata";
-    audio.volume = 1.0;
+    audio.preload = "none";        // ← JANGAN preload, jangan auto-load
+    audio.autoplay = false;         // ← Eksplisit tidak autoplay
     audio.muted = false;
-    // TIDAK pakai crossOrigin, TIDAK pakai AudioContext
+    audio.volume = 1.0;
+    // TIDAK di-set src di sini — src di-set saat user klik play
     state.audio = audio;
 
     audio.addEventListener("loadedmetadata", () => {
@@ -591,6 +582,8 @@
     audio.addEventListener("play", () => {
       state.isPlaying = true;
       updatePlayButtons();
+      // FIX: log status
+      console.log("[Music] play event — muted:", audio.muted, "volume:", audio.volume);
     });
 
     audio.addEventListener("pause", () => {
@@ -611,9 +604,19 @@
       console.error("[Music] Gagal load:", audio.src);
     });
 
-    /* BUTTONS */
     const playBtn = document.getElementById("rdkMusicPlay");
-    if (playBtn) playBtn.addEventListener("click", togglePlay);
+    if (playBtn) playBtn.addEventListener("click", () => {
+      const audio = state.audio;
+      // Kalau belum ada src, set src lagu aktif
+      if (!audio.src || audio.src === "" || audio.src === window.location.href) {
+        const track = PLAYLIST[state.currentIndex];
+        if (track) {
+          audio.src = track.src;
+          audio.load();
+        }
+      }
+      togglePlay();
+    });
 
     const prevBtn = document.getElementById("rdkMusicPrev");
     if (prevBtn) prevBtn.addEventListener("click", prevTrack);
@@ -676,13 +679,7 @@
     setupProgressDrag();
     setupMiniVisibility();
     renderTrackList();
-
-    /* Set src awal tanpa play */
-    if (PLAYLIST[0]) {
-      audio.src = PLAYLIST[0].src;
-      state.currentIndex = 0;
-      updateNowBar();
-    }
+    updateNowBar();
   }
 
   function init() {
