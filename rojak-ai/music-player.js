@@ -14,25 +14,25 @@
   const PLAYLIST = [
   {
     title: "Teh Hijau",
-    artist: "King Rojak",
+    artist: "Tulus",
     src: "./music/Teh Hijau.mp3",
-    cover: "./music/Teh Hijau.jpge"
+    cover: "./music/Teh Hijau.jpeg"
   },
   {
     title: "Sesi Potret",
-    artist: "Artis 2",
+    artist: "Ari Lesmana",
     src: "./music/Sesi Potret.mp3",
     cover: "./music/Sesi Potret.jpeg"
   },
   {
     title: "Dunia Yang Nanti",
-    artist: "Artis 3",
+    artist: "Raim Laode",
     src: "./music/Dunia Yang Nanti.mp3",
-    cover: "./music/iqro'.jpge"
+    cover: "./music/iqro'.jpeg"
   }
 ];
 
-  const GAIN_BOOST = 2.5;
+  const GAIN_BOOST = 1.0;
 
   const state = {
     audio: null,
