@@ -1,62 +1,41 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player + DIAGNOSTIC MODE
+   ROJAK AI — Chat Widget (FIXED SCROLL)
 ============================================================ */
 
 (function () {
   "use strict";
 
-  /* ---------------------------------------------------------
-     🎵 CONFIG
-  --------------------------------------------------------- */
-
-  const PLAYLIST_INFO = {
-    name: "My Playlist — King Rojak",
-    owner: "rojak",
-    cover: "./music/playlist-cover.jpeg"
+  const CONFIG = {
+    API_ENDPOINT: "/api/ai",
+    MAX_MESSAGE_LEN: 2000,
+    MAX_IMAGE_BYTES: 4 * 1024 * 1024,
+    MAX_HISTORY: 16,
+    STORAGE_KEY: "rojak_ai_history_v1"
   };
 
-  const PLAYLIST = [
-    {
-      title: "Teh Hijau",
-      artist: "Tulus",
-      src: "./music/teh-hijau.mp3"
-    },
-    {
-      title: "Sesi Potret",
-      artist: "eńau, Ari Lesmana",
-      src: "./music/sesi-potret.mp3"
-    },
-    {
-      title: "Dunia Yang Nanti",
-      artist: "Raim Laode",
-      src: "./music/dunia-yang-nanti.mp3"
-    }
+  const QUICK_SUGGESTIONS = [
+    "Rumus VLOOKUP untuk cari nama",
+    "Bedanya IF dan IFS?",
+    "Rumus jumlah gaji kotor",
+    "Kenapa rumusku #N/A?"
   ];
 
-  const DIAGNOSTIC_MODE = true;
-
   const state = {
-    audio: null,
-    currentIndex: 0,
-    duration: 0,
-    currentTime: 0,
-    isPlaying: false,
-    loop: false,
-    shuffle: false,
-    dragging: false,
-    ready: false,
-    miniOpen: false,
-    miniDismissed: false,
-    durationCache: {}
+    open: false,
+    sending: false,
+    history: [],
+    attachedImage: null,
+    scrollY: 0
   };
 
-  const ICON_PLAY = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20 6 4"/></svg>`;
-  const ICON_PAUSE = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`;
-  const ICON_PREV = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="19 20 9 12 19 4 19 20"/><rect x="5" y="4" width="2" height="16"/></svg>`;
-  const ICON_NEXT = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="4" width="2" height="16"/></svg>`;
-  const ICON_SHUFFLE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>`;
-  const ICON_LOOP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
-  const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+  /* ---------- ICONS ---------- */
+
+  const ICON_CHAT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+  const ICON_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+  const ICON_CAMERA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  const ICON_RESET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+
+  /* ---------- HELPERS ---------- */
 
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
@@ -81,620 +60,572 @@
     return node;
   }
 
-  function formatTime(sec) {
-    if (!isFinite(sec) || sec < 0) return "0:00";
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return m + ":" + (s < 10 ? "0" + s : s);
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  function logDiag(msg, type) {
-    console.log("[Music]", msg);
-    if (!DIAGNOSTIC_MODE) return;
-    const panel = document.getElementById("rdkMusicDiag");
-    if (!panel) return;
-
-    const line = document.createElement("div");
-    line.className = "rdk-music-diag-line" + (type ? " rdk-music-diag-" + type : "");
-    line.textContent = "› " + msg;
-    panel.appendChild(line);
-    panel.scrollTop = panel.scrollHeight;
+  function formatTime(ts) {
+    const d = new Date(ts);
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
   }
 
-  function buildDiagnostic() {
-    if (!DIAGNOSTIC_MODE) return null;
-    return el("div", { class: "rdk-music-diag", id: "rdkMusicDiag" });
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1024 / 1024).toFixed(2) + " MB";
   }
 
-  function buildPlayer() {
-    const section = el("section", {
-      class: "rdk-music-section",
-      id: "rdkMusicSection"
+  function renderRichText(raw) {
+    let safe = escapeHtml(raw);
+
+    const codeBlocks = [];
+    safe = safe.replace(/```([\s\S]*?)```/g, (_, code) => {
+      const clean = code.replace(/^\n+|\n+$/g, "");
+      codeBlocks.push(clean);
+      return `\u0000CODEBLOCK${codeBlocks.length - 1}\u0000`;
     });
 
-    const diag = buildDiagnostic();
-    if (diag) section.appendChild(diag);
+    safe = safe.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    safe = safe.replace(/\n/g, "<br>");
 
-    const playlistCoverWrap = el("div", { class: "rdk-music-playlist-cover" });
-    if (PLAYLIST_INFO.cover) {
-      const img = el("img", {
-        src: PLAYLIST_INFO.cover,
-        alt: PLAYLIST_INFO.name
-      });
-      img.addEventListener("error", () => {
-        playlistCoverWrap.innerHTML = ICON_MUSIC;
-      });
-      img.addEventListener("load", () => {
-        logDiag("cover playlist OK", "ok");
-      });
-      playlistCoverWrap.appendChild(img);
-    } else {
-      playlistCoverWrap.innerHTML = ICON_MUSIC;
-    }
-
-    const playlistMeta = el("div", { class: "rdk-music-playlist-meta" }, [
-      el("div", { class: "rdk-music-playlist-name", text: PLAYLIST_INFO.name }),
-      el("div", { class: "rdk-music-playlist-owner", text: PLAYLIST_INFO.owner })
-    ]);
-
-    const playlistHeader = el("div", {
-      class: "rdk-music-playlist-header"
-    }, [playlistCoverWrap, playlistMeta]);
-
-    const trackList = el("div", {
-      class: "rdk-music-tracklist",
-      id: "rdkMusicTrackList"
+    safe = safe.replace(/\u0000CODEBLOCK(\d+)\u0000/g, (_, idx) => {
+      const code = codeBlocks[Number(idx)];
+      return `<pre><code>${code}</code></pre>`;
     });
 
-    const list = el("div", { class: "rdk-music-list" }, [trackList]);
-
-    const barTitle = el("div", {
-      class: "rdk-music-nowbar-title",
-      id: "rdkMusicBarTitle"
-    });
-
-    const prevBtn = el("button", {
-      class: "rdk-music-iconbtn", type: "button", id: "rdkMusicPrev",
-      title: "Sebelumnya", html: ICON_PREV
-    });
-
-    const progressTrack = el("div", { class: "rdk-music-progress-track" }, [
-      el("div", { class: "rdk-music-progress-fill", id: "rdkMusicProgressFill" })
-    ]);
-
-    const progressThumb = el("div", {
-      class: "rdk-music-progress-thumb",
-      id: "rdkMusicProgressThumb"
-    });
-
-    const progress = el("div", {
-      class: "rdk-music-progress",
-      id: "rdkMusicProgress"
-    }, [progressTrack, progressThumb]);
-
-    const playBtn = el("button", {
-      class: "rdk-music-play", type: "button", id: "rdkMusicPlay",
-      title: "Play", html: ICON_PLAY
-    });
-
-    const timeEl = el("div", {
-      class: "rdk-music-time", id: "rdkMusicTime", text: "-0:00"
-    });
-
-    const shuffleBtn = el("button", {
-      class: "rdk-music-iconbtn", type: "button", id: "rdkMusicShuffle",
-      title: "Acak", html: ICON_SHUFFLE
-    });
-
-    const loopBtn = el("button", {
-      class: "rdk-music-iconbtn", type: "button", id: "rdkMusicLoop",
-      title: "Ulangi", html: ICON_LOOP
-    });
-
-    const extras = el("div", { class: "rdk-music-extras" }, [shuffleBtn, loopBtn]);
-
-    const row = el("div", { class: "rdk-music-row" }, [
-      prevBtn, progress, playBtn, timeEl, extras
-    ]);
-
-    const nowbar = el("div", { class: "rdk-music-nowbar" }, [barTitle, row]);
-
-    section.appendChild(playlistHeader);
-    section.appendChild(list);
-    section.appendChild(nowbar);
-
-    return section;
+    return safe;
   }
 
-  function buildMiniPlayer() {
-    const mini = el("div", { class: "rdk-music-mini", id: "rdkMusicMini" });
+  /* ---------- STORAGE ---------- */
 
-    const coverWrap = el("div", { class: "rdk-music-mini-cover" });
-    if (PLAYLIST_INFO.cover) {
-      const img = el("img", { src: PLAYLIST_INFO.cover, alt: "Playlist" });
-      img.addEventListener("error", () => {
-        coverWrap.innerHTML = ICON_MUSIC;
-      });
-      coverWrap.appendChild(img);
-    } else {
-      coverWrap.innerHTML = ICON_MUSIC;
-    }
-
-    const title = el("div", {
-      class: "rdk-music-mini-title", id: "rdkMusicMiniTitle",
-      text: PLAYLIST[0] ? PLAYLIST[0].title : ""
-    });
-
-    const artist = el("div", {
-      class: "rdk-music-mini-artist", id: "rdkMusicMiniArtist",
-      text: PLAYLIST[0] ? PLAYLIST[0].artist : ""
-    });
-
-    const meta = el("div", { class: "rdk-music-mini-meta" }, [title, artist]);
-
-    const prevBtn = el("button", {
-      class: "rdk-music-mini-btn", type: "button", id: "rdkMusicMiniPrev",
-      title: "Sebelumnya", html: ICON_PREV
-    });
-
-    const playBtn = el("button", {
-      class: "rdk-music-mini-btn rdk-music-mini-play", type: "button", id: "rdkMusicMiniPlay",
-      title: "Play", html: ICON_PLAY
-    });
-
-    const nextBtn = el("button", {
-      class: "rdk-music-mini-btn", type: "button", id: "rdkMusicMiniNext",
-      title: "Selanjutnya", html: ICON_NEXT
-    });
-
-    const closeBtn = el("button", {
-      class: "rdk-music-mini-close", type: "button", id: "rdkMusicMiniClose",
-      title: "Sembunyikan", html: "×"
-    });
-
-    const controls = el("div", { class: "rdk-music-mini-controls" }, [
-      prevBtn, playBtn, nextBtn, closeBtn
-    ]);
-
-    mini.appendChild(coverWrap);
-    mini.appendChild(meta);
-    mini.appendChild(controls);
-
-    return mini;
-  }
-
-  function renderTrackList() {
-    const container = document.getElementById("rdkMusicTrackList");
-    if (!container) return;
-    container.innerHTML = "";
-
-    PLAYLIST.forEach((track, i) => {
-      const isActive = i === state.currentIndex;
-
-      const numEl = el("div", {
-        class: "rdk-music-track-num",
-        text: String(i + 1)
-      });
-
-      const eqEl = el("div", { class: "rdk-music-eq" }, [
-        el("span"), el("span"), el("span"), el("span")
-      ]);
-
-      const info = el("div", { class: "rdk-music-track-info" }, [
-        el("div", { class: "rdk-music-track-title", text: track.title }),
-        el("div", { class: "rdk-music-track-artist", text: track.artist })
-      ]);
-
-      const row = el("div", {
-        class: "rdk-music-track" + (isActive ? " rdk-music-track-active" : ""),
-        "data-index": String(i)
-      }, [numEl, eqEl, info]);
-
-      row.addEventListener("click", () => {
-        logDiag("klik track: " + track.title);
-        playTrack(i);
-      });
-      container.appendChild(row);
-    });
-  }
-
-  function updateNowBar() {
-    const track = PLAYLIST[state.currentIndex];
-    if (!track) return;
-
-    const barTitle = document.getElementById("rdkMusicBarTitle");
-    if (barTitle) {
-      barTitle.innerHTML = "";
-      barTitle.appendChild(document.createTextNode(track.title + " "));
-      const sep = document.createElement("span");
-      sep.textContent = "· " + track.artist;
-      barTitle.appendChild(sep);
-    }
-
-    const miniTitle = document.getElementById("rdkMusicMiniTitle");
-    const miniArtist = document.getElementById("rdkMusicMiniArtist");
-    if (miniTitle) miniTitle.textContent = track.title;
-    if (miniArtist) miniArtist.textContent = track.artist;
-
-    document.querySelectorAll(".rdk-music-track").forEach((row, i) => {
-      row.classList.toggle("rdk-music-track-active", i === state.currentIndex);
-    });
-  }
-
-  async function playTrack(index) {
-    if (!PLAYLIST[index]) return;
-    const track = PLAYLIST[index];
-    state.currentIndex = index;
-
-    const audio = state.audio;
-    if (!audio) return;
-
-    logDiag("─── playTrack #" + (index + 1) + " ───");
-    logDiag("title: " + track.title);
-    logDiag("src: " + track.src);
-
-    audio.src = track.src;
-    audio.load();
-
-    audio.muted = false;
-    audio.volume = 1.0;
-    logDiag("muted: " + audio.muted + ", volume: " + audio.volume);
-
-    updateNowBar();
-
+  function loadHistory() {
     try {
-      const res = await fetch(track.src, { method: "HEAD" });
-      if (res.ok) {
-        logDiag("✓ file ditemukan (HTTP " + res.status + ")", "ok");
-        logDiag("  content-type: " + (res.headers.get("content-type") || "-"));
-        logDiag("  content-length: " + (res.headers.get("content-length") || "-"));
-      } else {
-        logDiag("✗ file TIDAK ditemukan (HTTP " + res.status + ")", "error");
-        logDiag("  Cek nama file di GitHub folder music/", "error");
-        logDiag("  URL: " + new URL(track.src, location.href).href, "error");
-        return;
+      const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        state.history = parsed.slice(-30).map(m => ({
+          role: m.role === "assistant" ? "assistant" : "user",
+          content: String(m.content || ""),
+          ts: Number(m.ts) || Date.now()
+        }));
       }
-    } catch (err) {
-      logDiag("✗ fetch gagal: " + err.message, "error");
-    }
+    } catch (_) { /* ignore */ }
+  }
 
+  function saveHistory() {
     try {
-      logDiag("memanggil audio.play()...");
-      const p = audio.play();
-      if (p && typeof p.then === "function") {
-        await p;
-        logDiag("✓ play() resolved — audio main", "ok");
-      }
-    } catch (err) {
-      logDiag("✗ play() error: " + err.name, "error");
-      logDiag("  message: " + err.message, "error");
-
-      if (err.name === "NotAllowedError") {
-        logDiag("  → Browser blok autoplay. Coba klik sekali lagi.", "warn");
-      } else if (err.name === "NotSupportedError") {
-        logDiag("  → Format MP3 tidak didukung / file korup.", "error");
-      } else if (err.name === "AbortError") {
-        logDiag("  → Load dibatalkan.", "warn");
-      }
-    }
+      const lightweight = state.history.slice(-30).map(m => ({
+        role: m.role,
+        content: m.content,
+        ts: m.ts
+      }));
+      localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(lightweight));
+    } catch (_) { /* ignore */ }
   }
 
-  function togglePlay() {
-    const audio = state.audio;
-    if (!audio) return;
+  /* ---------- RENDER ---------- */
 
-    if (audio.paused) {
-      logDiag("togglePlay → play");
-      audio.muted = false;
-      audio.volume = 1.0;
-      const p = audio.play();
-      if (p && typeof p.catch === "function") {
-        p.catch(err => {
-          logDiag("✗ play error: " + err.name + " - " + err.message, "error");
-        });
-      }
-    } else {
-      logDiag("togglePlay → pause");
-      audio.pause();
+  function appendMessageEl(role, content, ts, imageDataUrl) {
+    const bodyEl = document.getElementById("rojakAiBody");
+    if (!bodyEl) return;
+
+    const msg = el("div", {
+      class: "rojak-ai-msg rojak-ai-msg-" + (role === "user" ? "user" : "bot")
+    });
+
+    const bubble = el("div", { class: "rojak-ai-bubble" });
+
+    if (imageDataUrl) {
+      bubble.appendChild(el("img", {
+        class: "rojak-ai-img",
+        src: imageDataUrl,
+        alt: "Lampiran"
+      }));
     }
+
+    if (content) {
+      bubble.appendChild(el("div", { html: renderRichText(content) }));
+    }
+
+    msg.appendChild(bubble);
+    msg.appendChild(el("div", { class: "rojak-ai-time", text: formatTime(ts) }));
+    bodyEl.appendChild(msg);
+    scrollToBottom();
   }
 
-  function updatePlayButtons() {
-    const icon = state.isPlaying ? ICON_PAUSE : ICON_PLAY;
-    const label = state.isPlaying ? "Pause" : "Play";
+  function appendTypingEl() {
+    const bodyEl = document.getElementById("rojakAiBody");
+    if (!bodyEl) return;
 
-    const mainBtn = document.getElementById("rdkMusicPlay");
-    if (mainBtn) {
-      mainBtn.innerHTML = icon;
-      mainBtn.title = label;
-    }
+    const wrap = el("div", {
+      class: "rojak-ai-msg rojak-ai-msg-bot",
+      id: "rojakAiTyping"
+    }, [
+      el("div", { class: "rojak-ai-typing" }, [
+        el("span"), el("span"), el("span")
+      ])
+    ]);
 
-    const miniBtn = document.getElementById("rdkMusicMiniPlay");
-    if (miniBtn) {
-      miniBtn.innerHTML = icon;
-      miniBtn.title = label;
-    }
-
-    const section = document.getElementById("rdkMusicSection");
-    if (section) section.classList.toggle("rdk-music-paused", !state.isPlaying);
+    bodyEl.appendChild(wrap);
+    scrollToBottom();
   }
 
-  function nextTrack() {
-    if (PLAYLIST.length === 0) return;
-    let nextIndex;
-    if (state.shuffle && PLAYLIST.length > 1) {
-      do { nextIndex = Math.floor(Math.random() * PLAYLIST.length); }
-      while (nextIndex === state.currentIndex);
-    } else {
-      nextIndex = (state.currentIndex + 1) % PLAYLIST.length;
-    }
-    playTrack(nextIndex);
+  function removeTypingEl() {
+    const t = document.getElementById("rojakAiTyping");
+    if (t && t.parentNode) t.parentNode.removeChild(t);
   }
 
-  function prevTrack() {
-    if (PLAYLIST.length === 0) return;
-    const audio = state.audio;
-    if (audio && audio.currentTime > 3) {
-      audio.currentTime = 0;
+  function scrollToBottom() {
+    const bodyEl = document.getElementById("rojakAiBody");
+    if (!bodyEl) return;
+    requestAnimationFrame(() => {
+      bodyEl.scrollTop = bodyEl.scrollHeight;
+    });
+  }
+
+  function renderQuickSuggestions() {
+    const bodyEl = document.getElementById("rojakAiBody");
+    if (!bodyEl) return;
+    if (state.history.length > 0) return;
+
+    const wrap = el("div", { class: "rojak-ai-suggest" });
+    QUICK_SUGGESTIONS.forEach(text => {
+      wrap.appendChild(el("button", {
+        class: "rojak-ai-chip",
+        type: "button",
+        text,
+        onclick: () => {
+          const input = document.getElementById("rojakAiInput");
+          if (!input) return;
+          input.value = text;
+          input.focus();
+          autoGrow(input);
+          wrap.remove();
+        }
+      }));
+    });
+    bodyEl.appendChild(wrap);
+  }
+
+  function renderHistory() {
+    const bodyEl = document.getElementById("rojakAiBody");
+    if (!bodyEl) return;
+
+    bodyEl.innerHTML = "";
+
+    if (state.history.length === 0) {
+      appendMessageEl(
+        "assistant",
+        "Halo! Saya Rojak AI 👋\n\nSaya bisa bantu soal rumus Excel, jelasin fungsi, atau baca tabel dari foto. Mau tanya apa?",
+        Date.now()
+      );
+      renderQuickSuggestions();
       return;
     }
-    let prevIndex;
-    if (state.shuffle && PLAYLIST.length > 1) {
-      do { prevIndex = Math.floor(Math.random() * PLAYLIST.length); }
-      while (prevIndex === state.currentIndex);
-    } else {
-      prevIndex = (state.currentIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
-    }
-    playTrack(prevIndex);
+
+    state.history.forEach(m => {
+      appendMessageEl(m.role, m.content, m.ts);
+    });
   }
 
-  function updateProgressUI() {
-    const dur = state.duration || 0;
-    const cur = state.currentTime || 0;
-    const pct = dur > 0 ? (cur / dur) * 100 : 0;
+  /* ---------- TEXTAREA ---------- */
 
-    const fill = document.getElementById("rdkMusicProgressFill");
-    const thumb = document.getElementById("rdkMusicProgressThumb");
-    const timeEl = document.getElementById("rdkMusicTime");
+  function autoGrow(ta) {
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 100) + "px";
+  }
 
-    if (fill) fill.style.width = pct + "%";
-    if (thumb) thumb.style.left = pct + "%";
+  /* ---------- PANEL OPEN / CLOSE (FIX SCROLL LOCK) ---------- */
 
-    if (timeEl) {
-      const remain = Math.max(0, dur - cur);
-      timeEl.textContent = "-" + formatTime(remain);
+  function openPanel() {
+    const panel = document.getElementById("rojakAiPanel");
+    const input = document.getElementById("rojakAiInput");
+    if (!panel) return;
+
+    panel.classList.add("rojak-ai-open");
+    state.open = true;
+
+    // Simpan posisi scroll body
+    state.scrollY = window.scrollY || window.pageYOffset || 0;
+
+    // Kunci scroll body — biar halaman belakang tidak ikut scroll
+    document.body.classList.add("rojak-ai-no-scroll");
+
+    setTimeout(() => {
+      if (input) input.focus();
+      scrollToBottom();
+    }, 60);
+  }
+
+  function closePanel() {
+    const panel = document.getElementById("rojakAiPanel");
+    if (!panel) return;
+
+    panel.classList.remove("rojak-ai-open");
+    state.open = false;
+
+    // Lepas kunci scroll body
+    document.body.classList.remove("rojak-ai-no-scroll");
+
+    // Kembalikan posisi scroll
+    if (state.scrollY) {
+      window.scrollTo(0, state.scrollY);
     }
   }
 
-  function setupProgressDrag() {
-    const bar = document.getElementById("rdkMusicProgress");
-    if (!bar) return;
-
-    function seekFromEvent(e) {
-      const rect = bar.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const pct = Math.max(0, Math.min(1, x / rect.width));
-      const dur = state.duration || 0;
-      if (dur > 0) {
-        state.currentTime = pct * dur;
-        updateProgressUI();
-        return state.currentTime;
-      }
-      return null;
-    }
-
-    function startDrag(e) {
-      if (!state.ready && state.duration === 0) return;
-      state.dragging = true;
-      bar.classList.add("rdk-music-dragging");
-      seekFromEvent(e);
-      e.preventDefault();
-    }
-
-    function moveDrag(e) {
-      if (!state.dragging) return;
-      seekFromEvent(e);
-      e.preventDefault();
-    }
-
-    function endDrag(e) {
-      if (!state.dragging) return;
-      state.dragging = false;
-      bar.classList.remove("rdk-music-dragging");
-      const t = seekFromEvent(e);
-      if (t !== null && state.audio) {
-        state.audio.currentTime = t;
-      }
-    }
-
-    bar.addEventListener("mousedown", startDrag);
-    document.addEventListener("mousemove", moveDrag);
-    document.addEventListener("mouseup", endDrag);
-    bar.addEventListener("touchstart", startDrag, { passive: false });
-    document.addEventListener("touchmove", moveDrag, { passive: false });
-    document.addEventListener("touchend", endDrag);
+  function togglePanel() {
+    state.open ? closePanel() : openPanel();
   }
 
-  function setupMiniVisibility() {
-    const section = document.getElementById("rdkMusicSection");
-    if (!section) return;
+  /* ---------- ATTACH ---------- */
 
-    if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver(
-        entries => {
-          for (const entry of entries) {
-            if (state.miniDismissed) return;
-            if (!entry.isIntersecting) openMini();
-            else closeMini();
+  function handleFileSelected(file) {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Hanya file gambar yang didukung.");
+      return;
+    }
+
+    if (file.size > CONFIG.MAX_IMAGE_BYTES) {
+      alert("Ukuran gambar terlalu besar (max 4MB).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      state.attachedImage = {
+        dataUrl: e.target.result,
+        name: file.name || "gambar.jpg",
+        size: file.size
+      };
+
+      const wrap = document.getElementById("rojakAiAttach");
+      const img = document.getElementById("rojakAiAttachImg");
+      const nameEl = document.getElementById("rojakAiAttachName");
+      const sizeEl = document.getElementById("rojakAiAttachSize");
+
+      if (img) img.src = state.attachedImage.dataUrl;
+      if (nameEl) nameEl.textContent = state.attachedImage.name;
+      if (sizeEl) sizeEl.textContent = formatBytes(state.attachedImage.size);
+      if (wrap) wrap.classList.add("rojak-ai-attach-on");
+
+      scrollToBottom();
+    };
+    reader.onerror = () => alert("Gagal membaca gambar.");
+    reader.readAsDataURL(file);
+  }
+
+  function clearAttachment() {
+    state.attachedImage = null;
+    const wrap = document.getElementById("rojakAiAttach");
+    const fileInput = document.getElementById("rojakAiFile");
+    if (wrap) wrap.classList.remove("rojak-ai-attach-on");
+    if (fileInput) fileInput.value = "";
+  }
+
+  /* ---------- SEND ---------- */
+
+  async function sendMessage() {
+    if (state.sending) return;
+
+    const input = document.getElementById("rojakAiInput");
+    if (!input) return;
+
+    const text = (input.value || "").trim();
+    const image = state.attachedImage;
+
+    if (!text && !image) return;
+
+    if (text.length > CONFIG.MAX_MESSAGE_LEN) {
+      alert("Pesan terlalu panjang.");
+      return;
+    }
+
+    const sugg = document.querySelector(".rojak-ai-suggest");
+    if (sugg) sugg.remove();
+
+    const ts = Date.now();
+    appendMessageEl("user", text, ts, image ? image.dataUrl : null);
+
+    state.history.push({ role: "user", content: text, ts });
+
+    input.value = "";
+    autoGrow(input);
+
+    const imageToSend = image ? image.dataUrl : null;
+    clearAttachment();
+
+    state.sending = true;
+    const sendBtn = document.getElementById("rojakAiSend");
+    if (sendBtn) sendBtn.disabled = true;
+
+    appendTypingEl();
+
+    try {
+      const payloadMessages = state.history
+        .slice(-CONFIG.MAX_HISTORY)
+        .map(m => ({ role: m.role, content: m.content }));
+
+      const body = { messages: payloadMessages };
+      if (imageToSend) body.image = imageToSend;
+
+      const res = await fetch(CONFIG.API_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      removeTypingEl();
+
+      if (!res.ok) {
+        let errMsg = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
+        try {
+          const j = await res.json();
+          if (j && j.error === "NO_API_KEY") {
+            errMsg = "Rojak AI belum dikonfigurasi. Silakan periksa Environment Variables.";
+          } else if (j && j.message) {
+            errMsg = j.message;
           }
-        },
-        { threshold: 0.2 }
+        } catch (_) { /* ignore */ }
+        appendMessageEl("assistant", errMsg, Date.now());
+        return;
+      }
+
+      const data = await res.json();
+      const reply = (data && data.reply) ? String(data.reply) : "Maaf, tidak ada balasan.";
+
+      appendMessageEl("assistant", reply, Date.now());
+      state.history.push({ role: "assistant", content: reply, ts: Date.now() });
+      saveHistory();
+
+    } catch (err) {
+      removeTypingEl();
+      console.error("[Rojak AI] fetch error:", err);
+      appendMessageEl(
+        "assistant",
+        "Tidak dapat terhubung ke Rojak AI. Periksa koneksi internet kamu.",
+        Date.now()
       );
-      observer.observe(section);
+    } finally {
+      state.sending = false;
+      if (sendBtn) sendBtn.disabled = false;
     }
   }
 
-  function openMini() {
-    const mini = document.getElementById("rdkMusicMini");
-    if (!mini || state.miniOpen) return;
-    state.miniOpen = true;
-    mini.classList.add("rdk-music-mini-open");
+  /* ---------- RESET ---------- */
+
+  function resetConversation() {
+    if (!confirm("Reset percakapan Rojak AI?")) return;
+    state.history = [];
+    state.attachedImage = null;
+    clearAttachment();
+    try { localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (_) {}
+    renderHistory();
   }
 
-  function closeMini() {
-    const mini = document.getElementById("rdkMusicMini");
-    if (!mini || !state.miniOpen) return;
-    state.miniOpen = false;
-    mini.classList.remove("rdk-music-mini-open");
+  /* ---------- BUILD ---------- */
+
+  function buildWidget() {
+    const fab = el("button", {
+      class: "rojak-ai-fab",
+      type: "button",
+      id: "rojakAiFab",
+      title: "Chat dengan Rojak AI",
+      "aria-label": "Buka Rojak AI"
+    }, [
+      el("span", { class: "rojak-ai-fab-dot" }),
+      el("span", { class: "rojak-ai-fab-icon", html: ICON_CHAT }),
+      el("span", { text: "Rojak AI" })
+    ]);
+
+    const panel = el("div", {
+      class: "rojak-ai-panel",
+      id: "rojakAiPanel",
+      role: "dialog",
+      "aria-label": "Rojak AI Chat"
+    });
+
+    const header = el("div", { class: "rojak-ai-header" }, [
+      el("div", { class: "rojak-ai-header-left" }, [
+        el("div", { class: "rojak-ai-avatar", text: "R" }),
+        el("div", { class: "rojak-ai-title" }, [
+          el("div", { class: "rojak-ai-title-name", text: "Rojak AI" }),
+          el("div", { class: "rojak-ai-title-status" }, [
+            el("span", { class: "rojak-ai-status-dot" }),
+            el("span", { text: "Online" })
+          ])
+        ])
+      ]),
+      el("div", { class: "rojak-ai-header-actions" }, [
+        el("button", {
+          class: "rojak-ai-icon-button",
+          type: "button",
+          title: "Reset percakapan",
+          "aria-label": "Reset percakapan",
+          id: "rojakAiReset",
+          html: ICON_RESET
+        }),
+        el("button", {
+          class: "rojak-ai-icon-button",
+          type: "button",
+          title: "Tutup",
+          "aria-label": "Tutup chat",
+          id: "rojakAiClose",
+          html: "×"
+        })
+      ])
+    ]);
+
+    const body = el("div", {
+      class: "rojak-ai-body",
+      id: "rojakAiBody"
+    });
+
+    const attach = el("div", {
+      class: "rojak-ai-attach",
+      id: "rojakAiAttach"
+    }, [
+      el("img", { id: "rojakAiAttachImg", alt: "Lampiran" }),
+      el("div", { class: "rojak-ai-attach-info" }, [
+        el("div", { class: "rojak-ai-attach-name", id: "rojakAiAttachName" }),
+        el("div", { class: "rojak-ai-attach-size", id: "rojakAiAttachSize" })
+      ]),
+      el("button", {
+        class: "rojak-ai-attach-remove",
+        type: "button",
+        id: "rojakAiAttachRemove",
+        "aria-label": "Hapus lampiran",
+        html: "×"
+      })
+    ]);
+
+    const textarea = el("textarea", {
+      class: "rojak-ai-textarea",
+      id: "rojakAiInput",
+      placeholder: "Tanya rumus Excel, kirim foto tabel...",
+      rows: "1",
+      maxlength: String(CONFIG.MAX_MESSAGE_LEN)
+    });
+
+    const fileInput = el("input", {
+      type: "file",
+      id: "rojakAiFile",
+      accept: "image/png,image/jpeg,image/jpg,image/webp",
+      style: "display:none"
+    });
+
+    const uploadBtn = el("button", {
+      class: "rojak-ai-mini",
+      type: "button",
+      id: "rojakAiUpload",
+      title: "Kirim foto",
+      "aria-label": "Kirim foto",
+      html: ICON_CAMERA
+    });
+
+    const sendBtn = el("button", {
+      class: "rojak-ai-send",
+      type: "button",
+      id: "rojakAiSend",
+      title: "Kirim",
+      "aria-label": "Kirim pesan",
+      html: ICON_SEND
+    });
+
+    const footer = el("div", { class: "rojak-ai-footer" }, [
+      attach,
+      el("div", { class: "rojak-ai-input-row" }, [
+        uploadBtn,
+        textarea,
+        sendBtn
+      ]),
+      el("div", {
+        class: "rojak-ai-hint",
+        text: "Rojak AI bisa salah. Cek ulang rumus penting."
+      })
+    ]);
+
+    panel.appendChild(header);
+    panel.appendChild(body);
+    panel.appendChild(footer);
+
+    document.body.appendChild(fab);
+    document.body.appendChild(panel);
+    document.body.appendChild(fileInput);
   }
 
-  function scrollToMainPlayer() {
-    const section = document.getElementById("rdkMusicSection");
-    if (!section) return;
-    state.miniDismissed = false;
-    section.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-
-  function mount() {
-    const oldSpotify = document.querySelector(".spotify-section");
-    const player = buildPlayer();
-
-    if (oldSpotify && oldSpotify.parentNode) {
-      oldSpotify.parentNode.replaceChild(player, oldSpotify);
-    } else {
-      const footer = document.querySelector(".footer");
-      if (footer && footer.parentNode) {
-        footer.parentNode.insertBefore(player, footer);
-      } else {
-        document.body.appendChild(player);
-      }
-    }
-
-    const mini = buildMiniPlayer();
-    document.body.appendChild(mini);
-
-    logDiag("=== Rojak Music Player start ===");
-    logDiag("user-agent: " + navigator.userAgent.slice(0, 80));
-    logDiag("location: " + location.href);
-
-    const audio = new Audio();
-    audio.preload = "metadata";
-    audio.muted = false;
-    audio.volume = 1.0;
-    state.audio = audio;
-
-    audio.addEventListener("loadstart", () => logDiag("event: loadstart"));
-    audio.addEventListener("loadedmetadata", () => {
-      state.duration = audio.duration || 0;
-      state.ready = true;
-      logDiag("event: loadedmetadata — duration: " + state.duration + "s", "ok");
-      updateProgressUI();
-    });
-    audio.addEventListener("canplay", () => logDiag("event: canplay", "ok"));
-    audio.addEventListener("playing", () => logDiag("event: playing", "ok"));
-    audio.addEventListener("waiting", () => logDiag("event: waiting (buffering)"));
-    audio.addEventListener("stalled", () => logDiag("event: stalled", "warn"));
-
-    audio.addEventListener("timeupdate", () => {
-      if (state.dragging) return;
-      state.currentTime = audio.currentTime;
-      updateProgressUI();
-    });
-
-    audio.addEventListener("play", () => {
-      state.isPlaying = true;
-      updatePlayButtons();
-      logDiag("event: play — muted: " + audio.muted + ", vol: " + audio.volume, "ok");
-    });
-
-    audio.addEventListener("pause", () => {
-      state.isPlaying = false;
-      updatePlayButtons();
-      logDiag("event: pause");
-    });
-
-    audio.addEventListener("volumechange", () => {
-      logDiag("event: volumechange — vol: " + audio.volume + ", muted: " + audio.muted);
-    });
-
-    audio.addEventListener("ended", () => {
-      logDiag("event: ended");
-      if (state.loop) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-      } else {
-        nextTrack();
-      }
-    });
-
-    audio.addEventListener("error", () => {
-      const err = audio.error;
-      let code = "?";
-      let msg = "?";
-      if (err) {
-        code = err.code;
-        msg = err.message || "(no message)";
-      }
-      logDiag("✗ event: error — code: " + code + " msg: " + msg, "error");
-      if (code === 4) logDiag("  → File tidak ketemu / format MP3 tidak didukung", "error");
-      if (code === 3) logDiag("  → File korup / gagal decode", "error");
-      if (code === 2) logDiag("  → Network error", "error");
-    });
-
-    const playBtn = document.getElementById("rdkMusicPlay");
-    if (playBtn) playBtn.addEventListener("click", togglePlay);
-
-    const prevBtn = document.getElementById("rdkMusicPrev");
-    if (prevBtn) prevBtn.addEventListener("click", prevTrack);
-
-    const shuffleBtn = document.getElementById("rdkMusicShuffle");
-    if (shuffleBtn) {
-      shuffleBtn.addEventListener("click", () => {
-        state.shuffle = !state.shuffle;
-        shuffleBtn.classList.toggle("rdk-music-ctrl-active", state.shuffle);
-      });
-    }
-
-    const loopBtn = document.getElementById("rdkMusicLoop");
-    if (loopBtn) {
-      loopBtn.addEventListener("click", () => {
-        state.loop = !state.loop;
-        audio.loop = state.loop;
-        loopBtn.classList.toggle("rdk-music-ctrl-active", state.loop);
-      });
-    }
-
-    const miniPlay = document.getElementById("rdkMusicMiniPlay");
-    if (miniPlay) miniPlay.addEventListener("click", e => { e.stopPropagation(); togglePlay(); });
-
-    const miniPrev = document.getElementById("rdkMusicMiniPrev");
-    if (miniPrev) miniPrev.addEventListener("click", e => { e.stopPropagation(); prevTrack(); });
-
-    const miniNext = document.getElementById("rdkMusicMiniNext");
-    if (miniNext) miniNext.addEventListener("click", e => { e.stopPropagation(); nextTrack(); });
-
-    const miniClose = document.getElementById("rdkMusicMiniClose");
-    if (miniClose) miniClose.addEventListener("click", e => {
-      e.stopPropagation();
-      state.miniDismissed = true;
-      closeMini();
-    });
-
-    mini.addEventListener("click", e => {
-      if (e.target.closest("button")) return;
-      scrollToMainPlayer();
-    });
-
-    setupProgressDrag();
-    setupMiniVisibility();
-    renderTrackList();
-    updateNowBar();
-  }
+  /* ---------- INIT ---------- */
 
   function init() {
-    if (document.getElementById("rdkMusicSection")) return;
-    if (PLAYLIST.length === 0) return;
-    mount();
+    if (document.getElementById("rojakAiFab")) return;
+
+    buildWidget();
+    loadHistory();
+    renderHistory();
+
+    const fab = document.getElementById("rojakAiFab");
+    if (fab) fab.addEventListener("click", togglePanel);
+
+    const closeBtn = document.getElementById("rojakAiClose");
+    if (closeBtn) closeBtn.addEventListener("click", closePanel);
+
+    const resetBtn = document.getElementById("rojakAiReset");
+    if (resetBtn) resetBtn.addEventListener("click", resetConversation);
+
+    const uploadBtn = document.getElementById("rojakAiUpload");
+    const fileInput = document.getElementById("rojakAiFile");
+
+    if (uploadBtn && fileInput) {
+      uploadBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", e => {
+        handleFileSelected(e.target.files && e.target.files[0]);
+      });
+    }
+
+    const attachRemove = document.getElementById("rojakAiAttachRemove");
+    if (attachRemove) attachRemove.addEventListener("click", clearAttachment);
+
+    const sendBtn = document.getElementById("rojakAiSend");
+    if (sendBtn) sendBtn.addEventListener("click", sendMessage);
+
+    const textarea = document.getElementById("rojakAiInput");
+    if (textarea) {
+      textarea.addEventListener("input", () => autoGrow(textarea));
+      textarea.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      textarea.addEventListener("paste", e => {
+        const items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        for (const item of items) {
+          if (item.type && item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) {
+              handleFileSelected(file);
+              break;
+            }
+          }
+        }
+      });
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && state.open) closePanel();
+    });
   }
 
   if (document.readyState === "loading") {
