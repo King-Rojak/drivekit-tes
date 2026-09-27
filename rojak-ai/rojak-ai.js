@@ -1,6 +1,5 @@
 /* ============================================================
-   ROJAK AI — Widget Chat
-   Dibungkus IIFE supaya tidak mengganggu scope global DriveK1t.
+   ROJAK AI — CS & Tutor (Text-only)
 ============================================================ */
 
 (function () {
@@ -9,30 +8,28 @@
   const CONFIG = {
     API_ENDPOINT: "/api/ai",
     MAX_MESSAGE_LEN: 2000,
-    MAX_IMAGE_BYTES: 4 * 1024 * 1024,
-    MAX_HISTORY: 16,
+    MAX_HISTORY: 10,
     STORAGE_KEY: "rojak_ai_history_v1"
   };
 
   const QUICK_SUGGESTIONS = [
-    "Rumus VLOOKUP untuk cari nama",
-    "Bedanya IF dan IFS?",
-    "Rumus jumlah gaji kotor",
-    "Kenapa rumusku #N/A?"
+    "Cara membuat file TXT",
+    "Cara memakai Rojak DriveK1t",
+    "Cara membuat shortcut Drive",
+    "Apa saja fitur Rojak DriveK1t?"
   ];
 
   const state = {
     open: false,
     sending: false,
     history: [],
-    attachedImage: null
+    scrollY: 0
   };
 
   /* ---------- ICONS ---------- */
 
   const ICON_CHAT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
   const ICON_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
-  const ICON_CAMERA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   const ICON_RESET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
 
   /* ---------- HELPERS ---------- */
@@ -74,12 +71,6 @@
     const hh = String(d.getHours()).padStart(2, "0");
     const mm = String(d.getMinutes()).padStart(2, "0");
     return `${hh}:${mm}`;
-  }
-
-  function formatBytes(bytes) {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / 1024 / 1024).toFixed(2) + " MB";
   }
 
   function renderRichText(raw) {
@@ -134,7 +125,7 @@
 
   /* ---------- RENDER ---------- */
 
-  function appendMessageEl(role, content, ts, imageDataUrl) {
+  function appendMessageEl(role, content, ts) {
     const bodyEl = document.getElementById("rojakAiBody");
     if (!bodyEl) return;
 
@@ -143,14 +134,6 @@
     });
 
     const bubble = el("div", { class: "rojak-ai-bubble" });
-
-    if (imageDataUrl) {
-      bubble.appendChild(el("img", {
-        class: "rojak-ai-img",
-        src: imageDataUrl,
-        alt: "Lampiran"
-      }));
-    }
 
     if (content) {
       bubble.appendChild(el("div", { html: renderRichText(content) }));
@@ -225,7 +208,7 @@
     if (state.history.length === 0) {
       appendMessageEl(
         "assistant",
-        "Halo! Saya Rojak AI 👋\n\nSaya bisa bantu soal rumus Excel, jelasin fungsi, atau baca tabel dari foto. Mau tanya apa?",
+        "Halo! Saya Rojak AI, asisten Rojak DriveK1t.\n\nSaya bisa bantu cari rumus Excel, jelasin fungsi, atau pandu cara pakai DriveK1t. Mau tanya apa?",
         Date.now()
       );
       renderQuickSuggestions();
@@ -254,6 +237,9 @@
     panel.classList.add("rojak-ai-open");
     state.open = true;
 
+    state.scrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.classList.add("rojak-ai-no-scroll");
+
     setTimeout(() => {
       if (input) input.focus();
       scrollToBottom();
@@ -263,59 +249,19 @@
   function closePanel() {
     const panel = document.getElementById("rojakAiPanel");
     if (!panel) return;
+
     panel.classList.remove("rojak-ai-open");
     state.open = false;
+
+    document.body.classList.remove("rojak-ai-no-scroll");
+
+    if (state.scrollY) {
+      window.scrollTo(0, state.scrollY);
+    }
   }
 
   function togglePanel() {
     state.open ? closePanel() : openPanel();
-  }
-
-  /* ---------- ATTACH ---------- */
-
-  function handleFileSelected(file) {
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      alert("Hanya file gambar yang didukung.");
-      return;
-    }
-
-    if (file.size > CONFIG.MAX_IMAGE_BYTES) {
-      alert("Ukuran gambar terlalu besar (max 4MB).");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = e => {
-      state.attachedImage = {
-        dataUrl: e.target.result,
-        name: file.name || "gambar.jpg",
-        size: file.size
-      };
-
-      const wrap = document.getElementById("rojakAiAttach");
-      const img = document.getElementById("rojakAiAttachImg");
-      const nameEl = document.getElementById("rojakAiAttachName");
-      const sizeEl = document.getElementById("rojakAiAttachSize");
-
-      if (img) img.src = state.attachedImage.dataUrl;
-      if (nameEl) nameEl.textContent = state.attachedImage.name;
-      if (sizeEl) sizeEl.textContent = formatBytes(state.attachedImage.size);
-      if (wrap) wrap.classList.add("rojak-ai-attach-on");
-
-      scrollToBottom();
-    };
-    reader.onerror = () => alert("Gagal membaca gambar.");
-    reader.readAsDataURL(file);
-  }
-
-  function clearAttachment() {
-    state.attachedImage = null;
-    const wrap = document.getElementById("rojakAiAttach");
-    const fileInput = document.getElementById("rojakAiFile");
-    if (wrap) wrap.classList.remove("rojak-ai-attach-on");
-    if (fileInput) fileInput.value = "";
   }
 
   /* ---------- SEND ---------- */
@@ -327,9 +273,7 @@
     if (!input) return;
 
     const text = (input.value || "").trim();
-    const image = state.attachedImage;
-
-    if (!text && !image) return;
+    if (!text) return;
 
     if (text.length > CONFIG.MAX_MESSAGE_LEN) {
       alert("Pesan terlalu panjang.");
@@ -340,15 +284,12 @@
     if (sugg) sugg.remove();
 
     const ts = Date.now();
-    appendMessageEl("user", text, ts, image ? image.dataUrl : null);
+    appendMessageEl("user", text, ts);
 
     state.history.push({ role: "user", content: text, ts });
 
     input.value = "";
     autoGrow(input);
-
-    const imageToSend = image ? image.dataUrl : null;
-    clearAttachment();
 
     state.sending = true;
     const sendBtn = document.getElementById("rojakAiSend");
@@ -361,14 +302,25 @@
         .slice(-CONFIG.MAX_HISTORY)
         .map(m => ({ role: m.role, content: m.content }));
 
-      const body = { messages: payloadMessages };
-      if (imageToSend) body.image = imageToSend;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 28000);
 
-      const res = await fetch(CONFIG.API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+      let res;
+      try {
+        res = await fetch(CONFIG.API_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: payloadMessages }),
+          signal: controller.signal
+        });
+      } catch (fetchError) {
+        if (fetchError?.name === "AbortError") {
+          throw new Error("TIMEOUT");
+        }
+        throw fetchError;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       removeTypingEl();
 
@@ -396,9 +348,14 @@
     } catch (err) {
       removeTypingEl();
       console.error("[Rojak AI] fetch error:", err);
+      const errorMessage =
+        err?.message === "TIMEOUT"
+          ? "Rojak AI terlalu lama merespons. Coba kirim lagi."
+          : "Tidak dapat terhubung ke Rojak AI. Periksa koneksi internet kamu.";
+
       appendMessageEl(
         "assistant",
-        "Tidak dapat terhubung ke Rojak AI. Periksa koneksi internet kamu.",
+        errorMessage,
         Date.now()
       );
     } finally {
@@ -412,8 +369,6 @@
   function resetConversation() {
     if (!confirm("Reset percakapan Rojak AI?")) return;
     state.history = [];
-    state.attachedImage = null;
-    clearAttachment();
     try { localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (_) {}
     renderHistory();
   }
@@ -476,46 +431,12 @@
       id: "rojakAiBody"
     });
 
-    const attach = el("div", {
-      class: "rojak-ai-attach",
-      id: "rojakAiAttach"
-    }, [
-      el("img", { id: "rojakAiAttachImg", alt: "Lampiran" }),
-      el("div", { class: "rojak-ai-attach-info" }, [
-        el("div", { class: "rojak-ai-attach-name", id: "rojakAiAttachName" }),
-        el("div", { class: "rojak-ai-attach-size", id: "rojakAiAttachSize" })
-      ]),
-      el("button", {
-        class: "rojak-ai-attach-remove",
-        type: "button",
-        id: "rojakAiAttachRemove",
-        "aria-label": "Hapus lampiran",
-        html: "×"
-      })
-    ]);
-
     const textarea = el("textarea", {
       class: "rojak-ai-textarea",
       id: "rojakAiInput",
-      placeholder: "Tanya rumus Excel, kirim foto tabel...",
+      placeholder: "Tanya rumus Excel atau cara pakai DriveK1t...",
       rows: "1",
       maxlength: String(CONFIG.MAX_MESSAGE_LEN)
-    });
-
-    const fileInput = el("input", {
-      type: "file",
-      id: "rojakAiFile",
-      accept: "image/png,image/jpeg,image/jpg,image/webp",
-      style: "display:none"
-    });
-
-    const uploadBtn = el("button", {
-      class: "rojak-ai-mini",
-      type: "button",
-      id: "rojakAiUpload",
-      title: "Kirim foto",
-      "aria-label": "Kirim foto",
-      html: ICON_CAMERA
     });
 
     const sendBtn = el("button", {
@@ -528,9 +449,7 @@
     });
 
     const footer = el("div", { class: "rojak-ai-footer" }, [
-      attach,
       el("div", { class: "rojak-ai-input-row" }, [
-        uploadBtn,
         textarea,
         sendBtn
       ]),
@@ -546,7 +465,6 @@
 
     document.body.appendChild(fab);
     document.body.appendChild(panel);
-    document.body.appendChild(fileInput);
   }
 
   /* ---------- INIT ---------- */
@@ -567,19 +485,6 @@
     const resetBtn = document.getElementById("rojakAiReset");
     if (resetBtn) resetBtn.addEventListener("click", resetConversation);
 
-    const uploadBtn = document.getElementById("rojakAiUpload");
-    const fileInput = document.getElementById("rojakAiFile");
-
-    if (uploadBtn && fileInput) {
-      uploadBtn.addEventListener("click", () => fileInput.click());
-      fileInput.addEventListener("change", e => {
-        handleFileSelected(e.target.files && e.target.files[0]);
-      });
-    }
-
-    const attachRemove = document.getElementById("rojakAiAttachRemove");
-    if (attachRemove) attachRemove.addEventListener("click", clearAttachment);
-
     const sendBtn = document.getElementById("rojakAiSend");
     if (sendBtn) sendBtn.addEventListener("click", sendMessage);
 
@@ -590,20 +495,6 @@
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           sendMessage();
-        }
-      });
-
-      textarea.addEventListener("paste", e => {
-        const items = e.clipboardData && e.clipboardData.items;
-        if (!items) return;
-        for (const item of items) {
-          if (item.type && item.type.startsWith("image/")) {
-            const file = item.getAsFile();
-            if (file) {
-              handleFileSelected(file);
-              break;
-            }
-          }
         }
       });
     }
