@@ -1,9 +1,7 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player
-   Main player + Sticky Mini Player (muncul saat scroll)
+   ROJAK DRIVEK1T — Music Player + Mini Player
 ============================================================ */
 
-/* ---------- SVG SAFETY ---------- */
 .rdk-music-section svg,
 .rdk-music-mini svg {
   display: block;
@@ -26,8 +24,6 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
-
-/* HEADER */
 
 .rdk-music-header {
   display: flex;
@@ -59,10 +55,7 @@
   max-height: 16px;
 }
 
-.rdk-music-meta {
-  min-width: 0;
-  flex: 1 1 auto;
-}
+.rdk-music-meta { min-width: 0; flex: 1 1 auto; }
 
 .rdk-music-title {
   overflow: hidden;
@@ -116,14 +109,7 @@
   border-color: #3b3c38;
 }
 
-.rdk-music-btn:active {
-  transform: scale(.94);
-}
-
-.rdk-music-btn:focus-visible {
-  outline: 2px solid rgba(228, 86, 50, .55);
-  outline-offset: 2px;
-}
+.rdk-music-btn:active { transform: scale(.94); }
 
 .rdk-music-btn svg {
   width: 15px;
@@ -146,28 +132,16 @@
   border-radius: 50%;
   background: #e45632;
   color: #ffffff;
-  box-shadow:
-    0 4px 14px rgba(228, 86, 50, .28),
-    inset 0 1px 0 rgba(255, 255, 255, .1);
+  box-shadow: 0 4px 14px rgba(228, 86, 50, .28), inset 0 1px 0 rgba(255, 255, 255, .1);
 }
 
 .rdk-music-play:hover {
   background: #f0643f;
   border-color: #f0643f;
   color: #ffffff;
-  box-shadow:
-    0 6px 18px rgba(228, 86, 50, .38),
-    inset 0 1px 0 rgba(255, 255, 255, .12);
 }
 
-.rdk-music-play:active {
-  transform: scale(.94);
-}
-
-.rdk-music-play:focus-visible {
-  outline: 2px solid rgba(228, 86, 50, .7);
-  outline-offset: 3px;
-}
+.rdk-music-play:active { transform: scale(.94); }
 
 .rdk-music-play svg {
   width: 15px;
@@ -203,14 +177,11 @@
   padding: 0 20px;
   color: #676861;
   font-size: 10px;
-  letter-spacing: .2px;
   text-align: center;
   pointer-events: none;
 }
 
-.rdk-music-wave-empty.rdk-music-hidden {
-  display: none;
-}
+.rdk-music-wave-empty.rdk-music-hidden { display: none; }
 
 /* LIRIK */
 
@@ -243,10 +214,7 @@
   text-overflow: ellipsis;
 }
 
-.rdk-music-lyric-text {
-  display: inline-block;
-  color: #eeeeea;
-}
+.rdk-music-lyric-text { display: inline-block; color: #eeeeea; }
 
 .rdk-music-cursor {
   display: inline-block;
@@ -270,34 +238,29 @@
   left: 0;
   right: 0;
   bottom: 0;
-
   z-index: 7500;
 
   display: flex;
   align-items: center;
   gap: 10px;
 
-  padding: 10px 12px;
+  padding: 10px 100px 10px 12px;
 
   border-top: 1px solid #292a27;
-  background: rgba(16, 17, 15, .96);
+  background: rgba(16, 17, 15, .97);
 
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  /* Hidden state */
   transform: translateY(110%);
   opacity: 0;
   pointer-events: none;
 
   transition:
-    transform .25s cubic-bezier(.4, 0, .2, 1),
-    opacity .2s ease;
-
-  /* Beri ruang Rojak AI di kanan bawah */
-  padding-right: 96px;
+    transform .28s cubic-bezier(.4, 0, .2, 1),
+    opacity .22s ease;
 }
 
 .rdk-music-mini.rdk-music-mini-open {
@@ -325,17 +288,13 @@
   max-height: 15px;
 }
 
-.rdk-music-mini-meta {
-  min-width: 0;
-  flex: 1 1 auto;
-}
+.rdk-music-mini-meta { min-width: 0; flex: 1 1 auto; }
 
 .rdk-music-mini-title {
   overflow: hidden;
   color: #eeeeea;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: -.1px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -350,8 +309,6 @@
   white-space: nowrap;
 }
 
-/* Mini waveform */
-
 .rdk-music-mini-wave {
   display: block;
   width: 46px;
@@ -361,8 +318,6 @@
   max-height: none;
   opacity: .9;
 }
-
-/* Mini controls */
 
 .rdk-music-mini-controls {
   display: flex;
@@ -392,9 +347,7 @@
   border-color: #3b3c38;
 }
 
-.rdk-music-mini-btn:active {
-  transform: scale(.94);
-}
+.rdk-music-mini-btn:active { transform: scale(.94); }
 
 .rdk-music-mini-btn svg {
   width: 14px;
@@ -460,10 +413,7 @@
 
 @media (max-width: 600px) {
 
-  .rdk-music-header {
-    gap: 10px;
-    padding: 12px 13px;
-  }
+  .rdk-music-header { gap: 10px; padding: 12px 13px; }
 
   .rdk-music-icon {
     width: 34px;
@@ -491,19 +441,15 @@
     padding: 16px 13px;
   }
 
-  .rdk-music-lyric-wrap {
-    padding: 12px 13px 16px;
-  }
+  .rdk-music-lyric-wrap { padding: 12px 13px 16px; }
 
   .rdk-music-lyric-line {
     font-size: 13px;
     min-height: 24px;
   }
 
-  /* Mini di mobile: sembunyikan waveform, ringkas */
   .rdk-music-mini {
-    padding: 8px 10px 8px 10px;
-    padding-right: 78px;
+    padding: 8px 84px 8px 10px;
     gap: 8px;
   }
 
@@ -516,9 +462,7 @@
   .rdk-music-mini-title { font-size: 10.5px; }
   .rdk-music-mini-artist { font-size: 7.5px; }
 
-  .rdk-music-mini-wave {
-    display: none;
-  }
+  .rdk-music-mini-wave { display: none; }
 
   .rdk-music-mini-btn {
     width: 30px;
