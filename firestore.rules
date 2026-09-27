@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+
+    function isAdmin() {
+
+      return signedIn()
+        && exists(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        )
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.role == "admin";
+    }
+
+
+    match /users/{userId} {
+
+      // User baru boleh membuat profilnya sendiri
+      // dan role awal wajib member.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "member";
+
+
+      // User boleh membaca profil sendiri.
+      // Admin boleh membaca semua user.
+      allow read: if signedIn()
+        && (
+          request.auth.uid == userId
+          || isAdmin()
+        );
+
+
+      // Member hanya boleh mengubah data profil sendiri.
+      // Tidak boleh mengubah role.
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasOnly([
+            "name",
+            "email",
+            "photoURL",
+            "updatedAt"
+          ]);
+
+
+      // Admin boleh mengubah role/data user.
+      allow update: if isAdmin();
+
+
+      // Hanya admin yang boleh menghapus user.
+      allow delete: if isAdmin();
+    }
+  }
+}
