@@ -1,6 +1,5 @@
 /* ============================================================
-   ROJAK AI — Widget Chat
-   Dibungkus IIFE supaya tidak mengganggu scope global DriveK1t.
+   ROJAK AI — Chat Widget (FIXED SCROLL)
 ============================================================ */
 
 (function () {
@@ -25,7 +24,8 @@
     open: false,
     sending: false,
     history: [],
-    attachedImage: null
+    attachedImage: null,
+    scrollY: 0
   };
 
   /* ---------- ICONS ---------- */
@@ -244,7 +244,7 @@
     ta.style.height = Math.min(ta.scrollHeight, 100) + "px";
   }
 
-  /* ---------- PANEL ---------- */
+  /* ---------- PANEL OPEN / CLOSE (FIX SCROLL LOCK) ---------- */
 
   function openPanel() {
     const panel = document.getElementById("rojakAiPanel");
@@ -253,6 +253,12 @@
 
     panel.classList.add("rojak-ai-open");
     state.open = true;
+
+    // Simpan posisi scroll body
+    state.scrollY = window.scrollY || window.pageYOffset || 0;
+
+    // Kunci scroll body — biar halaman belakang tidak ikut scroll
+    document.body.classList.add("rojak-ai-no-scroll");
 
     setTimeout(() => {
       if (input) input.focus();
@@ -263,8 +269,17 @@
   function closePanel() {
     const panel = document.getElementById("rojakAiPanel");
     if (!panel) return;
+
     panel.classList.remove("rojak-ai-open");
     state.open = false;
+
+    // Lepas kunci scroll body
+    document.body.classList.remove("rojak-ai-no-scroll");
+
+    // Kembalikan posisi scroll
+    if (state.scrollY) {
+      window.scrollTo(0, state.scrollY);
+    }
   }
 
   function togglePanel() {
