@@ -1,7 +1,7 @@
 /* ============================================================
    ROJAK DRIVEK1T — Custom Music Player
    Gain boost 2.5x, tanpa volume slider.
-   Waveform bell curve + lirik typewriter.
+   Waveform bell curve smooth + lirik typewriter.
 ============================================================ */
 
 (function () {
@@ -30,15 +30,13 @@
   const ERASE_SPEED_MS = 25;
   const HOLD_AFTER_TYPE = 300;
 
-  // Konfigurasi waveform
   const WAVE_BARS = 72;
   const WAVE_GAP = 3;
   const WAVE_MIN_H = 3;
   const WAVE_ENVELOPE = true;
-  const WAVE_ENVELOPE_POWER = 1.4;
+  const WAVE_ENVELOPE_POWER = 1.35;
 
-  // Konfigurasi gain (volume boost)
-  const GAIN_BOOST = 3.0;   // 1.0 = normal, 2.5 = 2.5x lipat
+  const GAIN_BOOST = 2.5;
 
   const state = {
     audio: null,
@@ -96,17 +94,26 @@
     });
 
     const playBtn = el("button", {
-      class: "rdk-music-play", type: "button",
-      id: "rdkMusicPlay", title: "Play", html: ICON_PLAY
+      class: "rdk-music-play",
+      type: "button",
+      id: "rdkMusicPlay",
+      title: "Play",
+      "aria-label": "Play",
+      html: ICON_PLAY
     });
 
     const loopBtn = el("button", {
-      class: "rdk-music-btn", type: "button",
-      id: "rdkMusicLoop", title: "Loop", html: ICON_LOOP
+      class: "rdk-music-btn",
+      type: "button",
+      id: "rdkMusicLoop",
+      title: "Loop",
+      "aria-label": "Loop",
+      html: ICON_LOOP
     });
 
     const headerActions = el("div", { class: "rdk-music-header-actions" }, [
-      loopBtn, playBtn
+      loopBtn,
+      playBtn
     ]);
 
     const header = el("div", { class: "rdk-music-header" }, [
@@ -128,18 +135,26 @@
     ]);
 
     const lyricLine = el("div", {
-      class: "rdk-music-lyric-line", id: "rdkMusicLyricLine"
+      class: "rdk-music-lyric-line",
+      id: "rdkMusicLyricLine"
     }, [
       el("span", {
-        class: "rdk-music-lyric-text", id: "rdkMusicLyricText", text: ""
+        class: "rdk-music-lyric-text",
+        id: "rdkMusicLyricText",
+        text: ""
       }),
       el("span", {
-        class: "rdk-music-cursor", id: "rdkMusicCursor", text: "|"
+        class: "rdk-music-cursor",
+        id: "rdkMusicCursor",
+        text: "|"
       })
     ]);
 
     const lyricWrap = el("div", { class: "rdk-music-lyric-wrap" }, [
-      el("div", { class: "rdk-music-lyric-title", text: "LIRIK" }),
+      el("div", {
+        class: "rdk-music-lyric-title",
+        text: "Lirik"
+      }),
       lyricLine
     ]);
 
@@ -168,7 +183,7 @@
     const audio = new Audio();
     audio.preload = "auto";
     audio.src = TRACK.src;
-    audio.volume = 1.0;   // tetap 1.0 — boost via gainNode
+    audio.volume = 1.0;
     state.audio = audio;
 
     audio.addEventListener("loadedmetadata", () => {
@@ -264,13 +279,10 @@
     if (!btn) return;
     btn.innerHTML = state.isPlaying ? ICON_PAUSE : ICON_PLAY;
     btn.title = state.isPlaying ? "Pause" : "Play";
+    btn.setAttribute("aria-label", state.isPlaying ? "Pause" : "Play");
   }
 
-  /* ---------------------------------------------------------
-     AUDIO CONTEXT + ANALYSER + GAIN BOOST
-  --------------------------------------------------------- */
-
-  function ensureAudioContext(forceResume) {
+  function ensureAudioContext() {
     if (state.audioCtx) {
       if (state.audioCtx.state === "suspended") {
         state.audioCtx.resume().catch(() => {});
@@ -292,21 +304,17 @@
       const analyser = ctx.createAnalyser();
       const gainNode = ctx.createGain();
 
-      // Setelan akurasi analyser
       analyser.fftSize = 512;
       analyser.smoothingTimeConstant = 0.65;
       analyser.minDecibels = -90;
       analyser.maxDecibels = -10;
 
-      // Setelan boost volume
       gainNode.gain.value = GAIN_BOOST;
 
-      // Rantai: source → analyser → gainNode → speaker
       source.connect(analyser);
       analyser.connect(gainNode);
       gainNode.connect(ctx.destination);
 
-      // Buffer pre-allocated
       state.freqData = new Uint8Array(analyser.frequencyBinCount);
 
       state.audioCtx = ctx;
@@ -422,7 +430,8 @@
             const amp = v * env;
             const barH = Math.max(WAVE_MIN_H, WAVE_MIN_H + amp * (h * 0.92));
             const x = i * (barW + gap);
-            const alpha = 0.45 + v * 0.55;
+
+            const alpha = 0.4 + v * 0.6;
             ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
             ctx.fillRect(x, mid - barH / 2, barW, barH);
           }
@@ -440,7 +449,7 @@
           const v = Math.abs(base) * env;
           const barH = Math.max(WAVE_MIN_H, WAVE_MIN_H + v * (h * 0.75));
           const x = i * (barW + gap);
-          const alpha = 0.45 + v * 0.5;
+          const alpha = 0.4 + v * 0.5;
           ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
           ctx.fillRect(x, mid - barH / 2, barW, barH);
         }
