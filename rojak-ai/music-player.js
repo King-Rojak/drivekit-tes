@@ -1,18 +1,19 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player + DIAGNOSTIC MODE
+   ROJAK DRIVEK1T — Music Player (Playlist + Mini)
+   Hanya cover playlist di header. Tanpa cover per lagu.
 ============================================================ */
 
 (function () {
   "use strict";
 
   /* ---------------------------------------------------------
-     🎵 CONFIG
+     🎵 KONFIGURASI
   --------------------------------------------------------- */
 
   const PLAYLIST_INFO = {
     name: "My Playlist — King Rojak",
     owner: "rojak",
-    cover: "./music/playlist-cover.jpeg"
+    cover: "./music/playlist-cover.jpeg"   // ← ganti nama file cover playlist
   };
 
   const PLAYLIST = [
@@ -33,10 +34,12 @@
     }
   ];
 
-  const DIAGNOSTIC_MODE = true;
+  const GAIN_BOOST = 1.0;
 
   const state = {
     audio: null,
+    audioCtx: null,
+    gainNode: null,
     currentIndex: 0,
     duration: 0,
     currentTime: 0,
@@ -88,23 +91,9 @@
     return m + ":" + (s < 10 ? "0" + s : s);
   }
 
-  function logDiag(msg, type) {
-    console.log("[Music]", msg);
-    if (!DIAGNOSTIC_MODE) return;
-    const panel = document.getElementById("rdkMusicDiag");
-    if (!panel) return;
-
-    const line = document.createElement("div");
-    line.className = "rdk-music-diag-line" + (type ? " rdk-music-diag-" + type : "");
-    line.textContent = "› " + msg;
-    panel.appendChild(line);
-    panel.scrollTop = panel.scrollHeight;
-  }
-
-  function buildDiagnostic() {
-    if (!DIAGNOSTIC_MODE) return null;
-    return el("div", { class: "rdk-music-diag", id: "rdkMusicDiag" });
-  }
+  /* ---------------------------------------------------------
+     BUILD MAIN PLAYER
+  --------------------------------------------------------- */
 
   function buildPlayer() {
     const section = el("section", {
@@ -112,9 +101,7 @@
       id: "rdkMusicSection"
     });
 
-    const diag = buildDiagnostic();
-    if (diag) section.appendChild(diag);
-
+    /* ───── HEADER PLAYLIST (cover + nama) ───── */
     const playlistCoverWrap = el("div", { class: "rdk-music-playlist-cover" });
     if (PLAYLIST_INFO.cover) {
       const img = el("img", {
@@ -124,23 +111,31 @@
       img.addEventListener("error", () => {
         playlistCoverWrap.innerHTML = ICON_MUSIC;
       });
-      img.addEventListener("load", () => {
-        logDiag("cover playlist OK", "ok");
-      });
       playlistCoverWrap.appendChild(img);
     } else {
       playlistCoverWrap.innerHTML = ICON_MUSIC;
     }
 
+    const playlistName = el("div", {
+      class: "rdk-music-playlist-name",
+      text: PLAYLIST_INFO.name
+    });
+
+    const playlistOwner = el("div", {
+      class: "rdk-music-playlist-owner",
+      text: PLAYLIST_INFO.owner
+    });
+
     const playlistMeta = el("div", { class: "rdk-music-playlist-meta" }, [
-      el("div", { class: "rdk-music-playlist-name", text: PLAYLIST_INFO.name }),
-      el("div", { class: "rdk-music-playlist-owner", text: PLAYLIST_INFO.owner })
+      playlistName,
+      playlistOwner
     ]);
 
     const playlistHeader = el("div", {
       class: "rdk-music-playlist-header"
     }, [playlistCoverWrap, playlistMeta]);
 
+    /* ───── PLAYLIST ───── */
     const trackList = el("div", {
       class: "rdk-music-tracklist",
       id: "rdkMusicTrackList"
@@ -148,6 +143,7 @@
 
     const list = el("div", { class: "rdk-music-list" }, [trackList]);
 
+    /* ───── NOW BAR (bawah) ───── */
     const barTitle = el("div", {
       class: "rdk-music-nowbar-title",
       id: "rdkMusicBarTitle"
@@ -155,7 +151,7 @@
 
     const prevBtn = el("button", {
       class: "rdk-music-iconbtn", type: "button", id: "rdkMusicPrev",
-      title: "Sebelumnya", html: ICON_PREV
+      title: "Sebelumnya", "aria-label": "Sebelumnya", html: ICON_PREV
     });
 
     const progressTrack = el("div", { class: "rdk-music-progress-track" }, [
@@ -174,21 +170,23 @@
 
     const playBtn = el("button", {
       class: "rdk-music-play", type: "button", id: "rdkMusicPlay",
-      title: "Play", html: ICON_PLAY
+      title: "Play", "aria-label": "Play", html: ICON_PLAY
     });
 
     const timeEl = el("div", {
-      class: "rdk-music-time", id: "rdkMusicTime", text: "-0:00"
+      class: "rdk-music-time",
+      id: "rdkMusicTime",
+      text: "-0:00"
     });
 
     const shuffleBtn = el("button", {
       class: "rdk-music-iconbtn", type: "button", id: "rdkMusicShuffle",
-      title: "Acak", html: ICON_SHUFFLE
+      title: "Acak", "aria-label": "Acak", html: ICON_SHUFFLE
     });
 
     const loopBtn = el("button", {
       class: "rdk-music-iconbtn", type: "button", id: "rdkMusicLoop",
-      title: "Ulangi", html: ICON_LOOP
+      title: "Ulangi", "aria-label": "Ulangi", html: ICON_LOOP
     });
 
     const extras = el("div", { class: "rdk-music-extras" }, [shuffleBtn, loopBtn]);
@@ -206,9 +204,17 @@
     return section;
   }
 
-  function buildMiniPlayer() {
-    const mini = el("div", { class: "rdk-music-mini", id: "rdkMusicMini" });
+  /* ---------------------------------------------------------
+     BUILD MINI PLAYER
+  --------------------------------------------------------- */
 
+  function buildMiniPlayer() {
+    const mini = el("div", {
+      class: "rdk-music-mini",
+      id: "rdkMusicMini"
+    });
+
+    /* Cover mini pakai cover playlist */
     const coverWrap = el("div", { class: "rdk-music-mini-cover" });
     if (PLAYLIST_INFO.cover) {
       const img = el("img", { src: PLAYLIST_INFO.cover, alt: "Playlist" });
@@ -221,12 +227,14 @@
     }
 
     const title = el("div", {
-      class: "rdk-music-mini-title", id: "rdkMusicMiniTitle",
+      class: "rdk-music-mini-title",
+      id: "rdkMusicMiniTitle",
       text: PLAYLIST[0] ? PLAYLIST[0].title : ""
     });
 
     const artist = el("div", {
-      class: "rdk-music-mini-artist", id: "rdkMusicMiniArtist",
+      class: "rdk-music-mini-artist",
+      id: "rdkMusicMiniArtist",
       text: PLAYLIST[0] ? PLAYLIST[0].artist : ""
     });
 
@@ -234,22 +242,22 @@
 
     const prevBtn = el("button", {
       class: "rdk-music-mini-btn", type: "button", id: "rdkMusicMiniPrev",
-      title: "Sebelumnya", html: ICON_PREV
+      title: "Sebelumnya", "aria-label": "Sebelumnya", html: ICON_PREV
     });
 
     const playBtn = el("button", {
       class: "rdk-music-mini-btn rdk-music-mini-play", type: "button", id: "rdkMusicMiniPlay",
-      title: "Play", html: ICON_PLAY
+      title: "Play", "aria-label": "Play", html: ICON_PLAY
     });
 
     const nextBtn = el("button", {
       class: "rdk-music-mini-btn", type: "button", id: "rdkMusicMiniNext",
-      title: "Selanjutnya", html: ICON_NEXT
+      title: "Selanjutnya", "aria-label": "Selanjutnya", html: ICON_NEXT
     });
 
     const closeBtn = el("button", {
       class: "rdk-music-mini-close", type: "button", id: "rdkMusicMiniClose",
-      title: "Sembunyikan", html: "×"
+      title: "Sembunyikan", "aria-label": "Sembunyikan", html: "×"
     });
 
     const controls = el("div", { class: "rdk-music-mini-controls" }, [
@@ -263,9 +271,14 @@
     return mini;
   }
 
+  /* ---------------------------------------------------------
+     RENDER PLAYLIST (TANPA COVER PER LAGU)
+  --------------------------------------------------------- */
+
   function renderTrackList() {
     const container = document.getElementById("rdkMusicTrackList");
     if (!container) return;
+
     container.innerHTML = "";
 
     PLAYLIST.forEach((track, i) => {
@@ -290,13 +303,14 @@
         "data-index": String(i)
       }, [numEl, eqEl, info]);
 
-      row.addEventListener("click", () => {
-        logDiag("klik track: " + track.title);
-        playTrack(i);
-      });
+      row.addEventListener("click", () => playTrack(i));
       container.appendChild(row);
     });
   }
+
+  /* ---------------------------------------------------------
+     UPDATE UI
+  --------------------------------------------------------- */
 
   function updateNowBar() {
     const track = PLAYLIST[state.currentIndex];
@@ -321,7 +335,11 @@
     });
   }
 
-  async function playTrack(index) {
+  /* ---------------------------------------------------------
+     PLAY TRACK
+  --------------------------------------------------------- */
+
+  function playTrack(index, autoplay) {
     if (!PLAYLIST[index]) return;
     const track = PLAYLIST[index];
     state.currentIndex = index;
@@ -329,72 +347,34 @@
     const audio = state.audio;
     if (!audio) return;
 
-    logDiag("─── playTrack #" + (index + 1) + " ───");
-    logDiag("title: " + track.title);
-    logDiag("src: " + track.src);
-
     audio.src = track.src;
     audio.load();
 
-    audio.muted = false;
-    audio.volume = 1.0;
-    logDiag("muted: " + audio.muted + ", volume: " + audio.volume);
-
     updateNowBar();
 
-    try {
-      const res = await fetch(track.src, { method: "HEAD" });
-      if (res.ok) {
-        logDiag("✓ file ditemukan (HTTP " + res.status + ")", "ok");
-        logDiag("  content-type: " + (res.headers.get("content-type") || "-"));
-        logDiag("  content-length: " + (res.headers.get("content-length") || "-"));
-      } else {
-        logDiag("✗ file TIDAK ditemukan (HTTP " + res.status + ")", "error");
-        logDiag("  Cek nama file di GitHub folder music/", "error");
-        logDiag("  URL: " + new URL(track.src, location.href).href, "error");
-        return;
-      }
-    } catch (err) {
-      logDiag("✗ fetch gagal: " + err.message, "error");
-    }
-
-    try {
-      logDiag("memanggil audio.play()...");
+    if (autoplay !== false) {
+      ensureAudioContext();
       const p = audio.play();
-      if (p && typeof p.then === "function") {
-        await p;
-        logDiag("✓ play() resolved — audio main", "ok");
-      }
-    } catch (err) {
-      logDiag("✗ play() error: " + err.name, "error");
-      logDiag("  message: " + err.message, "error");
-
-      if (err.name === "NotAllowedError") {
-        logDiag("  → Browser blok autoplay. Coba klik sekali lagi.", "warn");
-      } else if (err.name === "NotSupportedError") {
-        logDiag("  → Format MP3 tidak didukung / file korup.", "error");
-      } else if (err.name === "AbortError") {
-        logDiag("  → Load dibatalkan.", "warn");
+      if (p && typeof p.catch === "function") {
+        p.catch(err => console.error("[Music] Play error:", err));
       }
     }
+
+    state.currentTime = 0;
+    state.duration = state.durationCache[track.src] || 0;
+    updateProgressUI();
   }
 
   function togglePlay() {
     const audio = state.audio;
     if (!audio) return;
-
     if (audio.paused) {
-      logDiag("togglePlay → play");
-      audio.muted = false;
-      audio.volume = 1.0;
+      ensureAudioContext();
       const p = audio.play();
       if (p && typeof p.catch === "function") {
-        p.catch(err => {
-          logDiag("✗ play error: " + err.name + " - " + err.message, "error");
-        });
+        p.catch(err => console.error("[Music] Play error:", err));
       }
     } else {
-      logDiag("togglePlay → pause");
       audio.pause();
     }
   }
@@ -407,12 +387,14 @@
     if (mainBtn) {
       mainBtn.innerHTML = icon;
       mainBtn.title = label;
+      mainBtn.setAttribute("aria-label", label);
     }
 
     const miniBtn = document.getElementById("rdkMusicMiniPlay");
     if (miniBtn) {
       miniBtn.innerHTML = icon;
       miniBtn.title = label;
+      miniBtn.setAttribute("aria-label", label);
     }
 
     const section = document.getElementById("rdkMusicSection");
@@ -447,6 +429,10 @@
     }
     playTrack(prevIndex);
   }
+
+  /* ---------------------------------------------------------
+     PROGRESS
+  --------------------------------------------------------- */
 
   function updateProgressUI() {
     const dur = state.duration || 0;
@@ -515,6 +501,44 @@
     document.addEventListener("touchend", endDrag);
   }
 
+  /* ---------------------------------------------------------
+     AUDIO CONTEXT
+  --------------------------------------------------------- */
+
+  function ensureAudioContext() {
+    if (state.audioCtx) {
+      if (state.audioCtx.state === "suspended") {
+        state.audioCtx.resume().catch(() => {});
+      }
+      return;
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx = new AudioCtx();
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+      const source = ctx.createMediaElementSource(state.audio);
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = GAIN_BOOST;
+
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      state.audioCtx = ctx;
+      state.sourceNode = source;
+      state.gainNode = gainNode;
+    } catch (err) {
+      console.error("[Music] AudioContext error:", err);
+    }
+  }
+
+  /* ---------------------------------------------------------
+     MINI VISIBILITY
+  --------------------------------------------------------- */
+
   function setupMiniVisibility() {
     const section = document.getElementById("rdkMusicSection");
     if (!section) return;
@@ -531,6 +555,13 @@
         { threshold: 0.2 }
       );
       observer.observe(section);
+    } else {
+      window.addEventListener("scroll", () => {
+        if (state.miniDismissed) return;
+        const rect = section.getBoundingClientRect();
+        const visible = rect.bottom > 80 && rect.top < window.innerHeight - 80;
+        visible ? closeMini() : openMini();
+      }, { passive: true });
     }
   }
 
@@ -555,6 +586,10 @@
     section.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
+  /* ---------------------------------------------------------
+     MOUNT
+  --------------------------------------------------------- */
+
   function mount() {
     const oldSpotify = document.querySelector(".spotify-section");
     const player = buildPlayer();
@@ -573,27 +608,18 @@
     const mini = buildMiniPlayer();
     document.body.appendChild(mini);
 
-    logDiag("=== Rojak Music Player start ===");
-    logDiag("user-agent: " + navigator.userAgent.slice(0, 80));
-    logDiag("location: " + location.href);
-
     const audio = new Audio();
     audio.preload = "metadata";
-    audio.muted = false;
-    audio.volume = 1.0;
+    if (PLAYLIST[0]) audio.src = PLAYLIST[0].src;
     state.audio = audio;
 
-    audio.addEventListener("loadstart", () => logDiag("event: loadstart"));
     audio.addEventListener("loadedmetadata", () => {
       state.duration = audio.duration || 0;
       state.ready = true;
-      logDiag("event: loadedmetadata — duration: " + state.duration + "s", "ok");
+      const track = PLAYLIST[state.currentIndex];
+      if (track) state.durationCache[track.src] = state.duration;
       updateProgressUI();
     });
-    audio.addEventListener("canplay", () => logDiag("event: canplay", "ok"));
-    audio.addEventListener("playing", () => logDiag("event: playing", "ok"));
-    audio.addEventListener("waiting", () => logDiag("event: waiting (buffering)"));
-    audio.addEventListener("stalled", () => logDiag("event: stalled", "warn"));
 
     audio.addEventListener("timeupdate", () => {
       if (state.dragging) return;
@@ -604,21 +630,14 @@
     audio.addEventListener("play", () => {
       state.isPlaying = true;
       updatePlayButtons();
-      logDiag("event: play — muted: " + audio.muted + ", vol: " + audio.volume, "ok");
     });
 
     audio.addEventListener("pause", () => {
       state.isPlaying = false;
       updatePlayButtons();
-      logDiag("event: pause");
-    });
-
-    audio.addEventListener("volumechange", () => {
-      logDiag("event: volumechange — vol: " + audio.volume + ", muted: " + audio.muted);
     });
 
     audio.addEventListener("ended", () => {
-      logDiag("event: ended");
       if (state.loop) {
         audio.currentTime = 0;
         audio.play().catch(() => {});
@@ -628,17 +647,7 @@
     });
 
     audio.addEventListener("error", () => {
-      const err = audio.error;
-      let code = "?";
-      let msg = "?";
-      if (err) {
-        code = err.code;
-        msg = err.message || "(no message)";
-      }
-      logDiag("✗ event: error — code: " + code + " msg: " + msg, "error");
-      if (code === 4) logDiag("  → File tidak ketemu / format MP3 tidak didukung", "error");
-      if (code === 3) logDiag("  → File korup / gagal decode", "error");
-      if (code === 2) logDiag("  → Network error", "error");
+      console.error("[Music] Gagal load:", audio.src);
     });
 
     const playBtn = document.getElementById("rdkMusicPlay");
@@ -665,20 +674,37 @@
     }
 
     const miniPlay = document.getElementById("rdkMusicMiniPlay");
-    if (miniPlay) miniPlay.addEventListener("click", e => { e.stopPropagation(); togglePlay(); });
+    if (miniPlay) {
+      miniPlay.addEventListener("click", e => {
+        e.stopPropagation();
+        togglePlay();
+      });
+    }
 
     const miniPrev = document.getElementById("rdkMusicMiniPrev");
-    if (miniPrev) miniPrev.addEventListener("click", e => { e.stopPropagation(); prevTrack(); });
+    if (miniPrev) {
+      miniPrev.addEventListener("click", e => {
+        e.stopPropagation();
+        prevTrack();
+      });
+    }
 
     const miniNext = document.getElementById("rdkMusicMiniNext");
-    if (miniNext) miniNext.addEventListener("click", e => { e.stopPropagation(); nextTrack(); });
+    if (miniNext) {
+      miniNext.addEventListener("click", e => {
+        e.stopPropagation();
+        nextTrack();
+      });
+    }
 
     const miniClose = document.getElementById("rdkMusicMiniClose");
-    if (miniClose) miniClose.addEventListener("click", e => {
-      e.stopPropagation();
-      state.miniDismissed = true;
-      closeMini();
-    });
+    if (miniClose) {
+      miniClose.addEventListener("click", e => {
+        e.stopPropagation();
+        state.miniDismissed = true;
+        closeMini();
+      });
+    }
 
     mini.addEventListener("click", e => {
       if (e.target.closest("button")) return;
@@ -689,11 +715,26 @@
     setupMiniVisibility();
     renderTrackList();
     updateNowBar();
+
+    PLAYLIST.forEach((track, i) => {
+      if (i === state.currentIndex) return;
+      const probe = document.createElement("audio");
+      probe.preload = "metadata";
+      probe.src = track.src;
+      probe.addEventListener("loadedmetadata", () => {
+        state.durationCache[track.src] = probe.duration;
+      });
+    });
+
+    if (PLAYLIST[0]) playTrack(0, false);
   }
 
   function init() {
     if (document.getElementById("rdkMusicSection")) return;
-    if (PLAYLIST.length === 0) return;
+    if (PLAYLIST.length === 0) {
+      console.warn("[Music] Playlist kosong.");
+      return;
+    }
     mount();
   }
 

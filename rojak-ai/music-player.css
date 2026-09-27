@@ -1,5 +1,5 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player + Diagnostic
+   ROJAK DRIVEK1T — Music Player (Playlist + Mini)
 ============================================================ */
 
 .rdk-music-section svg,
@@ -20,36 +20,6 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
-
-/* ───────── DIAGNOSTIC ───────── */
-
-.rdk-music-diag {
-  max-height: 180px;
-  overflow-y: auto;
-  padding: 8px 12px;
-  border-bottom: 1px solid #2a1f1c;
-  background: #1a1310;
-  font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 9.5px;
-  line-height: 1.6;
-  color: #d0b8b0;
-  scrollbar-width: thin;
-}
-
-.rdk-music-diag::-webkit-scrollbar { width: 5px; }
-.rdk-music-diag::-webkit-scrollbar-thumb {
-  background: #4a3530;
-  border-radius: 2px;
-}
-
-.rdk-music-diag-line {
-  padding: 1px 0;
-  word-break: break-all;
-}
-
-.rdk-music-diag-line.rdk-music-diag-ok { color: #8fd09a; }
-.rdk-music-diag-line.rdk-music-diag-error { color: #ff8888; font-weight: 600; }
-.rdk-music-diag-line.rdk-music-diag-warn { color: #f0c674; }
 
 /* ───────── HEADER PLAYLIST ───────── */
 
@@ -154,6 +124,7 @@
 
 .rdk-music-track-active .rdk-music-track-num { display: none; }
 
+/* Equalizer */
 .rdk-music-eq {
   width: 22px;
   height: 14px;
@@ -564,4 +535,4 @@
     padding: 8px 78px 8px 10px;
     gap: 8px;
   }
-   }
+}

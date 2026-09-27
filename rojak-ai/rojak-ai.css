@@ -1,8 +1,7 @@
 /* ============================================================
-   ROJAK AI — Chat Widget Styles (Text-only)
+   ROJAK AI — Style terisolasi
+   Semua class pakai prefix .rojak-ai-* agar tidak bentrok
 ============================================================ */
-
-/* ---------- FAB ---------- */
 
 .rojak-ai-fab {
   position: fixed;
@@ -63,7 +62,9 @@
   height: 100%;
 }
 
-/* ---------- PANEL ---------- */
+/* ============================================================
+   PANEL
+============================================================ */
 
 .rojak-ai-panel {
   position: fixed;
@@ -93,14 +94,13 @@
   box-shadow: 0 18px 45px rgba(0, 0, 0, .55);
 
   box-sizing: border-box;
-  overscroll-behavior: contain;
 }
 
 .rojak-ai-panel.rojak-ai-open {
   display: flex;
 }
 
-/* ---------- HEADER ---------- */
+/* HEADER */
 
 .rojak-ai-header {
   flex: 0 0 auto;
@@ -155,7 +155,9 @@
   display: flex;
   align-items: center;
   gap: 5px;
+
   margin-top: 2px;
+
   font-size: 8px;
   color: #8b8c86;
 }
@@ -204,7 +206,7 @@
   height: 13px;
 }
 
-/* ---------- BODY ---------- */
+/* BODY */
 
 .rojak-ai-body {
   flex: 1 1 auto;
@@ -220,7 +222,6 @@
     #131412;
 
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
 }
 
 .rojak-ai-msg {
@@ -230,8 +231,13 @@
   max-width: 100%;
 }
 
-.rojak-ai-msg-user { align-items: flex-end; }
-.rojak-ai-msg-bot { align-items: flex-start; }
+.rojak-ai-msg-user {
+  align-items: flex-end;
+}
+
+.rojak-ai-msg-bot {
+  align-items: flex-start;
+}
 
 .rojak-ai-bubble {
   max-width: 84%;
@@ -305,7 +311,16 @@
   color: #676861;
 }
 
-/* ---------- TYPING ---------- */
+.rojak-ai-img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 6px;
+  border: 1px solid #292a27;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* TYPING */
 
 .rojak-ai-typing {
   display: inline-flex;
@@ -337,7 +352,7 @@
   30% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* ---------- SUGGESTION ---------- */
+/* SUGGESTION */
 
 .rojak-ai-suggest {
   display: flex;
@@ -366,7 +381,82 @@
   color: #eeeeea;
 }
 
-/* ---------- FOOTER ---------- */
+/* ATTACH */
+
+.rojak-ai-attach {
+  display: none;
+  align-items: center;
+  gap: 8px;
+
+  margin: 0 10px;
+
+  padding: 6px 8px;
+
+  border: 1px solid #292a27;
+  border-radius: 6px;
+
+  background: #171815;
+}
+
+.rojak-ai-attach.rojak-ai-attach-on {
+  display: flex;
+}
+
+.rojak-ai-attach img {
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #292a27;
+}
+
+.rojak-ai-attach-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 9px;
+  color: #b4b5af;
+}
+
+.rojak-ai-attach-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #eeeeea;
+  font-weight: 600;
+}
+
+.rojak-ai-attach-size {
+  font-size: 8px;
+  color: #676861;
+  margin-top: 1px;
+}
+
+.rojak-ai-attach-remove {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #292a27;
+  border-radius: 4px;
+
+  background: transparent;
+  color: #8b8c86;
+
+  font-size: 13px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.rojak-ai-attach-remove:hover {
+  background: #24211d;
+  color: #d9655c;
+}
+
+/* FOOTER */
 
 .rojak-ai-footer {
   flex: 0 0 auto;
@@ -422,6 +512,35 @@
   color: #595a55;
 }
 
+.rojak-ai-mini {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #8b8c86;
+
+  cursor: pointer;
+}
+
+.rojak-ai-mini:hover {
+  background: #1e1f1c;
+  color: #eeeeea;
+}
+
+.rojak-ai-mini svg {
+  width: 16px;
+  height: 16px;
+}
+
 .rojak-ai-send {
   width: 32px;
   height: 32px;
@@ -462,8 +581,6 @@
   text-align: center;
 }
 
-/* ---------- SCROLLBAR ---------- */
-
 .rojak-ai-body::-webkit-scrollbar {
   width: 6px;
 }
@@ -477,21 +594,7 @@
   border-radius: 3px;
 }
 
-/* ============================================================
-   BODY SCROLL LOCK
-============================================================ */
-
-body.rojak-ai-no-scroll {
-  overflow: hidden !important;
-  position: fixed !important;
-  width: 100% !important;
-  height: 100% !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-}
-
-/* ---------- MOBILE ---------- */
+/* MOBILE */
 
 @media (max-width: 600px) {
 
@@ -528,4 +631,4 @@ body.rojak-ai-no-scroll {
     max-width: 90%;
     font-size: 11px;
   }
-                                    }
+}
