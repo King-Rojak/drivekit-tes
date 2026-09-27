@@ -6,12 +6,10 @@
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Model vision gratis yang MASIH ADA di OpenRouter.
-// Kalau satu error, ganti ke berikutnya (urut prioritas).
-const MODEL = "meta-llama/llama-3.2-11b-vision-instruct:free";
-// Alternatif (uncomment kalau utama error):
-// const MODEL = "qwen/qwen-2-vl-7b-instruct:free";
-// const MODEL = "google/gemini-flash-1.5-8b:free";
+// Model vision gratis yang MASIH AKTIF di OpenRouter.
+const MODEL = "google/gemma-4-26b-a4b-it:free";
+// Alternatif (uncomment kalau model utama error):
+// const MODEL = "google/gemma-4-31b-it:free";
 
 const SYSTEM_PROMPT = `
 Kamu adalah "Rojak AI", asisten khusus untuk Rojak DriveK1t.
@@ -121,22 +119,12 @@ function safeText(str, max) {
   return str.slice(0, max || 4000);
 }
 
-/**
- * Ekstrak reply dari response OpenRouter.
- * Handle semua format yang mungkin: string, array parts, dll.
- */
 function extractReply(choices) {
   if (!choices || !choices.length) return "";
-
   const msg = choices[0].message;
   if (!msg) return "";
-
   const content = msg.content;
-
-  // Format 1: string langsung
   if (typeof content === "string") return content.trim();
-
-  // Format 2: array of parts (multimodal)
   if (Array.isArray(content)) {
     return content
       .map(p => {
@@ -147,7 +135,6 @@ function extractReply(choices) {
       .join("")
       .trim();
   }
-
   return "";
 }
 
@@ -172,8 +159,6 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  /* ---- PARSE BODY ---- */
-
   let body = req.body;
   if (typeof body === "string") {
     try { body = JSON.parse(body); } catch (_) { body = null; }
@@ -194,8 +179,6 @@ module.exports = async function handler(req, res) {
 
   const trimmed = messagesIn.slice(-16);
 
-  /* ---- BUILD MESSAGES ---- */
-
   const messages = [
     { role: "system", content: SYSTEM_PROMPT }
   ];
@@ -214,8 +197,6 @@ module.exports = async function handler(req, res) {
     if (role === "user") lastUserIdx = messages.length - 1;
   }
 
-  /* ---- SISIPKAN GAMBAR KE PESAN USER TERAKHIR ---- */
-
   if (imageIn && isValidImageDataUrl(imageIn) && lastUserIdx >= 0) {
     const textContent = messages[lastUserIdx].content || "Tolong baca gambar ini.";
     messages[lastUserIdx].content = [
@@ -224,8 +205,6 @@ module.exports = async function handler(req, res) {
     ];
     console.log("[Rojak AI] Vision mode — image size:", Math.round(imageIn.length / 1024), "KB");
   }
-
-  /* ---- CALL OPENROUTER ---- */
 
   const payload = {
     model: MODEL,
@@ -263,8 +242,6 @@ module.exports = async function handler(req, res) {
       message = "Rojak AI lagi rame banget. Coba lagi sebentar ya.";
     } else if (upstreamRes.status === 401 || upstreamRes.status === 403) {
       message = "Rojak AI belum dikonfigurasi dengan benar. Hubungi admin.";
-    } else if (upstreamRes.status === 404) {
-      message = "Model AI tidak tersedia. Coba lagi nanti atau hubungi admin.";
     }
 
     return res.status(502).json({
@@ -283,8 +260,6 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  /* ---- EXTRACT REPLY ---- */
-
   const choices = data && data.choices;
   if (!choices || choices.length === 0) {
     return res.status(200).json({
@@ -300,8 +275,7 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Filter aneh: kalau reply cuma berisi "User Safety: safe / Response Safety: safe",
-  // berarti model fallback ngirim metadata. Kasih pesan ke user.
+  // Filter metadata keamanan yang bocor ke jawaban
   if (/user safety.*safe.*response safety.*safe/i.test(reply) && reply.length < 100) {
     console.warn("[Rojak AI] Detected safety metadata as reply, filtering");
     return res.status(200).json({
