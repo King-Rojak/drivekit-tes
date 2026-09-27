@@ -1,9 +1,8 @@
 /* ============================================================
    ROJAK DRIVEK1T — Custom Music Player
-   Semua SVG dibatasi max 20px biar tidak raksasa.
+   Play/Pause di header, waveform besar, tanpa progress bar.
 ============================================================ */
 
-/* GLOBAL SAFETY — cegah semua SVG di dalam player jadi raksasa */
 .rdk-music-section svg {
   display: block;
   width: 100%;
@@ -20,16 +19,15 @@
   background: #151614;
 }
 
-/* ============================================================
-   HEADER
-============================================================ */
+/* HEADER */
 
 .rdk-music-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid #292a27;
+  background: #10110f;
 }
 
 .rdk-music-icon {
@@ -75,119 +73,14 @@
   white-space: nowrap;
 }
 
-/* ============================================================
-   WAVE ANALYSER
-============================================================ */
-
-.rdk-music-wave-wrap {
-  position: relative;
-  height: 88px;
-  padding: 12px 14px 8px;
-  background: #131412;
-}
-
-.rdk-music-wave {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-}
-
-.rdk-music-wave-empty {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: #676861;
-  font-size: 9px;
-  pointer-events: none;
-  padding: 0 14px;
-  text-align: center;
-}
-
-.rdk-music-wave-empty.rdk-music-hidden {
-  display: none;
-}
-
-/* ============================================================
-   PROGRESS
-============================================================ */
-
-.rdk-music-progress-wrap {
+.rdk-music-header-actions {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 4px 14px 6px;
-}
-
-.rdk-music-time {
-  flex: 0 0 auto;
-  min-width: 32px;
-  color: #8b8c86;
-  font-size: 8px;
-  font-variant-numeric: tabular-nums;
-}
-
-.rdk-music-time.rdk-music-time-right {
-  text-align: right;
-}
-
-.rdk-music-progress {
-  flex: 1 1 auto;
-  position: relative;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.rdk-music-progress-track {
-  width: 100%;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #292a27;
-}
-
-.rdk-music-progress-fill {
-  width: 0%;
-  height: 100%;
-  border-radius: 999px;
-  background: #e45632;
-  transition: width .08s linear;
-}
-
-.rdk-music-progress-thumb {
-  position: absolute;
-  top: 50%;
-  width: 10px;
-  height: 10px;
-  margin-left: -5px;
-  border-radius: 50%;
-  background: #eeeeea;
-  transform: translateY(-50%);
-  opacity: 0;
-  transition: opacity .15s ease;
-  pointer-events: none;
-}
-
-.rdk-music-progress:hover .rdk-music-progress-thumb,
-.rdk-music-progress.rdk-music-dragging .rdk-music-progress-thumb {
-  opacity: 1;
-}
-
-/* ============================================================
-   CONTROLS
-============================================================ */
-
-.rdk-music-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 6px;
-  padding: 2px 14px 8px;
+  flex: 0 0 auto;
 }
+
+/* BUTTONS */
 
 .rdk-music-btn {
   width: 32px;
@@ -210,11 +103,6 @@
   border-color: #3b3c38;
 }
 
-.rdk-music-btn:disabled {
-  opacity: .35;
-  cursor: not-allowed;
-}
-
 .rdk-music-btn svg {
   width: 14px;
   height: 14px;
@@ -229,9 +117,9 @@
 }
 
 .rdk-music-play {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   border: 1px solid #e45632;
   border-radius: 50%;
   background: #e45632;
@@ -245,21 +133,54 @@
 }
 
 .rdk-music-play svg {
-  width: 16px;
-  height: 16px;
-  max-width: 16px;
-  max-height: 16px;
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
 }
 
-/* ============================================================
-   VOLUME
-============================================================ */
+/* WAVE */
+
+.rdk-music-wave-wrap {
+  position: relative;
+  height: 200px;
+  padding: 20px 16px;
+  background:
+    radial-gradient(600px 200px at 50% 50%, rgba(228, 86, 50, .05), transparent 70%),
+    #131412;
+}
+
+.rdk-music-wave {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.rdk-music-wave-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #676861;
+  font-size: 10px;
+  pointer-events: none;
+  padding: 0 16px;
+  text-align: center;
+}
+
+.rdk-music-wave-empty.rdk-music-hidden {
+  display: none;
+}
+
+/* VOLUME */
 
 .rdk-music-volume {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 14px 12px;
+  gap: 8px;
+  padding: 6px 16px 12px;
   color: #8b8c86;
   font-size: 8px;
 }
@@ -309,14 +230,12 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ============================================================
-   LIRIK TYPEWRITER
-============================================================ */
+/* LIRIK */
 
 .rdk-music-lyric-wrap {
   border-top: 1px solid #292a27;
   background: #10110f;
-  padding: 12px 14px 16px;
+  padding: 12px 16px 16px;
 }
 
 .rdk-music-lyric-title {
@@ -347,7 +266,6 @@
 .rdk-music-lyric-text {
   display: inline-block;
   color: #eeeeea;
-  transition: color .15s ease;
 }
 
 .rdk-music-cursor {
@@ -362,15 +280,13 @@
   51%, 100% { opacity: 0; }
 }
 
-/* ============================================================
-   MOBILE
-============================================================ */
+/* MOBILE */
 
 @media (max-width: 600px) {
 
   .rdk-music-wave-wrap {
-    height: 78px;
-    padding: 10px 12px 6px;
+    height: 150px;
+    padding: 14px 12px;
   }
 
   .rdk-music-title {
@@ -387,9 +303,9 @@
   }
 
   .rdk-music-play {
-    width: 38px;
-    height: 38px;
-    flex-basis: 38px;
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
   }
 
   .rdk-music-btn {
