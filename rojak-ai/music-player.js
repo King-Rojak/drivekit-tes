@@ -1,38 +1,40 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player (Spotify-style)
-   Playlist + Play/Pause bulat putih + progress dengan sisa waktu.
-   Tidak ada volume UI, tidak ada lirik.
+   ROJAK DRIVEK1T — Music Player (Playlist + Mini)
+   Hanya cover playlist di header. Tanpa cover per lagu.
 ============================================================ */
 
 (function () {
   "use strict";
 
   /* ---------------------------------------------------------
-     🎵 PLAYLIST — TAMBAH LAGU DI SINI
+     🎵 KONFIGURASI
   --------------------------------------------------------- */
 
-  const PLAYLIST = [
-  {
-    title: "Teh Hijau",
-    artist: "Tulus",
-    src: "./music/teh-hijau.mp3",
-    cover: "./music/teh-hijau.jpeg"
-  },
-  {
-    title: "Sesi Potret",
-    artist: "eńau, Ari Lesmana",
-    src: "./music/sesi-potret.mp3",
-    cover: "./music/sesi-potret.jpeg"
-  },
-  {
-    title: "Dunia Yang Nanti",
-    artist: "Raim Laode",
-    src: "./music/dunia-yang-nanti.mp3",
-    cover: "./music/iqro.jpeg"
-  }
-];
+  const PLAYLIST_INFO = {
+    name: "My Playlist — King Rojak",
+    owner: "rojak",
+    cover: "./music/playlist-cover.jpeg"   // ← ganti nama file cover playlist
+  };
 
-  const GAIN_BOOST = 1.0; // 1.0 = normal, 2.5 = boost
+  const PLAYLIST = [
+    {
+      title: "Teh Hijau",
+      artist: "Tulus",
+      src: "./music/teh-hijau.mp3"
+    },
+    {
+      title: "Sesi Potret",
+      artist: "eńau, Ari Lesmana",
+      src: "./music/sesi-potret.mp3"
+    },
+    {
+      title: "Dunia Yang Nanti",
+      artist: "Raim Laode",
+      src: "./music/dunia-yang-nanti.mp3"
+    }
+  ];
+
+  const GAIN_BOOST = 1.0;
 
   const state = {
     audio: null,
@@ -57,6 +59,7 @@
   const ICON_NEXT = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="4" width="2" height="16"/></svg>`;
   const ICON_SHUFFLE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>`;
   const ICON_LOOP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
+  const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
 
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
@@ -98,11 +101,41 @@
       id: "rdkMusicSection"
     });
 
-    const label = el("div", {
-      class: "rdk-music-label",
-      text: "My Playlist — King Rojak"
+    /* ───── HEADER PLAYLIST (cover + nama) ───── */
+    const playlistCoverWrap = el("div", { class: "rdk-music-playlist-cover" });
+    if (PLAYLIST_INFO.cover) {
+      const img = el("img", {
+        src: PLAYLIST_INFO.cover,
+        alt: PLAYLIST_INFO.name
+      });
+      img.addEventListener("error", () => {
+        playlistCoverWrap.innerHTML = ICON_MUSIC;
+      });
+      playlistCoverWrap.appendChild(img);
+    } else {
+      playlistCoverWrap.innerHTML = ICON_MUSIC;
+    }
+
+    const playlistName = el("div", {
+      class: "rdk-music-playlist-name",
+      text: PLAYLIST_INFO.name
     });
 
+    const playlistOwner = el("div", {
+      class: "rdk-music-playlist-owner",
+      text: PLAYLIST_INFO.owner
+    });
+
+    const playlistMeta = el("div", { class: "rdk-music-playlist-meta" }, [
+      playlistName,
+      playlistOwner
+    ]);
+
+    const playlistHeader = el("div", {
+      class: "rdk-music-playlist-header"
+    }, [playlistCoverWrap, playlistMeta]);
+
+    /* ───── PLAYLIST ───── */
     const trackList = el("div", {
       class: "rdk-music-tracklist",
       id: "rdkMusicTrackList"
@@ -110,13 +143,12 @@
 
     const list = el("div", { class: "rdk-music-list" }, [trackList]);
 
-    /* NOW BAR */
-    const nowTitle = el("div", {
+    /* ───── NOW BAR (bawah) ───── */
+    const barTitle = el("div", {
       class: "rdk-music-nowbar-title",
-      id: "rdkMusicNowTitle"
+      id: "rdkMusicBarTitle"
     });
 
-    /* Row: prev | progress | play | time | extras */
     const prevBtn = el("button", {
       class: "rdk-music-iconbtn", type: "button", id: "rdkMusicPrev",
       title: "Sebelumnya", "aria-label": "Sebelumnya", html: ICON_PREV
@@ -141,7 +173,6 @@
       title: "Play", "aria-label": "Play", html: ICON_PLAY
     });
 
-    // Waktu sisa (minus)
     const timeEl = el("div", {
       class: "rdk-music-time",
       id: "rdkMusicTime",
@@ -161,16 +192,12 @@
     const extras = el("div", { class: "rdk-music-extras" }, [shuffleBtn, loopBtn]);
 
     const row = el("div", { class: "rdk-music-row" }, [
-      prevBtn,
-      progress,
-      playBtn,
-      timeEl,
-      extras
+      prevBtn, progress, playBtn, timeEl, extras
     ]);
 
-    const nowbar = el("div", { class: "rdk-music-nowbar" }, [nowTitle, row]);
+    const nowbar = el("div", { class: "rdk-music-nowbar" }, [barTitle, row]);
 
-    section.appendChild(label);
+    section.appendChild(playlistHeader);
     section.appendChild(list);
     section.appendChild(nowbar);
 
@@ -186,6 +213,18 @@
       class: "rdk-music-mini",
       id: "rdkMusicMini"
     });
+
+    /* Cover mini pakai cover playlist */
+    const coverWrap = el("div", { class: "rdk-music-mini-cover" });
+    if (PLAYLIST_INFO.cover) {
+      const img = el("img", { src: PLAYLIST_INFO.cover, alt: "Playlist" });
+      img.addEventListener("error", () => {
+        coverWrap.innerHTML = ICON_MUSIC;
+      });
+      coverWrap.appendChild(img);
+    } else {
+      coverWrap.innerHTML = ICON_MUSIC;
+    }
 
     const title = el("div", {
       class: "rdk-music-mini-title",
@@ -225,6 +264,7 @@
       prevBtn, playBtn, nextBtn, closeBtn
     ]);
 
+    mini.appendChild(coverWrap);
     mini.appendChild(meta);
     mini.appendChild(controls);
 
@@ -232,7 +272,7 @@
   }
 
   /* ---------------------------------------------------------
-     RENDER PLAYLIST
+     RENDER PLAYLIST (TANPA COVER PER LAGU)
   --------------------------------------------------------- */
 
   function renderTrackList() {
@@ -269,20 +309,20 @@
   }
 
   /* ---------------------------------------------------------
-     NOW BAR UPDATE
+     UPDATE UI
   --------------------------------------------------------- */
 
   function updateNowBar() {
     const track = PLAYLIST[state.currentIndex];
     if (!track) return;
 
-    const nowTitle = document.getElementById("rdkMusicNowTitle");
-    if (nowTitle) {
-      nowTitle.innerHTML = "";
-      nowTitle.appendChild(document.createTextNode(track.title + " "));
+    const barTitle = document.getElementById("rdkMusicBarTitle");
+    if (barTitle) {
+      barTitle.innerHTML = "";
+      barTitle.appendChild(document.createTextNode(track.title + " "));
       const sep = document.createElement("span");
       sep.textContent = "· " + track.artist;
-      nowTitle.appendChild(sep);
+      barTitle.appendChild(sep);
     }
 
     const miniTitle = document.getElementById("rdkMusicMiniTitle");
@@ -324,10 +364,6 @@
     state.duration = state.durationCache[track.src] || 0;
     updateProgressUI();
   }
-
-  /* ---------------------------------------------------------
-     PLAY / PAUSE
-  --------------------------------------------------------- */
 
   function togglePlay() {
     const audio = state.audio;
@@ -395,7 +431,7 @@
   }
 
   /* ---------------------------------------------------------
-     PROGRESS (dengan waktu sisa, gaya Spotify)
+     PROGRESS
   --------------------------------------------------------- */
 
   function updateProgressUI() {
@@ -410,7 +446,6 @@
     if (fill) fill.style.width = pct + "%";
     if (thumb) thumb.style.left = pct + "%";
 
-    // Waktu sisa (gaya Spotify: -0:03)
     if (timeEl) {
       const remain = Math.max(0, dur - cur);
       timeEl.textContent = "-" + formatTime(remain);
@@ -467,7 +502,7 @@
   }
 
   /* ---------------------------------------------------------
-     AUDIO CONTEXT + GAIN
+     AUDIO CONTEXT
   --------------------------------------------------------- */
 
   function ensureAudioContext() {
@@ -573,7 +608,6 @@
     const mini = buildMiniPlayer();
     document.body.appendChild(mini);
 
-    /* AUDIO */
     const audio = new Audio();
     audio.preload = "metadata";
     if (PLAYLIST[0]) audio.src = PLAYLIST[0].src;
@@ -582,10 +616,8 @@
     audio.addEventListener("loadedmetadata", () => {
       state.duration = audio.duration || 0;
       state.ready = true;
-
       const track = PLAYLIST[state.currentIndex];
       if (track) state.durationCache[track.src] = state.duration;
-
       updateProgressUI();
     });
 
@@ -618,7 +650,6 @@
       console.error("[Music] Gagal load:", audio.src);
     });
 
-    /* MAIN BUTTONS */
     const playBtn = document.getElementById("rdkMusicPlay");
     if (playBtn) playBtn.addEventListener("click", togglePlay);
 
@@ -642,7 +673,6 @@
       });
     }
 
-    /* MINI BUTTONS */
     const miniPlay = document.getElementById("rdkMusicMiniPlay");
     if (miniPlay) {
       miniPlay.addEventListener("click", e => {
@@ -681,13 +711,11 @@
       scrollToMainPlayer();
     });
 
-    /* SETUP */
     setupProgressDrag();
     setupMiniVisibility();
     renderTrackList();
     updateNowBar();
 
-    // Preload durasi lagu lain
     PLAYLIST.forEach((track, i) => {
       if (i === state.currentIndex) return;
       const probe = document.createElement("audio");
@@ -700,10 +728,6 @@
 
     if (PLAYLIST[0]) playTrack(0, false);
   }
-
-  /* ---------------------------------------------------------
-     INIT
-  --------------------------------------------------------- */
 
   function init() {
     if (document.getElementById("rdkMusicSection")) return;
