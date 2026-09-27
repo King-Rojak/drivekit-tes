@@ -5,7 +5,7 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
   >
 
   <title>Rojak DriveK1t</title>
@@ -39,6 +39,10 @@
 
     * {
       box-sizing: border-box;
+    }
+
+    html, body {
+      touch-action: pan-x pan-y;
     }
 
     html,
@@ -125,77 +129,155 @@
 
     .login-screen {
       min-height: 100vh;
-
       display: none;
-
       align-items: center;
       justify-content: center;
-
-      padding: 20px;
+      padding: 22px;
+      background:
+        radial-gradient(900px 360px at 50% -18%, rgba(228, 86, 50, .08), transparent 65%),
+        var(--bg);
     }
 
     .login-box {
-      width: min(360px, 100%);
+      width: min(420px, 100%);
+      padding: 28px;
+      border: 1px solid #30312e;
+      border-radius: 10px;
+      background: #121310;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255,255,255,.025);
+    }
 
-      padding: 25px;
+    .login-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 26px;
+    }
 
+    .login-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 24px;
+      padding: 0 8px;
       border: 1px solid var(--border);
-      border-radius: 7px;
+      border-radius: 5px;
+      background: #0d0e0b;
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+    }
 
-      background: var(--panel);
+    .login-badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .login-version {
+      color: var(--muted-2);
+      font-size: 7px;
+    }
+
+    .login-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
     }
 
     .login-logo {
-      width: 45px;
-      height: 45px;
-
-      margin-bottom: 15px;
-
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
       overflow: hidden;
-
-      border: 1px solid var(--border);
-      border-radius: 7px;
+      border: 1px solid #30312e;
+      border-radius: 10px;
+      background: var(--panel-2);
+      box-shadow: 0 8px 24px rgba(0,0,0,.28);
     }
 
     .login-logo img {
       width: 100%;
       height: 100%;
+      display: block;
       object-fit: cover;
+    }
+
+    .login-heading {
+      min-width: 0;
     }
 
     .login-box h1 {
       margin: 0;
-
-      font-size: 19px;
-      font-weight: 700;
-      letter-spacing: -.5px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.7px;
     }
 
     .login-box p {
-      margin: 6px 0 18px;
-
+      margin: 5px 0 0;
       color: var(--muted);
-
       font-size: 9px;
-      line-height: 1.5;
+      line-height: 1.55;
+    }
+
+    .login-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .login-feature {
+      min-width: 0;
+      padding: 10px 8px;
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      background: #0d0e0b;
+    }
+
+    .login-feature strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--text);
+      font-size: 8px;
+    }
+
+    .login-feature span {
+      display: block;
+      color: var(--muted-2);
+      font-size: 7px;
+      line-height: 1.4;
     }
 
     .google-login {
       width: 100%;
-      height: 38px;
-
-      border: 1px solid var(--border);
-      border-radius: 5px;
-
-      background: var(--panel-2);
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border: 1px solid #363733;
+      border-radius: 6px;
+      background: #1a1b18;
       color: var(--text);
-
       font-size: 9px;
-      font-weight: 600;
+      font-weight: 700;
+      transition: background .15s ease, border-color .15s ease, transform .1s ease;
     }
 
     .google-login:hover {
-      background: #1e1f1c;
+      background: #20211e;
+      border-color: #454640;
+    }
+
+    .google-login:active {
+      transform: translateY(1px);
     }
 
     .google-login:disabled {
@@ -203,15 +285,41 @@
       cursor: wait;
     }
 
+    .google-icon {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 15px;
+    }
+
+    .login-note {
+      margin: 12px 0 0;
+      color: #555650;
+      font-size: 7px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
     .login-error {
       min-height: 15px;
-
       margin-top: 9px;
-
       color: var(--red);
-
       font-size: 8px;
       line-height: 1.4;
+      text-align: center;
+    }
+
+    @media (max-width: 430px) {
+      .login-box {
+        padding: 22px 18px 18px;
+      }
+
+      .login-features {
+        grid-template-columns: 1fr;
+      }
+
+      .login-feature {
+        padding: 9px;
+      }
     }
 
     /* ================================
@@ -1325,35 +1433,65 @@
 
     <div class="login-box">
 
-      <div class="login-logo">
-
-        <img
-          src="https://files.catbox.moe/brdrmx.png"
-          alt="Rojak DriveK1t"
-        >
-
+      <div class="login-topline">
+        <div class="login-badge">
+          <span class="login-badge-dot"></span>
+          Secure access
+        </div>
+        <div class="login-version">DriveK1t / Web</div>
       </div>
 
-      <h1>
-        Rojak DriveK1t
-      </h1>
+      <div class="login-header">
+        <div class="login-logo">
+          <img
+            src="https://files.catbox.moe/brdrmx.png"
+            alt="Rojak DriveK1t"
+          >
+        </div>
 
-      <p>
-        Small tools for Google Drive.
-      </p>
+        <div class="login-heading">
+          <h1>Rojak DriveK1t</h1>
+          <p>Small tools for Google Drive and your daily Excel workflow.</p>
+        </div>
+      </div>
+
+      <div class="login-features">
+        <div class="login-feature">
+          <strong>Google Drive</strong>
+          <span>Simpan file TXT langsung.</span>
+        </div>
+        <div class="login-feature">
+          <strong>Excel Tools</strong>
+          <span>Siapkan rumus lebih cepat.</span>
+        </div>
+        <div class="login-feature">
+          <strong>Rojak AI</strong>
+          <span>Bantuan rumus & penggunaan.</span>
+        </div>
+      </div>
 
       <button
         id="loginButton"
         class="google-login"
         type="button"
       >
-        Continue with Google
+        <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42Z"/>
+          <path fill="#34A853" d="M12 21.7c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.7Z"/>
+          <path fill="#FBBC05" d="M6.54 13.79A5.84 5.84 0 0 1 6.23 12c0-.62.11-1.22.31-1.79V7.68H3.3A9.75 9.75 0 0 0 2.27 12c0 1.57.38 3.06 1.03 4.32l3.24-2.53Z"/>
+          <path fill="#EA4335" d="M12 6.18c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.28 14.63 2.3 12 2.3a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 7.9 9.46 6.18 12 6.18Z"/>
+        </svg>
+        <span>Continue with Google</span>
       </button>
 
       <div
         id="loginError"
         class="login-error"
       ></div>
+
+      <div class="login-note">
+        Login menggunakan akun Google. Rojak DriveK1t tidak menyimpan password Google kamu.
+      </div>
 
     </div>
 
