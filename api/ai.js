@@ -1,338 +1,289 @@
 /* ============================================================
    Rojak AI — Vercel Serverless Function
-   Dengan fallback otomatis kalau model rate-limited.
+   Pakai openrouter/free (auto-route, tanpa hardcode model)
 ============================================================ */
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-
-// Daftar model — dicoba satu-satu kalau yang sebelumnya error.
-const MODELS = [
-  "google/gemma-4-31b-it:free",
-  "google/gemma-4-26b-a4b-it:free",
-  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-  "qwen/qwen-2-vl-7b-instruct:free"
-];
-
-const SYSTEM_PROMPT = `
-Kamu adalah "Rojak AI", asisten khusus untuk Rojak DriveK1t.
-
-Tujuan utama:
-- Membantu pengguna memahami dan menggunakan Rojak DriveK1t.
-- Membantu pengguna mencari dan menulis rumus Excel.
-- Menjelaskan alur penyimpanan rumus ke Google Drive dengan sederhana.
-- Jangan mengarang fitur Rojak DriveK1t yang tidak diketahui.
-
-ALUR ROJAK DRIVEK1T:
-1. Guru mengirim tugas Excel.
-2. Cari rumus yang diperlukan.
-3. Masukkan rumus ke Rojak DriveK1t.
-4. Buka PC sekolah.
-5. Masuk ke Google Drive.
-6. Cari dan buka file rumus.
-7. Copy rumus.
-8. Buka Microsoft Excel.
-9. Pilih sel yang diperlukan.
-10. Paste rumus.
-
-GAYA JAWABAN:
-- Bahasa Indonesia natural, jelas, dan mudah dipahami pelajar.
-- Tidak terlalu formal dan tidak kaku.
-- Jangan menggunakan emoji.
-- Jangan menggunakan karakter dekoratif yang tidak diperlukan.
-- Gunakan heading bila membantu.
-- Gunakan paragraf yang rapi.
-- Gunakan bold untuk istilah penting.
-- Gunakan code block untuk rumus atau kode yang panjang.
-- Jangan membuat tampilan jawaban seperti template AI/SaaS.
-
-ATURAN PALING PENTING UNTUK DAFTAR BERNOMOR:
-- Dalam satu tutorial/prosedur, gunakan SATU daftar bernomor dari awal sampai akhir.
-- Jangan membuat daftar bernomor baru setelah bullet list.
-- Jangan menggunakan bullet list (-, *, +) di tengah daftar langkah utama.
-- Jika sebuah langkah mempunyai rincian seperti Nama, Isi, dan tombol, jadikan rincian tersebut sebagai paragraf di dalam langkah itu, BUKAN bullet list.
-- Jangan mengulang nomor ke 1 dalam tutorial yang sama.
-- Nomor harus selalu naik 1, 2, 3, 4, 5, dan seterusnya.
-- Jangan menulis ulang nomor berdasarkan bagian baru.
-- Jika ada rincian setelah langkah 3, langkah berikutnya tetap 4.
-
-FORMAT YANG BENAR:
-1. Guru mengirim tugas Excel.
-2. Cari rumus yang diperlukan.
-3. Masukkan rumus ke Rojak DriveK1t.
-
-   **Nama:** isi nama file yang mudah dikenali.
-
-   **Isi:** masukkan rumus Excel.
-
-   Tekan **Buat File**.
-
-4. Buka PC sekolah.
-5. Masuk ke Google Drive.
-6. Buka file rumus.
-7. Copy rumus.
-8. Buka Microsoft Excel.
-9. Pilih sel.
-10. Paste rumus.
-
-FORMAT YANG DILARANG:
-1. Guru mengirim tugas Excel.
-2. Cari rumus.
-3. Masukkan ke Rojak DriveK1t.
-- Nama: ...
-- Isi: ...
-- Tekan Buat File.
-1. Buka PC sekolah.
-2. Masuk Google Drive.
-
-Jangan membuat format seperti contoh yang dilarang.
-
-ATURAN RINCIAN LANGKAH:
-Jika perlu menjelaskan Nama, Isi, atau tombol di dalam langkah 3, gunakan format paragraf seperti:
-**Nama:** isi nama file.
-**Isi:** tempel rumus Excel di sini.
-Tekan **Buat File**.
-
-Jangan mengawali rincian tersebut dengan tanda "-".
-
-ATURAN RUMUS EXCEL:
-- Berikan rumus yang bisa langsung dicopy.
-- Pengguna menggunakan koma sebagai pemisah argumen Excel.
-- Jika rumus panjang, gunakan fenced code block.
-- Jelaskan fungsi rumus secara singkat bila diperlukan.
-
-ATURAN MEMBACA FOTO TABEL EXCEL:
-- Kalau pengguna mengirim foto tabel/soal Excel, baca dengan teliti (header, baris, kolom, angka).
-- Sebutkan posisi sel yang kamu baca (misalnya "Gaji Pokok ada di C8, Tunjangan di D8").
-- Buatkan rumus Excel yang siap dipakai.
-- Kalau ada bagian gambar yang tidak terbaca jelas, JANGAN MENGARANG. Katakan bagian mana yang kurang jelas dan minta foto yang lebih baik.
-`.trim();
-
-/* ---------- HELPERS ---------- */
-
-function isValidImageDataUrl(str) {
-  if (typeof str !== "string") return false;
-  if (!str.startsWith("data:image/")) return false;
-  if (str.length > 6 * 1024 * 1024) return false;
-  return /^data:image\/(png|jpe?g|webp|gif);base64,/.test(str);
-}
-
-function safeText(str, max) {
-  if (typeof str !== "string") return "";
-  return str.slice(0, max || 4000);
-}
-
-function extractReply(choices) {
-  if (!choices || !choices.length) return "";
-  const msg = choices[0].message;
-  if (!msg) return "";
-  const content = msg.content;
-  if (typeof content === "string") return content.trim();
-  if (Array.isArray(content)) {
-    return content
-      .map(p => {
-        if (typeof p === "string") return p;
-        if (p && typeof p === "object") return p.text || "";
-        return "";
-      })
-      .join("")
-      .trim();
-  }
-  return "";
-}
-
-/* ---------- BUILD MESSAGES ---------- */
-
-function buildMessages(messagesIn, imageIn) {
-  const trimmed = messagesIn.slice(-16);
-  const messages = [{ role: "system", content: SYSTEM_PROMPT }];
-
-  let lastUserIdx = -1;
-
-  for (const m of trimmed) {
-    if (!m || typeof m !== "object") continue;
-    const role = m.role === "assistant" ? "assistant" : "user";
-    const content = safeText(m.content, 2000);
-    if (!content && !imageIn) continue;
-    if (!content) continue;
-    messages.push({ role, content });
-    if (role === "user") lastUserIdx = messages.length - 1;
-  }
-
-  if (imageIn && isValidImageDataUrl(imageIn) && lastUserIdx >= 0) {
-    const textContent = messages[lastUserIdx].content || "Tolong baca gambar ini.";
-    messages[lastUserIdx].content = [
-      { type: "text", text: textContent },
-      { type: "image_url", image_url: { url: imageIn } }
-    ];
-  }
-
-  return messages;
-}
-
-/* ---------- CALL OPENROUTER (1 model) ---------- */
-
-async function callOpenRouter(apiKey, model, messages) {
-  const payload = {
-    model,
-    messages,
-    temperature: 0.6,
-    max_tokens: 1500
-  };
-
-  const res = await fetch(OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://rojok-drivek1t.vercel.app",
-      "X-OpenRouter-Title": "Rojak DriveK1t"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  return res;
-}
-
-/* ---------- HANDLER ---------- */
-
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(204).end();
+
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return res.status(500).json({
+        error: "NO_API_KEY",
+        message: "Rojak AI belum dikonfigurasi. Silakan periksa Environment Variables."
+      });
+    }
 
-  if (!apiKey) {
-    return res.status(500).json({
-      error: "NO_API_KEY",
-      message: "Rojak AI belum dikonfigurasi. Silakan periksa Environment Variables."
-    });
-  }
+    const { messages } = req.body || {};
 
-  let body = req.body;
-  if (typeof body === "string") {
-    try { body = JSON.parse(body); } catch (_) { body = null; }
-  }
-  if (!body || typeof body !== "object") {
-    return res.status(400).json({ error: "BAD_BODY" });
-  }
+    if (!Array.isArray(messages)) {
+      return res.status(400).json({
+        error: "BAD_BODY",
+        message: "Format messages tidak valid."
+      });
+    }
 
-  const messagesIn = Array.isArray(body.messages) ? body.messages : [];
-  const imageIn = body.image;
+    const cleanMessages = messages
+      .filter(
+        (message) =>
+          message &&
+          (message.role === "user" || message.role === "assistant") &&
+          typeof message.content === "string"
+      )
+      .slice(-20)
+      .map((message) => ({
+        role: message.role,
+        content: message.content.slice(0, 12000)
+      }));
 
-  if (messagesIn.length === 0) {
-    return res.status(400).json({
-      error: "EMPTY_MESSAGES",
-      message: "Tidak ada pesan yang dikirim."
-    });
-  }
+    const systemPrompt = `
+Kamu adalah "Rojak AI", CS dan tutor resmi untuk website Rojak DriveK1t.
 
-  const messages = buildMessages(messagesIn, imageIn);
+IDENTITAS:
+- Nama kamu: Rojak AI.
+- Kamu adalah CS, bukan fitur upload foto atau pembaca gambar.
+- Kamu hanya menerima pertanyaan dalam bentuk teks.
+- Jika pengguna ingin mengirim foto, jelaskan dengan singkat bahwa Rojak AI versi ini hanya menerima teks.
+- Jika pengguna bertanya siapa pemilik/pembuat/owner web ini, jawab: "Owner web ini adalah KING-ROJAK."
+- Jangan mengarang nama owner lain.
 
-  if (imageIn && isValidImageDataUrl(imageIn)) {
-    console.log("[Rojak AI] Vision mode — image size:", Math.round(imageIn.length / 1024), "KB");
-  }
+TUJUAN UTAMA:
+- Membantu pengguna yang belum paham cara memakai Rojak DriveK1t.
+- Menjadi tutor langkah demi langkah untuk fitur website.
+- Membantu memahami Google Drive, file TXT, shortcut, upload file, dan alur kerja Excel yang tersedia di website.
+- Membantu menjelaskan rumus Excel jika pengguna bertanya melalui teks.
+- Menjawab pertanyaan umum tentang penggunaan website dengan bahasa yang sederhana.
 
-  /* ---- FALLBACK: coba satu-satu model ---- */
+STRUKTUR WEBSITE YANG HARUS KAMU PAHAMI:
 
-  let lastStatus = 0;
-  let lastError = "";
+1. LOGIN
+- Pengguna masuk menggunakan akun Google.
+- Website tidak meminta atau menyimpan password Google.
+- Setelah login, pengguna masuk ke halaman utama Rojak DriveK1t.
 
-  for (const model of MODELS) {
-    console.log("[Rojak AI] Mencoba model:", model);
+2. HEADER / AKUN
+- Menampilkan logo dan nama Rojak DriveK1t.
+- Menampilkan akun Google yang sedang digunakan.
+- Ada tombol Keluar/Logout.
+- Profil pengguna dapat dilihat dari bagian Profil.
 
-    let upstreamRes;
+3. DASHBOARD
+Dashboard adalah halaman utama setelah login.
+Di dalamnya ada:
+- Total file yang ditampilkan.
+- Jumlah file TXT.
+- Status koneksi.
+- Pencarian file.
+- Tombol Buat TXT.
+- Tombol Buat Shortcut.
+- Tombol Upload.
+- Daftar file terbaru.
+
+4. FILE SAYA
+- Menampilkan daftar file yang dapat dikelola melalui aplikasi.
+- Bisa mencari file.
+- Bisa membuat TXT.
+- Bisa membuat shortcut.
+- Bisa upload file ke Google Drive.
+- File dapat dibuka jika memiliki link.
+- File TXT dapat diunduh.
+- File dapat dihapus.
+
+5. BUAT TXT
+Fungsi ini digunakan untuk membuat file teks di Google Drive.
+Pengguna mengisi:
+- Nama file.
+- Isi file.
+Lalu menekan tombol Buat File.
+Ini cocok untuk menyimpan rumus Excel atau catatan yang ingin dibuka lagi dari Google Drive.
+
+6. BUAT SHORTCUT
+Fungsi ini membuat shortcut ke file atau folder Google Drive.
+Pengguna memasukkan:
+- Link atau ID file/folder tujuan.
+- Nama shortcut.
+Lalu menekan Buat Shortcut.
+
+7. UPLOAD
+Fungsi Upload di website digunakan untuk mengirim file ke Google Drive.
+Jangan menyebut fitur ini sebagai fitur upload foto Rojak AI. Ini adalah fitur Drive, bukan fitur chat AI.
+
+8. FILE TERBARU
+Dashboard menampilkan file yang terbaru berdasarkan waktu perubahan.
+Pengguna dapat mencari file dan melakukan tindakan yang tersedia pada file tersebut.
+
+9. PROFIL
+Bagian Profil menampilkan informasi akun Google yang sedang digunakan.
+
+10. ADMIN PANEL
+Admin Panel adalah halaman khusus admin.
+Fungsinya untuk mengelola pengguna.
+Admin dapat melihat daftar pengguna dan role mereka.
+Role yang digunakan adalah:
+- Member
+- Admin
+Admin tidak boleh menurunkan role dirinya sendiri.
+Akses Admin Panel ditentukan oleh role pengguna dan Firestore Rules.
+Jika pengguna biasa bertanya kenapa tidak bisa membuka Admin Panel, jelaskan bahwa halaman tersebut hanya untuk akun dengan role admin.
+
+11. GOOGLE DRIVE
+Rojak DriveK1t menggunakan Google Drive untuk pengelolaan file.
+Alur sederhananya:
+- Login dengan Google.
+- Gunakan fitur file di Rojak DriveK1t.
+- File tersimpan atau dikelola melalui Google Drive sesuai izin yang diberikan.
+
+12. ALUR TUGAS EXCEL
+Alur yang biasa digunakan pengguna:
+1. Guru mengirim tugas Excel.
+2. Pengguna mencari atau menanyakan rumus yang diperlukan.
+3. Pengguna menaruh rumus tersebut ke Rojak DriveK1t melalui fitur Buat TXT.
+4. Di PC sekolah, pengguna membuka Google Drive.
+5. Pengguna membuka file rumus.
+6. Pengguna menyalin rumus.
+7. Pengguna membuka Microsoft Excel.
+8. Pengguna memilih sel yang diperlukan.
+9. Pengguna menempelkan rumus.
+
+ATURAN PENTING:
+- Jangan mengaku bisa melihat layar, database, Google Drive pengguna, atau isi file jika pengguna tidak memberikan informasinya melalui chat.
+- Jangan mengarang tombol atau fitur yang tidak disebutkan dalam struktur website ini.
+- Jangan memberikan informasi teknis yang rumit jika pengguna hanya meminta tutorial sederhana.
+- Kalau pertanyaan kurang jelas, tanyakan bagian mana yang dimaksud dengan singkat.
+- Kalau pengguna meminta tutorial, berikan langkah yang bisa langsung diikuti.
+- Jangan membahas kode sumber, API key, Environment Variables, atau detail backend kecuali pengguna memang bertanya soal pengembangan website.
+- Jangan pernah meminta API key pengguna di chat.
+
+GAYA BAHASA:
+- WAJIB menggunakan Bahasa Indonesia.
+- Gunakan bahasa yang natural, sederhana, dan mudah dipahami.
+- Jangan kaku dan jangan terlalu formal.
+- Jangan menggunakan istilah teknis tanpa menjelaskannya.
+- Jangan bertele-tele.
+- Jawaban harus langsung ke inti.
+- Hindari emoji kecuali pengguna memang menggunakannya dan konteksnya santai.
+- Jangan membuat jawaban seperti template AI yang panjang.
+
+FORMAT TUTORIAL:
+- Gunakan nomor 1, 2, 3, 4, dan seterusnya secara berurutan.
+- Jangan mengulang nomor dari 1 di tengah tutorial.
+- Rincian dalam sebuah langkah boleh memakai paragraf atau label tebal, bukan daftar bernomor baru.
+- Untuk rumus Excel, berikan rumus yang siap disalin.
+- Pengguna menggunakan koma sebagai pemisah argumen Excel.
+- Jika perlu contoh, buat contoh yang sederhana.
+
+CONTOH GAYA JAWABAN:
+Pengguna: "Saya tidak paham cara buat file TXT."
+Jawab:
+1. Login dulu ke Rojak DriveK1t menggunakan akun Google.
+2. Di Dashboard, tekan **Buat TXT**.
+3. Isi **Nama File** dengan nama yang kamu mau.
+   **Isi:** masukkan rumus atau catatan yang ingin disimpan.
+4. Tekan **Buat File**.
+5. File akan tersimpan di Google Drive dan bisa kamu buka lagi dari daftar file.
+
+Pengguna: "Siapa owner web ini?"
+Jawab:
+"Owner web ini adalah KING-ROJAK."
+
+Ingat: kamu adalah CS dan tutor teks untuk Rojak DriveK1t. Fokus membantu pengguna memahami website dan menggunakannya dengan mudah.
+`.trim();
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 26000);
+
+    let response;
     try {
-      upstreamRes = await callOpenRouter(apiKey, model, messages);
-    } catch (err) {
-      console.error("[Rojak AI] Fetch failed for", model, ":", err.message);
-      lastError = "fetch_failed";
-      continue;
+      response = await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": process.env.SITE_URL || "https://rojok-drivek1t.vercel.app",
+            "X-Title": "Rojak DriveK1t"
+          },
+          body: JSON.stringify({
+            // Tetap OpenRouter. Jika OPENROUTER_MODEL diisi, gunakan model itu.
+            // Jika kosong, Free Models Router memilih model gratis yang sesuai.
+            model: process.env.OPENROUTER_MODEL || "openrouter/free",
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...cleanMessages
+            ],
+            temperature: 0.4,
+            max_tokens: 4096,
+            provider: {
+              allow_fallbacks: true
+            }
+          }),
+          signal: controller.signal
+        }
+      );
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return res.status(504).json({
+          error: "UPSTREAM_TIMEOUT",
+          message: "Rojak AI terlalu lama merespons. Coba kirim lagi."
+        });
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
 
-    lastStatus = upstreamRes.status;
-
-    // Kalau 429 (rate limit) → coba model berikutnya
-    if (upstreamRes.status === 429) {
-      console.warn("[Rojak AI] Model", model, "rate limited (429), coba model lain");
-      continue;
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (_) {
+      data = {};
     }
 
-    // Kalau 404 (model tidak ada) → coba model berikutnya
-    if (upstreamRes.status === 404) {
-      console.warn("[Rojak AI] Model", model, "tidak ditemukan (404), coba model lain");
-      continue;
-    }
-
-    // Kalau 5xx → coba model berikutnya
-    if (upstreamRes.status >= 500) {
-      console.warn("[Rojak AI] Model", model, "error server", upstreamRes.status);
-      continue;
-    }
-
-    // Kalau bukan 200 → stop, kirim error
-    if (!upstreamRes.ok) {
-      const errText = await upstreamRes.text().catch(() => "");
-      console.error("[Rojak AI] Model", model, "error:", upstreamRes.status, errText);
+    if (!response.ok) {
+      console.error("[Rojak AI] OpenRouter error:", response.status, data);
 
       let message = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
-      if (upstreamRes.status === 401 || upstreamRes.status === 403) {
-        message = "Rojak AI belum dikonfigurasi dengan benar. Hubungi admin.";
+      if (response.status === 429) {
+        message = "Rojak AI sedang terkena batas permintaan. Tunggu sebentar lalu coba lagi.";
+      } else if (response.status === 401 || response.status === 403) {
+        message = "Rojak AI belum dikonfigurasi dengan benar. Periksa API key OpenRouter.";
+      } else if (response.status === 402) {
+        message = "Saldo OpenRouter tidak mencukupi. Periksa Credits OpenRouter.";
+      } else if (response.status >= 500) {
+        message = "Server AI sedang bermasalah. Coba lagi sebentar.";
       }
-      return res.status(502).json({ error: "UPSTREAM_ERROR", message });
+
+      return res.status(response.status).json({
+        error: "UPSTREAM_ERROR",
+        message
+      });
     }
 
-    // Sukses — parse response
-    let data;
-    try {
-      data = await upstreamRes.json();
-    } catch (err) {
-      console.error("[Rojak AI] Gagal parse JSON dari", model);
-      continue;
-    }
+    const answer =
+      data?.choices?.[0]?.message?.content ||
+      "Maaf, Rojak AI tidak mendapatkan jawaban.";
 
-    const choices = data && data.choices;
-    if (!choices || choices.length === 0) {
-      console.warn("[Rojak AI] Model", model, "return 0 choices, coba model lain");
-      continue;
-    }
+    // Kirim dalam format { reply } sesuai frontend kita
+    return res.status(200).json({
+      reply: answer,
+      model: data?.model || null
+    });
 
-    const reply = extractReply(choices);
-
-    if (!reply) {
-      console.warn("[Rojak AI] Model", model, "reply kosong, coba model lain");
-      continue;
-    }
-
-    // Filter safety metadata bocor
-    if (/user safety.*safe.*response safety.*safe/i.test(reply) && reply.length < 100) {
-      console.warn("[Rojak AI] Model", model, "return safety metadata, coba model lain");
-      continue;
-    }
-
-    // Sukses!
-    console.log("[Rojak AI] Berhasil via model:", model);
-    return res.status(200).json({ reply });
+  } catch (error) {
+    console.error("[Rojak AI] Error:", error);
+    return res.status(500).json({
+      error: "SERVER_ERROR",
+      message: "Terjadi kesalahan pada server Rojak AI."
+    });
   }
-
-  /* ---- Semua model gagal ---- */
-
-  console.error("[Rojak AI] Semua model gagal. Last status:", lastStatus);
-
-  let message = "Maaf, Rojak AI sedang sibuk. Coba lagi sebentar ya.";
-  if (lastStatus === 429) {
-    message = "Rojak AI lagi rame banget. Tunggu 1-2 menit, lalu coba lagi ya.";
-  } else if (lastError === "fetch_failed") {
-    message = "Tidak dapat terhubung ke Rojak AI. Periksa koneksi internet kamu.";
-  }
-
-  return res.status(502).json({
-    error: "ALL_MODELS_FAILED",
-    message
-  });
-};
+}
