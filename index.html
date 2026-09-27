@@ -846,7 +846,7 @@
     }
 
     /* ================================
-       SPOTIFY (fallback kalau ada)
+       SPOTIFY (fallback, akan diganti music-player)
     ================================= */
 
     .spotify-section {
@@ -1192,11 +1192,10 @@
     }
 
     /* ============================================================
-       ROJAK AI + MUSIC PLAYER — GLOBAL SAFETY
-       Taruh di paling bawah supaya menang urutan load.
+       TAMBAHAN: GLOBAL SVG SAFETY — Rojak AI + Music Player
+       Blok ini baru, tidak mengubah CSS lain di atas.
     ============================================================ */
 
-    /* Batasi SVG di chat Rojak AI */
     .rojak-ai-fab-icon svg {
       width: 100% !important;
       height: 100% !important;
@@ -1229,7 +1228,6 @@
       display: block !important;
     }
 
-    /* Batasi SVG di music player */
     .rdk-music-section svg {
       display: block !important;
       width: 16px !important;
@@ -1254,10 +1252,10 @@
     }
 
     .rdk-music-play svg {
-      width: 16px !important;
-      height: 16px !important;
-      max-width: 16px !important;
-      max-height: 16px !important;
+      width: 14px !important;
+      height: 14px !important;
+      max-width: 14px !important;
+      max-height: 14px !important;
     }
 
     .rdk-music-volume svg {
@@ -1267,7 +1265,6 @@
       max-height: 13px !important;
     }
 
-    /* Canvas waveform jangan melebar keluar */
     .rdk-music-wave {
       width: 100% !important;
       height: 100% !important;
@@ -1276,10 +1273,10 @@
     }
   </style>
 
-  <!-- ROJAK AI STYLES -->
+  <!-- TAMBAHAN BARU: CSS Rojak AI -->
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
 
-  <!-- MUSIC PLAYER STYLES -->
+  <!-- TAMBAHAN BARU: CSS Music Player -->
   <link rel="stylesheet" href="./rojak-ai/music-player.css">
 </head>
 
@@ -1671,8 +1668,7 @@
       </section>
 
 
-      <!-- SPOTIFY (fallback) -->
-      <!-- music-player.js akan otomatis mengganti section ini -->
+      <!-- SPOTIFY (fallback, akan otomatis diganti music-player.js) -->
 
       <section class="spotify-section">
 
@@ -1730,8 +1726,6 @@
 
       <div class="profile-content">
 
-        <!-- USER INFO -->
-
         <div class="profile-user">
 
           <img
@@ -1768,8 +1762,6 @@
 
         </div>
 
-
-        <!-- FORM -->
 
         <div class="profile-form">
 
@@ -1891,7 +1883,6 @@
               ]
 
             });
-
 
             window.RDK_GOOGLE.gapiInited =
               true;
@@ -2212,8 +2203,6 @@
         "";
 
 
-      /* PROFILE HEADER */
-
       $("profileUserName").textContent =
         displayName;
 
@@ -2226,8 +2215,6 @@
       $("profileRole").textContent =
         currentRole.toUpperCase();
 
-
-      /* ADMIN */
 
       $("adminButton").style.display =
         currentRole === "admin"
@@ -3605,10 +3592,10 @@
 
   </script>
 
-  <!-- ROJAK AI WIDGET -->
+  <!-- TAMBAHAN BARU: Rojak AI -->
   <script src="./rojak-ai/rojak-ai.js" defer></script>
 
-  <!-- MUSIC PLAYER -->
+  <!-- TAMBAHAN BARU: Music Player -->
   <script src="./rojak-ai/music-player.js" defer></script>
 
 </body>
