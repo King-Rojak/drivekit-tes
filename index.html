@@ -1429,11 +1429,22 @@
     // Jika modul utama gagal dimuat, jangan biarkan halaman berhenti di "Memuat...".
     // Failsafe ini hanya membuka halaman login; fitur lain tetap memakai kode utama.
     window.__RDK_LOADING_DONE__ = false;
+    window.__RDK_LOADING_STARTED_AT__ = Date.now();
+    window.__RDK_LOADING_HIDE_TIMER__ = null;
 
     window.__RDK_FINISH_LOADING__ = function () {
-      window.__RDK_LOADING_DONE__ = true;
-      const loading = document.getElementById("loadingScreen");
-      if (loading) loading.style.display = "none";
+      if (window.__RDK_LOADING_DONE__) return;
+
+      const elapsed = Date.now() - window.__RDK_LOADING_STARTED_AT__;
+      const remaining = Math.max(0, 1000 - elapsed);
+
+      clearTimeout(window.__RDK_LOADING_HIDE_TIMER__);
+
+      window.__RDK_LOADING_HIDE_TIMER__ = window.setTimeout(function () {
+        window.__RDK_LOADING_DONE__ = true;
+        const loading = document.getElementById("loadingScreen");
+        if (loading) loading.style.display = "none";
+      }, remaining);
     };
 
     window.setTimeout(function () {
@@ -2144,6 +2155,37 @@
   <!-- =========================================
        JAVASCRIPT
   ========================================== -->
+  <!-- LOGIN MOBILE FALLBACK -->
+  <script>
+    // Jika modul utama gagal terinisialisasi, tombol Login tetap punya handler.
+    // Ini tidak mengganti sistem login utama; hanya menjadi pengaman.
+    window.setTimeout(function () {
+      const button = document.getElementById("loginButton");
+      if (!button || button.onclick) return;
+
+      button.addEventListener("click", async function () {
+        const old = button.querySelector("span")?.textContent || "Continue with Google";
+        button.disabled = true;
+        const label = button.querySelector("span");
+        if (label) label.textContent = "Membuka Google...";
+
+        try {
+          const firebase = await import("./firebase-config.js");
+          const authModule = await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js");
+          const provider = new authModule.GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: "select_account" });
+          await authModule.signInWithRedirect(firebase.auth, provider);
+        } catch (error) {
+          console.error("Login fallback error:", error);
+          const errorBox = document.getElementById("loginError");
+          if (errorBox) errorBox.textContent = "Login gagal: " + (error.code || error.message || "coba lagi");
+          button.disabled = false;
+          if (label) label.textContent = old;
+        }
+      });
+    }, 1500);
+  </script>
+
 
   <script type="module">
 
