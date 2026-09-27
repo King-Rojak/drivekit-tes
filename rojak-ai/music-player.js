@@ -1,6 +1,6 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player + DIAGNOSTIC MODE
-   FIX: tidak autoplay saat halaman load
+   ROJAK DRIVEK1T — Music Player
+   Fix: equalizer hanya animasi saat audio PLAYING
 ============================================================ */
 
 (function () {
@@ -29,8 +29,6 @@
       src: "./music/dunia-yang-nanti.mp3"
     }
   ];
-
-  const DIAGNOSTIC_MODE = true;
 
   const state = {
     audio: null,
@@ -85,32 +83,13 @@
     return m + ":" + (s < 10 ? "0" + s : s);
   }
 
-  function logDiag(msg, type) {
-    console.log("[Music]", msg);
-    if (!DIAGNOSTIC_MODE) return;
-    const panel = document.getElementById("rdkMusicDiag");
-    if (!panel) return;
-
-    const line = document.createElement("div");
-    line.className = "rdk-music-diag-line" + (type ? " rdk-music-diag-" + type : "");
-    line.textContent = "› " + msg;
-    panel.appendChild(line);
-    panel.scrollTop = panel.scrollHeight;
-  }
-
-  function buildDiagnostic() {
-    if (!DIAGNOSTIC_MODE) return null;
-    return el("div", { class: "rdk-music-diag", id: "rdkMusicDiag" });
-  }
+  /* ---------- BUILD MAIN PLAYER ---------- */
 
   function buildPlayer() {
     const section = el("section", {
       class: "rdk-music-section",
       id: "rdkMusicSection"
     });
-
-    const diag = buildDiagnostic();
-    if (diag) section.appendChild(diag);
 
     const playlistCoverWrap = el("div", { class: "rdk-music-playlist-cover" });
     if (PLAYLIST_INFO.cover) {
@@ -120,9 +99,6 @@
       });
       img.addEventListener("error", () => {
         playlistCoverWrap.innerHTML = ICON_MUSIC;
-      });
-      img.addEventListener("load", () => {
-        logDiag("cover playlist OK", "ok");
       });
       playlistCoverWrap.appendChild(img);
     } else {
@@ -266,8 +242,6 @@
     container.innerHTML = "";
 
     PLAYLIST.forEach((track, i) => {
-      const isActive = i === state.currentIndex;
-
       const numEl = el("div", {
         class: "rdk-music-track-num",
         text: String(i + 1)
@@ -283,14 +257,14 @@
       ]);
 
       const row = el("div", {
-        class: "rdk-music-track" + (isActive ? " rdk-music-track-active" : ""),
+        class: "rdk-music-track",
         "data-index": String(i)
       }, [numEl, eqEl, info]);
 
       row.addEventListener("click", () => {
-        logDiag("klik track: " + track.title);
         playTrack(i);
       });
+
       container.appendChild(row);
     });
   }
@@ -312,11 +286,17 @@
     const miniArtist = document.getElementById("rdkMusicMiniArtist");
     if (miniTitle) miniTitle.textContent = track.title;
     if (miniArtist) miniArtist.textContent = track.artist;
+  }
 
+  function updateTrackHighlight() {
     document.querySelectorAll(".rdk-music-track").forEach((row, i) => {
-      row.classList.toggle("rdk-music-track-active", i === state.currentIndex);
+      const isActive = i === state.currentIndex;
+      const isPlaying = isActive && state.isPlaying;
+      row.classList.toggle("rdk-music-track-active", isPlaying);
     });
   }
+
+  /* ---------- PLAY TRACK ---------- */
 
   async function playTrack(index, autoplay) {
     if (!PLAYLIST[index]) return;
@@ -326,12 +306,7 @@
     const audio = state.audio;
     if (!audio) return;
 
-    logDiag("─── playTrack #" + (index + 1) + " ───");
-    logDiag("title: " + track.title);
-    logDiag("src: " + track.src);
-    logDiag("autoplay: " + (autoplay !== false));
-
-    // PAUSE dulu sebelum ganti src — biar tidak autoplay di background
+    // Pause dulu sebelum ganti src
     try { audio.pause(); } catch (e) {}
 
     audio.src = track.src;
@@ -339,38 +314,19 @@
 
     audio.muted = false;
     audio.volume = 1.0;
-    logDiag("muted: " + audio.muted + ", volume: " + audio.volume);
 
     updateNowBar();
+    updateTrackHighlight();
 
-    // Kalau autoplay === false, jangan play — cukup set src
-    if (autoplay === false) {
-      logDiag("autoplay=false → skip play()", "warn");
-      return;
-    }
+    if (autoplay === false) return;
 
     try {
-      const res = await fetch(track.src, { method: "HEAD" });
-      if (res.ok) {
-        logDiag("✓ file ditemukan (HTTP " + res.status + ")", "ok");
-      } else {
-        logDiag("✗ file TIDAK ditemukan (HTTP " + res.status + ")", "error");
-        return;
-      }
-    } catch (err) {
-      logDiag("✗ fetch gagal: " + err.message, "error");
-    }
-
-    try {
-      logDiag("memanggil audio.play()...");
       const p = audio.play();
       if (p && typeof p.then === "function") {
         await p;
-        logDiag("✓ play() resolved — audio main", "ok");
       }
     } catch (err) {
-      logDiag("✗ play() error: " + err.name, "error");
-      logDiag("  message: " + err.message, "error");
+      console.error("[Music] play error:", err);
     }
   }
 
@@ -379,17 +335,13 @@
     if (!audio) return;
 
     if (audio.paused) {
-      logDiag("togglePlay → play");
       audio.muted = false;
       audio.volume = 1.0;
       const p = audio.play();
       if (p && typeof p.catch === "function") {
-        p.catch(err => {
-          logDiag("✗ play error: " + err.name + " - " + err.message, "error");
-        });
+        p.catch(err => console.error("[Music] play error:", err));
       }
     } else {
-      logDiag("togglePlay → pause");
       audio.pause();
     }
   }
@@ -412,6 +364,8 @@
 
     const section = document.getElementById("rdkMusicSection");
     if (section) section.classList.toggle("rdk-music-paused", !state.isPlaying);
+
+    updateTrackHighlight();
   }
 
   function nextTrack() {
@@ -550,6 +504,8 @@
     section.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
+  /* ---------- MOUNT ---------- */
+
   function mount() {
     const oldSpotify = document.querySelector(".spotify-section");
     const player = buildPlayer();
@@ -568,9 +524,6 @@
     const mini = buildMiniPlayer();
     document.body.appendChild(mini);
 
-    logDiag("=== Rojak Music Player start ===");
-    logDiag("location: " + location.href);
-
     const audio = new Audio();
     audio.preload = "none";
     audio.autoplay = false;
@@ -578,17 +531,11 @@
     audio.volume = 1.0;
     state.audio = audio;
 
-    audio.addEventListener("loadstart", () => logDiag("event: loadstart"));
     audio.addEventListener("loadedmetadata", () => {
       state.duration = audio.duration || 0;
       state.ready = true;
-      logDiag("event: loadedmetadata — duration: " + state.duration + "s", "ok");
       updateProgressUI();
     });
-    audio.addEventListener("canplay", () => logDiag("event: canplay", "ok"));
-    audio.addEventListener("playing", () => logDiag("event: playing", "ok"));
-    audio.addEventListener("waiting", () => logDiag("event: waiting (buffering)"));
-    audio.addEventListener("stalled", () => logDiag("event: stalled", "warn"));
 
     audio.addEventListener("timeupdate", () => {
       if (state.dragging) return;
@@ -599,21 +546,14 @@
     audio.addEventListener("play", () => {
       state.isPlaying = true;
       updatePlayButtons();
-      logDiag("event: play — muted: " + audio.muted + ", vol: " + audio.volume, "ok");
     });
 
     audio.addEventListener("pause", () => {
       state.isPlaying = false;
       updatePlayButtons();
-      logDiag("event: pause");
-    });
-
-    audio.addEventListener("volumechange", () => {
-      logDiag("event: volumechange — vol: " + audio.volume + ", muted: " + audio.muted);
     });
 
     audio.addEventListener("ended", () => {
-      logDiag("event: ended");
       if (state.loop) {
         audio.currentTime = 0;
         audio.play().catch(() => {});
@@ -623,16 +563,10 @@
     });
 
     audio.addEventListener("error", () => {
-      const err = audio.error;
-      let code = "?";
-      let msg = "?";
-      if (err) {
-        code = err.code;
-        msg = err.message || "(no message)";
-      }
-      logDiag("✗ event: error — code: " + code + " msg: " + msg, "error");
+      console.error("[Music] Gagal load:", audio.src);
     });
 
+    // Buttons
     const playBtn = document.getElementById("rdkMusicPlay");
     if (playBtn) playBtn.addEventListener("click", togglePlay);
 
@@ -682,9 +616,12 @@
     renderTrackList();
     updateNowBar();
 
-    // Pastikan tidak autoplay
+    // Set state awal: paused
+    state.isPlaying = false;
+    updatePlayButtons();
+
+    // Pastikan audio benar-benar pause
     try { audio.pause(); } catch (e) {}
-    logDiag("mount selesai — audio pause");
   }
 
   function init() {
