@@ -30,7 +30,7 @@
     }
   ];
 
-  const DIAGNOSTIC_MODE = false;
+  const DIAGNOSTIC_MODE = true;
 
   const state = {
     audio: null,
