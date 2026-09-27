@@ -1,7 +1,7 @@
 /* ============================================================
    ROJAK DRIVEK1T — Custom Music Player
-   FIX FINAL: canvas dijamin selalu render waveform.
-   ============================================================ */
+   Waveform analyser real + envelope bell curve (pinggir kecil, tengah besar)
+============================================================ */
 
 (function () {
   "use strict";
@@ -29,6 +29,13 @@
   const ERASE_SPEED_MS = 25;
   const HOLD_AFTER_TYPE = 300;
 
+  // Konfigurasi waveform
+  const WAVE_BARS = 72;           // jumlah batang
+  const WAVE_GAP = 3;             // jarak antar batang (px)
+  const WAVE_MIN_H = 3;           // tinggi minimum batang (px)
+  const WAVE_ENVELOPE = true;     // aktifkan bentuk bell curve
+  const WAVE_ENVELOPE_POWER = 1.4; // makin besar = makin tajam di tengah
+
   const state = {
     audio: null,
     audioCtx: null,
@@ -42,6 +49,8 @@
     ready: false,
     analyserOK: false,
     fallbackTime: 0,
+    freqData: null,               // reuse buffer biar gak GC tiap frame
+    timeData: null,
     currentLyricIndex: -1,
     typewriterTimer: null,
     typewriterPhase: "idle",
@@ -179,7 +188,6 @@
 
     audio.addEventListener("loadedmetadata", () => {
       state.duration = audio.duration || 0;
-      console.log("[Music] duration:", state.duration);
     });
 
     audio.addEventListener("canplay", () => {
@@ -196,7 +204,6 @@
       state.isPlaying = true;
       updatePlayButton();
       ensureAudioContext();
-      // Selalu jalankan animasi (fallback kalau analyser gagal)
       startWaveAnimation();
       updateLyricForTime(audio.currentTime, true);
     });
@@ -260,7 +267,6 @@
       if (!state.isPlaying) drawIdleWave();
     });
 
-    // Panggil resizeCanvas SETELAH frame berikutnya biar layout sudah settle
     requestAnimationFrame(() => {
       resizeCanvas();
       drawIdleWave();
@@ -289,6 +295,14 @@
     btn.title = state.isPlaying ? "Pause" : "Play";
   }
 
+  /* ---------------------------------------------------------
+     AUDIO CONTEXT + ANALYSER
+     Setelan dibuat lebih akurat:
+     - fftSize 512 → lebih detail frekuensi
+     - smoothingTimeConstant 0.65 → lebih responsif (delay kecil)
+     - minDecibels & maxDecibels dioptimasi
+  --------------------------------------------------------- */
+
   function ensureAudioContext(forceResume) {
     if (state.audioCtx) {
       if (state.audioCtx.state === "suspended") {
@@ -310,18 +324,25 @@
       const source = ctx.createMediaElementSource(state.audio);
       const analyser = ctx.createAnalyser();
 
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.75;
+      // Setelan akurasi
+      analyser.fftSize = 512;                 // lebih detail (256 freq bins)
+      analyser.smoothingTimeConstant = 0.65;  // responsif, delay kecil
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
 
       source.connect(analyser);
       analyser.connect(ctx.destination);
+
+      // Pre-allocate buffer (biar gak GC tiap frame)
+      state.freqData = new Uint8Array(analyser.frequencyBinCount);
+      state.timeData = new Uint8Array(analyser.fftSize);
 
       state.audioCtx = ctx;
       state.analyser = analyser;
       state.sourceNode = source;
       state.analyserOK = true;
 
-      console.log("[Music] AudioContext OK, state:", ctx.state);
+      console.log("[Music] Analyser siap — fftSize:", analyser.fftSize, "bins:", analyser.frequencyBinCount);
     } catch (err) {
       console.error("[Music] AudioContext error:", err);
       state.analyserOK = false;
@@ -335,9 +356,8 @@
     const rect = canvas.getBoundingClientRect();
     const w = Math.max(1, Math.floor(rect.width));
     const h = Math.max(1, Math.floor(rect.height));
-
-    // Hanya resize kalau ukuran benar-benar beda (biar nggak reset terus)
     const dpr = window.devicePixelRatio || 1;
+
     const newW = Math.floor(w * dpr);
     const newH = Math.floor(h * dpr);
 
@@ -349,10 +369,21 @@
     }
   }
 
-  /**
-   * Gambar waveform statis (saat idle / paused).
-   * Pakai ukuran dari canvas element langsung.
-   */
+  /* ---------------------------------------------------------
+     ENVELOPE — bell curve (pinggir kecil, tengah besar)
+     Return nilai 0..1 berdasarkan posisi bar (0..bars-1)
+  --------------------------------------------------------- */
+
+  function envelope(i, total) {
+    if (!WAVE_ENVELOPE) return 1;
+    // Normalisasi posisi ke -1..1
+    const x = (i / (total - 1)) * 2 - 1;
+    // cos bell: x=0 → 1, |x|=1 → 0
+    const bell = Math.cos((x * Math.PI) / 2);
+    // Kuadratkan dengan power untuk kurva lebih tajam
+    return Math.pow(Math.max(0, bell), WAVE_ENVELOPE_POWER);
+  }
+
   function drawIdleWave() {
     const canvas = document.getElementById("rdkMusicWave");
     if (!canvas) return;
@@ -366,15 +397,16 @@
 
     ctx.clearRect(0, 0, w, h);
 
-    const bars = 64;
-    const gap = 3;
+    const bars = WAVE_BARS;
+    const gap = WAVE_GAP;
     const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
 
     ctx.fillStyle = "#3a3b37";
 
     for (let i = 0; i < bars; i++) {
       const x = i * (barW + gap);
-      const barH = 4;
+      const env = envelope(i, bars);
+      const barH = Math.max(2, WAVE_MIN_H + env * 6);
       ctx.fillRect(x, mid - barH / 2, barW, barH);
     }
   }
@@ -387,7 +419,6 @@
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Pastikan ukuran canvas sudah benar
     resizeCanvas();
 
     function frame() {
@@ -400,51 +431,64 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      const bars = 64;
-      const gap = 3;
+      const bars = WAVE_BARS;
+      const gap = WAVE_GAP;
       const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
 
-      // Coba pakai analyser dulu
       let usedAnalyser = false;
-      if (state.analyser && state.analyserOK) {
-        const data = new Uint8Array(state.analyser.frequencyBinCount);
-        state.analyser.getByteFrequencyData(data);
 
-        // Cek apakah ada data (bukan semua nol)
+      if (state.analyser && state.analyserOK && state.freqData) {
+        state.analyser.getByteFrequencyData(state.freqData);
+
         let maxVal = 0;
-        for (let i = 0; i < data.length; i++) {
-          if (data[i] > maxVal) maxVal = data[i];
+        for (let i = 0; i < state.freqData.length; i++) {
+          if (state.freqData[i] > maxVal) maxVal = state.freqData[i];
         }
 
         if (maxVal > 0) {
           usedAnalyser = true;
-          const usable = Math.floor(data.length * 0.7);
+
+          // Gunakan sekitar 55% bins pertama (bass–mid) karena high freq biasanya kosong
+          const usable = Math.floor(state.freqData.length * 0.55);
 
           for (let i = 0; i < bars; i++) {
-            const idx = Math.floor((i / bars) * usable);
-            const v = data[idx] / 255;
-            const barH = Math.max(4, v * (h * 0.92));
+            // Map bar i ke freq bin, dengan distribusi log-ish biar low freq lebih keliatan
+            const norm = i / (bars - 1);
+            const idx = Math.floor(Math.pow(norm, 0.85) * (usable - 1));
+            const v = state.freqData[idx] / 255;
+
+            // Envelope bell curve
+            const env = envelope(i, bars);
+
+            // Tinggi final = envelope * data + minimum
+            const amp = v * env;
+            const barH = Math.max(
+              WAVE_MIN_H,
+              WAVE_MIN_H + amp * (h * 0.92)
+            );
+
             const x = i * (barW + gap);
-            const alpha = 0.55 + v * 0.45;
+            const alpha = 0.45 + v * 0.55;
             ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
             ctx.fillRect(x, mid - barH / 2, barW, barH);
           }
         }
       }
 
-      // FALLBACK: kalau analyser nggak ada / nggak dapet data
+      // FALLBACK kalau analyser tidak tersedia
       if (!usedAnalyser) {
         state.fallbackTime += 0.12;
 
-        // Selalu gambar waveform (biar tidak kosong sama sekali)
         for (let i = 0; i < bars; i++) {
+          const env = envelope(i, bars);
+
           const base =
             Math.sin(state.fallbackTime + i * 0.35) * 0.5 +
             Math.sin(state.fallbackTime * 1.7 + i * 0.18) * 0.3 +
             Math.sin(state.fallbackTime * 0.6 + i * 0.9) * 0.2;
 
-          const v = Math.abs(base);
-          const barH = Math.max(6, v * (h * 0.7));
+          const v = Math.abs(base) * env;
+          const barH = Math.max(WAVE_MIN_H, WAVE_MIN_H + v * (h * 0.75));
           const x = i * (barW + gap);
           const alpha = 0.45 + v * 0.5;
           ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
@@ -575,7 +619,6 @@
     mount();
     setCursorVisible(false);
 
-    // Panggil lagi setelah 500ms untuk memastikan canvas sudah ter-render
     setTimeout(() => {
       resizeCanvas();
       if (!state.isPlaying) drawIdleWave();
