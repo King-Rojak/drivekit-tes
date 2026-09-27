@@ -4,150 +4,764 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0d0e0b">
-  <link rel="icon" type="image/png" href="https://files.catbox.moe/brdrmx.png">
+  <link rel="icon" type="image/png" href="https://files.catbox.moe/jsc22m.jpg">
   <title>Rojak DriveK1t · Admin</title>
+
   <style>
     :root {
-      --bg:#0d0e0b; --panel:#151614; --panel-2:#191a18; --border:#292a27;
-      --border-soft:#222320; --text:#eeeeea; --muted:#8b8c86; --muted-2:#676861;
-      --orange:#e45632; --orange-hover:#f0643f; --green:#69b879; --red:#d9655c;
+      --bg:#0d0e0b;
+      --panel:#151614;
+      --panel-2:#191a18;
+      --input:#0b0c0a;
+      --border:#292a27;
+      --border-soft:#222320;
+      --text:#eeeeea;
+      --muted:#8b8c86;
+      --muted-2:#676861;
+      --orange:#e45632;
+      --orange-hover:#f0643f;
+      --green:#69b879;
+      --red:#d9655c;
     }
-    * { box-sizing:border-box; }
-    html,body { margin:0; min-height:100%; background:var(--bg); color:var(--text); touch-action:pan-x pan-y; }
-    body { font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    button,select { font:inherit; }
-    button { cursor:pointer; }
 
-    .loading-screen { position:fixed; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; background:var(--bg); }
-    .loading-box { text-align:center; }
-    .loading-logo { width:46px; height:46px; margin:0 auto 10px; overflow:hidden; border:1px solid var(--border); border-radius:7px; background:var(--panel); }
-    .loading-logo img { width:100%; height:100%; display:block; object-fit:cover; }
-    .loading-text { color:var(--muted); font-size:9px; }
+    * { box-sizing: border-box; }
 
-    .login-screen { min-height:100vh; display:none; align-items:center; justify-content:center; padding:22px; background:radial-gradient(900px 360px at 50% -18%,rgba(228,86,50,.08),transparent 65%),var(--bg); }
-    .login-box { width:min(420px,100%); padding:28px; border:1px solid #30312e; border-radius:10px; background:#121310; box-shadow:0 24px 70px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.025); }
-    .login-topline { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:26px; }
-    .login-badge { display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px; border:1px solid var(--border); border-radius:5px; background:#0d0e0b; color:var(--muted); font-size:7px; font-weight:700; letter-spacing:.55px; text-transform:uppercase; }
-    .login-badge-dot { width:5px; height:5px; border-radius:50%; background:var(--green); }
-    .login-version { color:var(--muted-2); font-size:7px; }
-    .login-header { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
-    .login-logo { width:58px; height:58px; flex:0 0 58px; overflow:hidden; border:1px solid #30312e; border-radius:10px; background:var(--panel-2); }
-    .login-logo img { width:100%; height:100%; display:block; object-fit:cover; }
-    .login-heading { min-width:0; }
-    .login-box h1 { margin:0; font-size:22px; font-weight:800; letter-spacing:-.7px; }
-    .login-box p { margin:5px 0 0; color:var(--muted); font-size:9px; line-height:1.55; }
-    .login-features { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:18px; }
-    .login-feature { min-width:0; padding:10px 8px; border:1px solid var(--border-soft); border-radius:6px; background:#0d0e0b; }
-    .login-feature strong { display:block; margin-bottom:3px; color:var(--text); font-size:8px; }
-    .login-feature span { display:block; color:var(--muted-2); font-size:7px; line-height:1.4; }
-    .google-login { width:100%; height:42px; display:flex; align-items:center; justify-content:center; gap:9px; border:1px solid #363733; border-radius:6px; background:#1a1b18; color:var(--text); font-size:9px; font-weight:700; }
-    .google-login:hover { background:#20211e; border-color:#454640; }
-    .google-login:disabled { opacity:.5; cursor:wait; }
-    .login-error { min-height:15px; margin-top:9px; color:var(--red); font-size:8px; line-height:1.4; text-align:center; }
+    html, body {
+      touch-action: pan-x pan-y;
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-    .app { display:none; min-height:100vh; }
-    .topbar { height:58px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; border-bottom:1px solid var(--border); background:#10110f; }
-    .brand { display:flex; align-items:center; gap:9px; min-width:0; }
-    .brand-logo { width:35px; height:35px; flex:0 0 35px; overflow:hidden; border:1px solid var(--border); border-radius:6px; background:var(--panel); }
-    .brand-logo img { width:100%; height:100%; display:block; object-fit:cover; }
-    .brand-text { font-size:11px; font-weight:700; }
-    .brand-text span { color:var(--orange); }
-    .top-actions { display:flex; align-items:center; gap:5px; }
-    .top-user { max-width:180px; overflow:hidden; color:var(--muted); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
-    .top-button { height:29px; padding:0 9px; border:1px solid var(--border); border-radius:5px; background:transparent; color:var(--muted); font-size:8px; font-weight:600; }
-    .top-button:hover { background:var(--panel-2); color:var(--text); }
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-    .container { width:min(900px,calc(100% - 20px)); margin:0 auto; padding:28px 0 45px; }
-    .page-head { margin-bottom:20px; }
-    .page-head h1 { margin:0; font-size:23px; font-weight:800; letter-spacing:-.7px; }
-    .page-head p { margin:6px 0 0; color:var(--muted); font-size:9px; }
-    .summary { display:flex; align-items:center; gap:17px; padding:11px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); color:var(--muted); font-size:8px; }
-    .summary-item { display:flex; align-items:center; gap:5px; }
-    .summary-value { color:var(--text); font-size:9px; font-weight:700; }
-    .summary-divider { width:1px; height:11px; background:var(--border); }
-    .section { margin-top:25px; }
-    .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
-    .section-title { margin:0; font-size:11px; font-weight:700; }
-    .section-info { color:var(--muted); font-size:7px; }
-    .user-table { overflow:hidden; border:1px solid var(--border); border-radius:7px; background:var(--panel); }
-    .table-head,.user-row { display:grid; grid-template-columns:minmax(250px,1fr) 130px 205px; align-items:center; }
-    .table-head { min-height:35px; padding:0 13px; border-bottom:1px solid var(--border); color:var(--muted); font-size:7px; font-weight:700; letter-spacing:.4px; }
-    .user-row { min-height:66px; padding:9px 13px; border-bottom:1px solid var(--border); }
-    .user-row:last-child { border-bottom:0; }
-    .user-row:hover { background:#11120f; }
-    .user-main { display:flex; align-items:center; gap:10px; min-width:0; }
-    .avatar { width:34px; height:34px; flex:0 0 34px; border:1px solid var(--border); border-radius:50%; object-fit:cover; background:var(--panel-2); }
-    .user-details { min-width:0; }
-    .name { overflow:hidden; color:var(--text); font-size:9px; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
-    .email { overflow:hidden; margin-top:3px; color:var(--muted); font-size:7px; text-overflow:ellipsis; white-space:nowrap; }
-    .role-select { width:98px; height:30px; padding:0 7px; outline:none; border:1px solid var(--border); border-radius:5px; background:var(--panel-2); color:var(--text); font-size:8px; }
-    .role-select:focus { border-color:#454640; }
-    .role-select:disabled { opacity:.5; cursor:not-allowed; }
-    .self-role { color:var(--orange-hover); font-size:7px; font-weight:700; }
-    .uid { overflow:hidden; color:var(--muted-2); font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-size:7px; text-overflow:ellipsis; white-space:nowrap; }
-    .message { padding:40px 15px; text-align:center; color:var(--muted); font-size:8px; }
-    .message.error { color:var(--red); }
-    .status { min-height:14px; margin-top:8px; font-size:8px; }
-    .status.success { color:var(--green); }
-    .status.error { color:var(--red); }
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
 
-    @media(max-width:700px) {
-      .topbar { height:54px; padding:0 10px; }
-      .brand-logo { width:33px; height:33px; flex-basis:33px; }
-      .top-user { display:none; }
-      .container { width:calc(100% - 16px); padding:20px 0 35px; }
-      .page-head h1 { font-size:21px; }
-      .summary { flex-wrap:wrap; gap:8px 14px; }
-      .summary-divider { display:none; }
-      .table-head { display:none; }
-      .user-row { display:block; padding:13px; }
-      .user-main { margin-bottom:11px; }
-      .role-select { width:100%; }
-      .uid { margin-top:9px; padding-left:44px; }
-      .login-box { padding:22px 18px 18px; }
-      .login-features { grid-template-columns:1fr; }
+    /* ================================
+       LOADING
+    ================================= */
+
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+    }
+
+    .loading-box { text-align: center; }
+
+    .loading-logo {
+      width: 46px;
+      height: 46px;
+      margin: 0 auto 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--panel);
+    }
+
+    .loading-logo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .loading-text {
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    /* ================================
+       LOGIN (Admin)
+    ================================= */
+
+    .login-screen {
+      min-height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      background:
+        radial-gradient(900px 360px at 50% -18%, rgba(228, 86, 50, .08), transparent 65%),
+        var(--bg);
+    }
+
+    .login-box {
+      width: min(420px, 100%);
+      padding: 28px;
+      border: 1px solid #30312e;
+      border-radius: 12px;
+      background: #121310;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255,255,255,.025);
+    }
+
+    .login-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 26px;
+    }
+
+    .login-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 24px;
+      padding: 0 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #0d0e0b;
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+    }
+
+    .login-badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 0 3px rgba(228, 86, 50, .12);
+    }
+
+    .login-version {
+      color: var(--muted-2);
+      font-size: 8px;
+    }
+
+    .login-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .login-logo {
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
+      overflow: hidden;
+      border: 1px solid #30312e;
+      border-radius: 10px;
+      background: var(--panel-2);
+      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+    }
+
+    .login-logo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .login-heading { min-width: 0; }
+
+    .login-box h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.7px;
+    }
+
+    .login-box p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.55;
+    }
+
+    .google-login {
+      width: 100%;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid #363733;
+      border-radius: 8px;
+      background: #f5f5f4;
+      color: #1a1a1a;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: -.1px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.3);
+      transition: background .15s ease, transform .1s ease;
+    }
+
+    .google-login:hover { background: #ffffff; }
+    .google-login:active { transform: translateY(1px); }
+    .google-login:disabled { opacity: .6; cursor: wait; }
+
+    .google-icon {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+    }
+
+    .login-error {
+      min-height: 15px;
+      margin-top: 9px;
+      color: var(--red);
+      font-size: 8.5px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    /* ================================
+       APP
+    ================================= */
+
+    .app { display: none; min-height: 100vh; }
+
+    /* Topbar */
+
+    .topbar {
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      background: #10110f;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 35px;
+      height: 35px;
+      flex: 0 0 35px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+    }
+
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .brand-text {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: -.2px;
+    }
+
+    .brand-text .accent { color: var(--orange); }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      margin-left: 6px;
+      padding: 0 7px;
+      border: 1px solid rgba(228, 86, 50, .35);
+      border-radius: 4px;
+      background: rgba(228, 86, 50, .1);
+      color: var(--orange);
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .top-button {
+      height: 30px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 600;
+      transition: background .12s ease, color .12s ease;
+    }
+
+    .top-button:hover {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    /* Container */
+
+    .container {
+      width: min(880px, calc(100% - 20px));
+      margin: 0 auto;
+      padding: 24px 0 45px;
+    }
+
+    /* ================================
+       PAGE HEAD
+    ================================= */
+
+    .page-head {
+      margin-bottom: 18px;
+    }
+
+    .page-head h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.7px;
+    }
+
+    .page-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    /* ================================
+       SUMMARY CARDS
+    ================================= */
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent, var(--muted-2));
+      opacity: .65;
+    }
+
+    .summary-card.total::before { --accent: #8ab8d0; }
+    .summary-card.admin::before { --accent: var(--orange); }
+    .summary-card.member::before { --accent: var(--green); }
+
+    .summary-label {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      display: block;
+      color: var(--text);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.8px;
+      line-height: 1;
+    }
+
+    /* ================================
+       SECTION
+    ================================= */
+
+    .section {
+      margin-top: 4px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -.2px;
+    }
+
+    .section-info {
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    /* ================================
+       USER LIST
+    ================================= */
+
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .user-card {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      transition: border-color .15s ease, background .15s ease;
+    }
+
+    .user-card:hover {
+      border-color: #33342f;
+      background: #161714;
+    }
+
+    .user-card.self {
+      border-color: rgba(228, 86, 50, .35);
+      background: linear-gradient(135deg, rgba(228, 86, 50, .05), transparent 60%), var(--panel);
+    }
+
+    .user-row-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--panel-2);
+    }
+
+    .user-info {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .user-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .user-name-text {
+      overflow: hidden;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -.2px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-you-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      padding: 0 7px;
+      border: 1px solid rgba(228, 86, 50, .35);
+      border-radius: 4px;
+      background: rgba(228, 86, 50, .1);
+      color: var(--orange);
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+
+    .user-email {
+      overflow: hidden;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Role */
+
+    .role-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 26px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+
+    .role-badge.admin {
+      border-color: rgba(228, 86, 50, .35);
+      background: rgba(228, 86, 50, .08);
+      color: var(--orange);
+    }
+
+    .role-badge.member {
+      border-color: rgba(105, 184, 121, .3);
+      background: rgba(105, 184, 121, .08);
+      color: var(--green);
+    }
+
+    /* UID row */
+
+    .uid-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .uid-label {
+      flex: 0 0 auto;
+      color: var(--muted-2);
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .uid-value {
+      overflow: hidden;
+      flex: 1 1 auto;
+      color: #6a6b64;
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      text-align: right;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Role select (self) */
+
+    .role-select {
+      width: 120px;
+      height: 30px;
+      padding: 0 8px;
+      outline: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .12s ease;
+    }
+
+    .role-select:hover {
+      border-color: #454640;
+    }
+
+    .role-select:focus {
+      border-color: var(--orange);
+    }
+
+    .role-select:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* ================================
+       MESSAGE
+    ================================= */
+
+    .message {
+      padding: 40px 15px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .message.error { color: var(--red); }
+
+    /* ================================
+       STATUS
+    ================================= */
+
+    .status {
+      min-height: 16px;
+      margin-top: 14px;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .status.success { color: var(--green); }
+    .status.error { color: var(--red); }
+
+    /* ================================
+       MOBILE
+    ================================= */
+
+    @media (max-width: 700px) {
+      .topbar {
+        height: 54px;
+        padding: 0 12px;
+      }
+
+      .brand-logo {
+        width: 33px;
+        height: 33px;
+        flex-basis: 33px;
+      }
+
+      .brand-text { font-size: 10.5px; }
+
+      .top-button {
+        height: 28px;
+        padding: 0 9px;
+        font-size: 8.5px;
+      }
+
+      .container {
+        width: calc(100% - 20px);
+        padding: 20px 0 40px;
+      }
+
+      .page-head h1 { font-size: 20px; }
+      .page-head p { font-size: 9.5px; }
+
+      .summary {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-bottom: 20px;
+      }
+
+      .summary-card {
+        padding: 11px 10px;
+      }
+
+      .summary-label { font-size: 8px; margin-bottom: 6px; }
+      .summary-value { font-size: 22px; }
+
+      .user-card {
+        padding: 12px 13px;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+      }
+
+      .user-name-text { font-size: 12.5px; }
+      .user-email { font-size: 9.5px; }
+
+      .role-select {
+        width: 100%;
+        margin-top: 12px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .brand-badge { display: none; }
     }
   </style>
 </head>
+
 <body>
+
+  <!-- LOADING -->
   <div id="loadingScreen" class="loading-screen">
     <div class="loading-box">
-      <div class="loading-logo"><img src="https://files.catbox.moe/brdrmx.png" alt="Rojak DriveK1t"></div>
+      <div class="loading-logo">
+        <img src="https://files.catbox.moe/jsc22m.jpg" alt="Rojak DriveK1t">
+      </div>
       <div id="loadingText" class="loading-text">Memuat Admin Panel...</div>
     </div>
   </div>
 
+  <!-- LOGIN -->
   <section id="loginScreen" class="login-screen">
     <div class="login-box">
       <div class="login-topline">
-        <div class="login-badge"><span class="login-badge-dot"></span>Secure access</div>
-        <div class="login-version">Admin / Web</div>
+        <div class="login-badge">
+          <span class="login-badge-dot"></span>
+          Admin access
+        </div>
+        <div class="login-version">DriveK1t / Admin</div>
       </div>
+
       <div class="login-header">
-        <div class="login-logo"><img src="https://files.catbox.moe/brdrmx.png" alt="Rojak DriveK1t"></div>
+        <div class="login-logo">
+          <img src="https://files.catbox.moe/jsc22m.jpg" alt="Rojak DriveK1t">
+        </div>
         <div class="login-heading">
           <h1>Rojak DriveK1t</h1>
-          <p>Masuk menggunakan akun Google yang memiliki akses admin.</p>
+          <p>Masuk dengan akun Google yang memiliki akses admin.</p>
         </div>
       </div>
-      <div class="login-features">
-        <div class="login-feature"><strong>User Management</strong><span>Kelola role member dan admin.</span></div>
-        <div class="login-feature"><strong>Protected</strong><span>Akses dikontrol oleh Firestore Rules.</span></div>
-        <div class="login-feature"><strong>DriveK1t</strong><span>Kembali ke aplikasi utama kapan saja.</span></div>
-      </div>
-      <button id="loginButton" class="google-login" type="button">Continue with Google</button>
+
+      <button id="loginButton" class="google-login" type="button">
+        <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42Z"/>
+          <path fill="#34A853" d="M12 21.7c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.7Z"/>
+          <path fill="#FBBC05" d="M6.54 13.79A5.84 5.84 0 0 1 6.23 12c0-.62.11-1.22.31-1.79V7.68H3.3A9.75 9.75 0 0 0 2.27 12c0 1.57.38 3.06 1.03 4.32l3.24-2.53Z"/>
+          <path fill="#EA4335" d="M12 6.18c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.28 14.63 2.3 12 2.3a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 7.9 9.46 6.18 12 6.18Z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
       <div id="loginError" class="login-error"></div>
     </div>
   </section>
 
+  <!-- APP -->
   <section id="app" class="app">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-logo"><img src="https://files.catbox.moe/brdrmx.png" alt="Rojak DriveK1t"></div>
-        <div class="brand-text">Rojak <span>DriveK1t</span> · Admin</div>
+        <div class="brand-logo">
+          <img src="https://files.catbox.moe/jsc22m.jpg" alt="Rojak DriveK1t">
+        </div>
+        <div class="brand-text">
+          Rojak <span class="accent">DriveK1t</span>
+          <span class="brand-badge">Admin</span>
+        </div>
       </div>
+
       <div class="top-actions">
-        <span id="adminName" class="top-user"></span>
         <button id="backButton" class="top-button" type="button">Kembali</button>
         <button id="logoutButton" class="top-button" type="button">Logout</button>
       </div>
@@ -155,27 +769,35 @@
 
     <main class="container">
       <div class="page-head">
-        <h1>Users</h1>
+        <h1>User Management</h1>
         <p>Kelola akses pengguna Rojak DriveK1t.</p>
       </div>
 
       <div class="summary">
-        <div class="summary-item">Users <span id="totalUsers" class="summary-value">0</span></div>
-        <span class="summary-divider"></span>
-        <div class="summary-item">Admin <span id="totalAdmins" class="summary-value">0</span></div>
-        <span class="summary-divider"></span>
-        <div class="summary-item">Member <span id="totalMembers" class="summary-value">0</span></div>
+        <div class="summary-card total">
+          <span class="summary-label">Total Users</span>
+          <span id="totalUsers" class="summary-value">0</span>
+        </div>
+        <div class="summary-card admin">
+          <span class="summary-label">Admin</span>
+          <span id="totalAdmins" class="summary-value">0</span>
+        </div>
+        <div class="summary-card member">
+          <span class="summary-label">Member</span>
+          <span id="totalMembers" class="summary-value">0</span>
+        </div>
       </div>
 
       <section class="section">
         <div class="section-head">
-          <h2 class="section-title">Daftar pengguna</h2>
+          <h2 class="section-title">Daftar Pengguna</h2>
           <span class="section-info">Role dapat diubah</span>
         </div>
-        <div class="user-table">
-          <div class="table-head"><div>USER</div><div>ROLE</div><div>UID</div></div>
-          <div id="usersList"><div class="message">Memuat pengguna...</div></div>
+
+        <div id="usersList" class="user-list">
+          <div class="message">Memuat pengguna...</div>
         </div>
+
         <div id="status" class="status"></div>
       </section>
     </main>
@@ -189,7 +811,9 @@
       signInWithRedirect,
       getRedirectResult,
       signOut,
-      onAuthStateChanged
+      onAuthStateChanged,
+      setPersistence,
+      browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
     import {
       collection,
@@ -237,15 +861,24 @@
 
     async function loginGoogle() {
       $("loginButton").disabled = true;
-      $("loginButton").textContent = "Membuka Google...";
+      const label = $("loginButton").querySelector("span");
+      if (label) label.textContent = "Membuka Google...";
       $("loginError").textContent = "";
+
       try {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: "select_account" });
+
         await signInWithPopup(auth, provider);
       } catch (error) {
         console.error(error);
-        if (error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user") {
+
+        if (
+          error.code === "auth/popup-blocked" ||
+          error.code === "auth/popup-closed-by-user" ||
+          error.code === "auth/cancelled-popup-request" ||
+          error.code === "auth/operation-not-supported-in-this-environment"
+        ) {
           try {
             await signInWithRedirect(auth, new GoogleAuthProvider());
             return;
@@ -253,21 +886,23 @@
             console.error(redirectError);
           }
         }
+
         $("loginError").textContent = "Login gagal: " + (error.code || error.message);
       } finally {
         $("loginButton").disabled = false;
-        $("loginButton").textContent = "Continue with Google";
+        if (label) label.textContent = "Continue with Google";
       }
     }
 
     async function loadUsers() {
       $("usersList").innerHTML = '<div class="message">Memuat pengguna...</div>';
+
       try {
         const snapshot = await getDocs(collection(db, "users"));
-        const users = snapshot.docs.map(item => ({ id:item.id, ...item.data() }));
-        users.sort((a,b) => (a.name || a.email || "").localeCompare(b.name || b.email || ""));
+        const users = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        users.sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || ""));
 
-        const admins = users.filter(user => user.role === "admin").length;
+        const admins = users.filter(u => u.role === "admin").length;
         $("totalUsers").textContent = users.length;
         $("totalAdmins").textContent = admins;
         $("totalMembers").textContent = users.length - admins;
@@ -279,28 +914,36 @@
 
         $("usersList").innerHTML = users.map(user => {
           const self = user.id === currentUser.uid;
-          const name = user.name || user.email?.split("@")[0] || "User";
+          const name = user.name || (user.email ? user.email.split("@")[0] : "User");
           const email = user.email || "-";
           const photo = user.photoURL || "https://www.gravatar.com/avatar/?d=mp";
           const role = user.role === "admin" ? "admin" : "member";
+
           return `
-            <div class="user-row">
-              <div class="user-main">
+            <div class="user-card${self ? " self" : ""}">
+              <div class="user-row-top">
                 <img class="avatar" src="${escapeHTML(photo)}" alt="Profile">
-                <div class="user-details">
-                  <div class="name">${escapeHTML(name)}</div>
-                  <div class="email">${escapeHTML(email)}</div>
+                <div class="user-info">
+                  <div class="user-name">
+                    <span class="user-name-text">${escapeHTML(name)}</span>
+                    ${self ? '<span class="user-you-badge">You</span>' : ''}
+                  </div>
+                  <div class="user-email">${escapeHTML(email)}</div>
                 </div>
+                ${self
+                  ? `<span class="role-badge ${role}">${role === "admin" ? "Admin" : "Member"}</span>`
+                  : `<select class="role-select" data-user-id="${escapeHTML(user.id)}" data-old-role="${role}">
+                       <option value="member" ${role === "member" ? "selected" : ""}>Member</option>
+                       <option value="admin" ${role === "admin" ? "selected" : ""}>Admin</option>
+                     </select>`
+                }
               </div>
-              <div>
-                ${self ? '<div class="self-role">ADMIN · YOU</div>' : `
-                  <select class="role-select" data-user-id="${escapeHTML(user.id)}" data-old-role="${role}">
-                    <option value="member" ${role === "member" ? "selected" : ""}>Member</option>
-                    <option value="admin" ${role === "admin" ? "selected" : ""}>Admin</option>
-                  </select>`}
+              <div class="uid-row">
+                <span class="uid-label">UID</span>
+                <span class="uid-value" title="${escapeHTML(user.id)}">${escapeHTML(user.id)}</span>
               </div>
-              <div class="uid" title="${escapeHTML(user.id)}">${escapeHTML(user.id)}</div>
-            </div>`;
+            </div>
+          `;
         }).join("");
 
         document.querySelectorAll(".role-select").forEach(select => {
@@ -309,14 +952,16 @@
             const oldRole = select.dataset.oldRole;
             const newRole = select.value;
             if (newRole === oldRole) return;
-            if (!confirm(`Ubah role user ini menjadi ${newRole.toUpperCase()}?`)) {
+            if (!confirm(`Ubah role menjadi ${newRole.toUpperCase()}?`)) {
               select.value = oldRole;
               return;
             }
+
             select.disabled = true;
             setStatus("Menyimpan perubahan role...");
+
             try {
-              await updateDoc(doc(db, "users", userId), { role:newRole });
+              await updateDoc(doc(db, "users", userId), { role: newRole });
               setStatus("Role berhasil diubah.", "success");
               await loadUsers();
             } catch (error) {
@@ -327,12 +972,15 @@
             }
           });
         });
+
       } catch (error) {
         console.error(error);
         $("usersList").innerHTML = '<div class="message error">Gagal memuat pengguna.</div>';
         setStatus("Tidak bisa membaca user. Pastikan akun ini memiliki role admin.", "error");
       }
     }
+
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
 
     $("loginButton").onclick = loginGoogle;
     $("backButton").onclick = () => { window.location.href = "./index.html"; };
@@ -348,7 +996,6 @@
       }
 
       currentUser = user;
-      $("adminName").textContent = user.displayName || user.email || "Admin";
       $("loadingText").textContent = "Memeriksa akses...";
 
       try {
@@ -366,7 +1013,7 @@
       }
     });
 
-    try { await getRedirectResult(auth); } catch (error) { console.error(error); }
+    getRedirectResult(auth).catch(error => console.error(error));
   </script>
 </body>
 </html>
