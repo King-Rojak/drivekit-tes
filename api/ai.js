@@ -1,51 +1,19 @@
 /* ============================================================
    Rojak AI — Vercel Serverless Function
-   Pakai openrouter/free (auto-route, tanpa hardcode model)
+   Dengan fallback otomatis kalau model rate-limited.
 ============================================================ */
 
-export default async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-  if (req.method === "OPTIONS") return res.status(204).end();
+// Daftar model — dicoba satu-satu kalau yang sebelumnya error.
+const MODELS = [
+  "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
+  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+  "qwen/qwen-2-vl-7b-instruct:free"
+];
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  try {
-    if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(500).json({
-        error: "NO_API_KEY",
-        message: "Rojak AI belum dikonfigurasi. Silakan periksa Environment Variables."
-      });
-    }
-
-    const { messages } = req.body || {};
-
-    if (!Array.isArray(messages)) {
-      return res.status(400).json({
-        error: "BAD_BODY",
-        message: "Format messages tidak valid."
-      });
-    }
-
-    const cleanMessages = messages
-      .filter(
-        (message) =>
-          message &&
-          (message.role === "user" || message.role === "assistant") &&
-          typeof message.content === "string"
-      )
-      .slice(-20)
-      .map((message) => ({
-        role: message.role,
-        content: message.content.slice(0, 12000)
-      }));
-
-    const systemPrompt = `
+const SYSTEM_PROMPT = `
 Kamu adalah "Rojak AI", asisten khusus untuk Rojak DriveK1t.
 
 Tujuan utama:
@@ -131,66 +99,240 @@ ATURAN RUMUS EXCEL:
 - Pengguna menggunakan koma sebagai pemisah argumen Excel.
 - Jika rumus panjang, gunakan fenced code block.
 - Jelaskan fungsi rumus secara singkat bila diperlukan.
+
+ATURAN MEMBACA FOTO TABEL EXCEL:
+- Kalau pengguna mengirim foto tabel/soal Excel, baca dengan teliti (header, baris, kolom, angka).
+- Sebutkan posisi sel yang kamu baca (misalnya "Gaji Pokok ada di C8, Tunjangan di D8").
+- Buatkan rumus Excel yang siap dipakai.
+- Kalau ada bagian gambar yang tidak terbaca jelas, JANGAN MENGARANG. Katakan bagian mana yang kurang jelas dan minta foto yang lebih baik.
 `.trim();
 
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": process.env.SITE_URL || "https://rojok-drivek1t.vercel.app",
-          "X-Title": "Rojak DriveK1t"
-        },
-        body: JSON.stringify({
-          // Pakai openrouter/free — auto-route ke model gratis yang tersedia
-          model: process.env.OPENROUTER_MODEL || "openrouter/free",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...cleanMessages
-          ],
-          temperature: 0.4,
-          max_tokens: 4096
-        })
-      }
-    );
+/* ---------- HELPERS ---------- */
 
-    const data = await response.json();
+function isValidImageDataUrl(str) {
+  if (typeof str !== "string") return false;
+  if (!str.startsWith("data:image/")) return false;
+  if (str.length > 6 * 1024 * 1024) return false;
+  return /^data:image\/(png|jpe?g|webp|gif);base64,/.test(str);
+}
 
-    if (!response.ok) {
-      console.error("[Rojak AI] OpenRouter error:", response.status, data);
+function safeText(str, max) {
+  if (typeof str !== "string") return "";
+  return str.slice(0, max || 4000);
+}
 
-      let message = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
-      if (response.status === 429) {
-        message = "Rojak AI lagi rame. Tunggu 1-2 menit lalu coba lagi ya.";
-      } else if (response.status === 401 || response.status === 403) {
-        message = "Rojak AI belum dikonfigurasi dengan benar. Hubungi admin.";
-      } else if (response.status === 402) {
-        message = "Saldo OpenRouter habis. Silakan top-up di openrouter.ai/settings/credits";
-      }
+function extractReply(choices) {
+  if (!choices || !choices.length) return "";
+  const msg = choices[0].message;
+  if (!msg) return "";
+  const content = msg.content;
+  if (typeof content === "string") return content.trim();
+  if (Array.isArray(content)) {
+    return content
+      .map(p => {
+        if (typeof p === "string") return p;
+        if (p && typeof p === "object") return p.text || "";
+        return "";
+      })
+      .join("")
+      .trim();
+  }
+  return "";
+}
 
-      return res.status(response.status).json({
-        error: "UPSTREAM_ERROR",
-        message
-      });
-    }
+/* ---------- BUILD MESSAGES ---------- */
 
-    const answer =
-      data?.choices?.[0]?.message?.content ||
-      "Maaf, Rojak AI tidak mendapatkan jawaban.";
+function buildMessages(messagesIn, imageIn) {
+  const trimmed = messagesIn.slice(-16);
+  const messages = [{ role: "system", content: SYSTEM_PROMPT }];
 
-    // Kirim dalam format { reply } sesuai frontend kita
-    return res.status(200).json({
-      reply: answer,
-      model: data?.model || null
-    });
+  let lastUserIdx = -1;
 
-  } catch (error) {
-    console.error("[Rojak AI] Error:", error);
+  for (const m of trimmed) {
+    if (!m || typeof m !== "object") continue;
+    const role = m.role === "assistant" ? "assistant" : "user";
+    const content = safeText(m.content, 2000);
+    if (!content && !imageIn) continue;
+    if (!content) continue;
+    messages.push({ role, content });
+    if (role === "user") lastUserIdx = messages.length - 1;
+  }
+
+  if (imageIn && isValidImageDataUrl(imageIn) && lastUserIdx >= 0) {
+    const textContent = messages[lastUserIdx].content || "Tolong baca gambar ini.";
+    messages[lastUserIdx].content = [
+      { type: "text", text: textContent },
+      { type: "image_url", image_url: { url: imageIn } }
+    ];
+  }
+
+  return messages;
+}
+
+/* ---------- CALL OPENROUTER (1 model) ---------- */
+
+async function callOpenRouter(apiKey, model, messages) {
+  const payload = {
+    model,
+    messages,
+    temperature: 0.6,
+    max_tokens: 1500
+  };
+
+  const res = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://rojok-drivek1t.vercel.app",
+      "X-OpenRouter-Title": "Rojak DriveK1t"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  return res;
+}
+
+/* ---------- HANDLER ---------- */
+
+module.exports = async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(204).end();
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey) {
     return res.status(500).json({
-      error: "SERVER_ERROR",
-      message: "Terjadi kesalahan pada server Rojak AI."
+      error: "NO_API_KEY",
+      message: "Rojak AI belum dikonfigurasi. Silakan periksa Environment Variables."
     });
   }
-}
+
+  let body = req.body;
+  if (typeof body === "string") {
+    try { body = JSON.parse(body); } catch (_) { body = null; }
+  }
+  if (!body || typeof body !== "object") {
+    return res.status(400).json({ error: "BAD_BODY" });
+  }
+
+  const messagesIn = Array.isArray(body.messages) ? body.messages : [];
+  const imageIn = body.image;
+
+  if (messagesIn.length === 0) {
+    return res.status(400).json({
+      error: "EMPTY_MESSAGES",
+      message: "Tidak ada pesan yang dikirim."
+    });
+  }
+
+  const messages = buildMessages(messagesIn, imageIn);
+
+  if (imageIn && isValidImageDataUrl(imageIn)) {
+    console.log("[Rojak AI] Vision mode — image size:", Math.round(imageIn.length / 1024), "KB");
+  }
+
+  /* ---- FALLBACK: coba satu-satu model ---- */
+
+  let lastStatus = 0;
+  let lastError = "";
+
+  for (const model of MODELS) {
+    console.log("[Rojak AI] Mencoba model:", model);
+
+    let upstreamRes;
+    try {
+      upstreamRes = await callOpenRouter(apiKey, model, messages);
+    } catch (err) {
+      console.error("[Rojak AI] Fetch failed for", model, ":", err.message);
+      lastError = "fetch_failed";
+      continue;
+    }
+
+    lastStatus = upstreamRes.status;
+
+    // Kalau 429 (rate limit) → coba model berikutnya
+    if (upstreamRes.status === 429) {
+      console.warn("[Rojak AI] Model", model, "rate limited (429), coba model lain");
+      continue;
+    }
+
+    // Kalau 404 (model tidak ada) → coba model berikutnya
+    if (upstreamRes.status === 404) {
+      console.warn("[Rojak AI] Model", model, "tidak ditemukan (404), coba model lain");
+      continue;
+    }
+
+    // Kalau 5xx → coba model berikutnya
+    if (upstreamRes.status >= 500) {
+      console.warn("[Rojak AI] Model", model, "error server", upstreamRes.status);
+      continue;
+    }
+
+    // Kalau bukan 200 → stop, kirim error
+    if (!upstreamRes.ok) {
+      const errText = await upstreamRes.text().catch(() => "");
+      console.error("[Rojak AI] Model", model, "error:", upstreamRes.status, errText);
+
+      let message = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
+      if (upstreamRes.status === 401 || upstreamRes.status === 403) {
+        message = "Rojak AI belum dikonfigurasi dengan benar. Hubungi admin.";
+      }
+      return res.status(502).json({ error: "UPSTREAM_ERROR", message });
+    }
+
+    // Sukses — parse response
+    let data;
+    try {
+      data = await upstreamRes.json();
+    } catch (err) {
+      console.error("[Rojak AI] Gagal parse JSON dari", model);
+      continue;
+    }
+
+    const choices = data && data.choices;
+    if (!choices || choices.length === 0) {
+      console.warn("[Rojak AI] Model", model, "return 0 choices, coba model lain");
+      continue;
+    }
+
+    const reply = extractReply(choices);
+
+    if (!reply) {
+      console.warn("[Rojak AI] Model", model, "reply kosong, coba model lain");
+      continue;
+    }
+
+    // Filter safety metadata bocor
+    if (/user safety.*safe.*response safety.*safe/i.test(reply) && reply.length < 100) {
+      console.warn("[Rojak AI] Model", model, "return safety metadata, coba model lain");
+      continue;
+    }
+
+    // Sukses!
+    console.log("[Rojak AI] Berhasil via model:", model);
+    return res.status(200).json({ reply });
+  }
+
+  /* ---- Semua model gagal ---- */
+
+  console.error("[Rojak AI] Semua model gagal. Last status:", lastStatus);
+
+  let message = "Maaf, Rojak AI sedang sibuk. Coba lagi sebentar ya.";
+  if (lastStatus === 429) {
+    message = "Rojak AI lagi rame banget. Tunggu 1-2 menit, lalu coba lagi ya.";
+  } else if (lastError === "fetch_failed") {
+    message = "Tidak dapat terhubung ke Rojak AI. Periksa koneksi internet kamu.";
+  }
+
+  return res.status(502).json({
+    error: "ALL_MODELS_FAILED",
+    message
+  });
+};
