@@ -1,15 +1,17 @@
 /* ============================================================
    Rojak AI — Vercel Serverless Function
-   Provider: OpenRouter (vision-capable free model)
-   Endpoint: POST /api/ai
+   Dengan fallback otomatis kalau model rate-limited.
 ============================================================ */
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Model vision gratis yang MASIH AKTIF di OpenRouter.
-const MODEL = "google/gemma-4-26b-a4b-it:free";
-// Alternatif (uncomment kalau model utama error):
-// const MODEL = "google/gemma-4-31b-it:free";
+// Daftar model — dicoba satu-satu kalau yang sebelumnya error.
+const MODELS = [
+  "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
+  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+  "qwen/qwen-2-vl-7b-instruct:free"
+];
 
 const SYSTEM_PROMPT = `
 Kamu adalah "Rojak AI", asisten khusus untuk Rojak DriveK1t.
@@ -138,6 +140,59 @@ function extractReply(choices) {
   return "";
 }
 
+/* ---------- BUILD MESSAGES ---------- */
+
+function buildMessages(messagesIn, imageIn) {
+  const trimmed = messagesIn.slice(-16);
+  const messages = [{ role: "system", content: SYSTEM_PROMPT }];
+
+  let lastUserIdx = -1;
+
+  for (const m of trimmed) {
+    if (!m || typeof m !== "object") continue;
+    const role = m.role === "assistant" ? "assistant" : "user";
+    const content = safeText(m.content, 2000);
+    if (!content && !imageIn) continue;
+    if (!content) continue;
+    messages.push({ role, content });
+    if (role === "user") lastUserIdx = messages.length - 1;
+  }
+
+  if (imageIn && isValidImageDataUrl(imageIn) && lastUserIdx >= 0) {
+    const textContent = messages[lastUserIdx].content || "Tolong baca gambar ini.";
+    messages[lastUserIdx].content = [
+      { type: "text", text: textContent },
+      { type: "image_url", image_url: { url: imageIn } }
+    ];
+  }
+
+  return messages;
+}
+
+/* ---------- CALL OPENROUTER (1 model) ---------- */
+
+async function callOpenRouter(apiKey, model, messages) {
+  const payload = {
+    model,
+    messages,
+    temperature: 0.6,
+    max_tokens: 1500
+  };
+
+  const res = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://rojok-drivek1t.vercel.app",
+      "X-OpenRouter-Title": "Rojak DriveK1t"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  return res;
+}
+
 /* ---------- HANDLER ---------- */
 
 module.exports = async function handler(req, res) {
@@ -177,111 +232,107 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const trimmed = messagesIn.slice(-16);
+  const messages = buildMessages(messagesIn, imageIn);
 
-  const messages = [
-    { role: "system", content: SYSTEM_PROMPT }
-  ];
-
-  let lastUserIdx = -1;
-
-  for (const m of trimmed) {
-    if (!m || typeof m !== "object") continue;
-    const role = m.role === "assistant" ? "assistant" : "user";
-    const content = safeText(m.content, 2000);
-    if (!content && !imageIn) continue;
-    if (!content) continue;
-
-    messages.push({ role, content });
-
-    if (role === "user") lastUserIdx = messages.length - 1;
-  }
-
-  if (imageIn && isValidImageDataUrl(imageIn) && lastUserIdx >= 0) {
-    const textContent = messages[lastUserIdx].content || "Tolong baca gambar ini.";
-    messages[lastUserIdx].content = [
-      { type: "text", text: textContent },
-      { type: "image_url", image_url: { url: imageIn } }
-    ];
+  if (imageIn && isValidImageDataUrl(imageIn)) {
     console.log("[Rojak AI] Vision mode — image size:", Math.round(imageIn.length / 1024), "KB");
   }
 
-  const payload = {
-    model: MODEL,
-    messages,
-    temperature: 0.6,
-    max_tokens: 1500
-  };
+  /* ---- FALLBACK: coba satu-satu model ---- */
 
-  let upstreamRes;
-  try {
-    upstreamRes = await fetch(OPENROUTER_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://rojok-drivek1t.vercel.app",
-        "X-OpenRouter-Title": "Rojak DriveK1t"
-      },
-      body: JSON.stringify(payload)
-    });
-  } catch (err) {
-    console.error("[Rojak AI] Fetch failed:", err);
-    return res.status(502).json({
-      error: "UPSTREAM_UNREACHABLE",
-      message: "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat."
-    });
-  }
+  let lastStatus = 0;
+  let lastError = "";
 
-  if (!upstreamRes.ok) {
-    const errText = await upstreamRes.text().catch(() => "");
-    console.error("[Rojak AI] OpenRouter error:", upstreamRes.status, errText);
+  for (const model of MODELS) {
+    console.log("[Rojak AI] Mencoba model:", model);
 
-    let message = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
-    if (upstreamRes.status === 429) {
-      message = "Rojak AI lagi rame banget. Coba lagi sebentar ya.";
-    } else if (upstreamRes.status === 401 || upstreamRes.status === 403) {
-      message = "Rojak AI belum dikonfigurasi dengan benar. Hubungi admin.";
+    let upstreamRes;
+    try {
+      upstreamRes = await callOpenRouter(apiKey, model, messages);
+    } catch (err) {
+      console.error("[Rojak AI] Fetch failed for", model, ":", err.message);
+      lastError = "fetch_failed";
+      continue;
     }
 
-    return res.status(502).json({
-      error: "UPSTREAM_ERROR",
-      message
-    });
+    lastStatus = upstreamRes.status;
+
+    // Kalau 429 (rate limit) → coba model berikutnya
+    if (upstreamRes.status === 429) {
+      console.warn("[Rojak AI] Model", model, "rate limited (429), coba model lain");
+      continue;
+    }
+
+    // Kalau 404 (model tidak ada) → coba model berikutnya
+    if (upstreamRes.status === 404) {
+      console.warn("[Rojak AI] Model", model, "tidak ditemukan (404), coba model lain");
+      continue;
+    }
+
+    // Kalau 5xx → coba model berikutnya
+    if (upstreamRes.status >= 500) {
+      console.warn("[Rojak AI] Model", model, "error server", upstreamRes.status);
+      continue;
+    }
+
+    // Kalau bukan 200 → stop, kirim error
+    if (!upstreamRes.ok) {
+      const errText = await upstreamRes.text().catch(() => "");
+      console.error("[Rojak AI] Model", model, "error:", upstreamRes.status, errText);
+
+      let message = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
+      if (upstreamRes.status === 401 || upstreamRes.status === 403) {
+        message = "Rojak AI belum dikonfigurasi dengan benar. Hubungi admin.";
+      }
+      return res.status(502).json({ error: "UPSTREAM_ERROR", message });
+    }
+
+    // Sukses — parse response
+    let data;
+    try {
+      data = await upstreamRes.json();
+    } catch (err) {
+      console.error("[Rojak AI] Gagal parse JSON dari", model);
+      continue;
+    }
+
+    const choices = data && data.choices;
+    if (!choices || choices.length === 0) {
+      console.warn("[Rojak AI] Model", model, "return 0 choices, coba model lain");
+      continue;
+    }
+
+    const reply = extractReply(choices);
+
+    if (!reply) {
+      console.warn("[Rojak AI] Model", model, "reply kosong, coba model lain");
+      continue;
+    }
+
+    // Filter safety metadata bocor
+    if (/user safety.*safe.*response safety.*safe/i.test(reply) && reply.length < 100) {
+      console.warn("[Rojak AI] Model", model, "return safety metadata, coba model lain");
+      continue;
+    }
+
+    // Sukses!
+    console.log("[Rojak AI] Berhasil via model:", model);
+    return res.status(200).json({ reply });
   }
 
-  let data;
-  try {
-    data = await upstreamRes.json();
-  } catch (err) {
-    return res.status(502).json({
-      error: "BAD_UPSTREAM_JSON",
-      message: "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat."
-    });
+  /* ---- Semua model gagal ---- */
+
+  console.error("[Rojak AI] Semua model gagal. Last status:", lastStatus);
+
+  let message = "Maaf, Rojak AI sedang sibuk. Coba lagi sebentar ya.";
+  if (lastStatus === 429) {
+    message = "Rojak AI lagi rame banget. Tunggu 1-2 menit, lalu coba lagi ya.";
+  } else if (lastError === "fetch_failed") {
+    message = "Tidak dapat terhubung ke Rojak AI. Periksa koneksi internet kamu.";
   }
 
-  const choices = data && data.choices;
-  if (!choices || choices.length === 0) {
-    return res.status(200).json({
-      reply: "Maaf, Rojak AI tidak bisa menjawab itu. Coba tanya dengan cara lain ya."
-    });
-  }
-
-  const reply = extractReply(choices);
-
-  if (!reply) {
-    return res.status(200).json({
-      reply: "Maaf, Rojak AI tidak menghasilkan jawaban. Coba lagi ya."
-    });
-  }
-
-  // Filter metadata keamanan yang bocor ke jawaban
-  if (/user safety.*safe.*response safety.*safe/i.test(reply) && reply.length < 100) {
-    console.warn("[Rojak AI] Detected safety metadata as reply, filtering");
-    return res.status(200).json({
-      reply: "Maaf, Rojak AI sedang error. Coba lagi sebentar ya."
-    });
-  }
-
-  return res.status(200).json({ reply });
+  return res.status(502).json({
+    error: "ALL_MODELS_FAILED",
+    message
+  });
 };
