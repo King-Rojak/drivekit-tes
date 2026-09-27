@@ -257,9 +257,7 @@
       .login-feature { padding: 9px 11px; }
     }
 
-    /* ============================================================
-       BROADCAST NOTIFICATION
-    ============================================================ */
+    /* BROADCAST */
 
     .broadcast-notif {
       position: fixed;
@@ -267,24 +265,16 @@
       left: 12px;
       right: 12px;
       z-index: 99990;
-
       max-width: 440px;
       margin: 0 auto;
-
       display: none;
       flex-direction: column;
-
       border: 1px solid rgba(228, 86, 50, .5);
       border-radius: 12px;
-
       background: rgba(20, 17, 15, .98);
       -webkit-backdrop-filter: blur(14px);
       backdrop-filter: blur(14px);
-
-      box-shadow:
-        0 12px 40px rgba(0, 0, 0, .65),
-        0 0 0 1px rgba(228, 86, 50, .15) inset;
-
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .65), 0 0 0 1px rgba(228, 86, 50, .15) inset;
       overflow: hidden;
     }
 
@@ -294,14 +284,8 @@
     }
 
     @keyframes broadcastSlideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .broadcast-notif.hiding {
@@ -309,10 +293,7 @@
     }
 
     @keyframes broadcastSlideUp {
-      to {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
+      to { opacity: 0; transform: translateY(-20px); }
     }
 
     .broadcast-header {
@@ -337,10 +318,7 @@
 
     .broadcast-icon svg { width: 16px; height: 16px; max-width: 16px; max-height: 16px; }
 
-    .broadcast-titles {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
+    .broadcast-titles { flex: 1 1 auto; min-width: 0; }
 
     .broadcast-title {
       color: var(--orange);
@@ -350,11 +328,7 @@
       text-transform: uppercase;
     }
 
-    .broadcast-time {
-      margin-top: 2px;
-      color: var(--muted);
-      font-size: 8px;
-    }
+    .broadcast-time { margin-top: 2px; color: var(--muted); font-size: 8px; }
 
     .broadcast-close {
       width: 26px;
@@ -373,10 +347,7 @@
       transition: background .12s ease, color .12s ease;
     }
 
-    .broadcast-close:hover {
-      background: rgba(228, 86, 50, .15);
-      color: var(--text);
-    }
+    .broadcast-close:hover { background: rgba(228, 86, 50, .15); color: var(--text); }
 
     .broadcast-body {
       padding: 12px 14px 14px;
@@ -389,7 +360,6 @@
       white-space: pre-wrap;
     }
 
-    /* Progress bar auto-hide */
     .broadcast-progress {
       height: 2px;
       background: rgba(228, 86, 50, .2);
@@ -413,16 +383,8 @@
     }
 
     @media (max-width: 480px) {
-      .broadcast-notif {
-        top: 8px;
-        left: 8px;
-        right: 8px;
-      }
-
-      .broadcast-body {
-        font-size: 12.5px;
-        padding: 11px 13px 13px;
-      }
+      .broadcast-notif { top: 8px; left: 8px; right: 8px; }
+      .broadcast-body { font-size: 12.5px; padding: 11px 13px 13px; }
     }
 
     /* APP */
@@ -483,21 +445,12 @@
 
     .profile-button img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
-    .container {
-      width: min(850px, calc(100% - 20px));
-      margin: 0 auto;
-      padding: 16px 0 28px;
-    }
+    .container { width: min(850px, calc(100% - 20px)); margin: 0 auto; padding: 16px 0 28px; }
 
     .drive-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
       padding: 12px 13px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel);
+      border: 1px solid var(--border); border-radius: 6px; background: var(--panel);
     }
 
     .drive-info { min-width: 0; }
@@ -514,15 +467,10 @@
     @keyframes blink { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 
     .drive-button {
-      height: 29px;
-      flex: 0 0 auto;
-      padding: 0 10px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 8px;
-      font-weight: 600;
+      height: 29px; flex: 0 0 auto; padding: 0 10px;
+      border: 1px solid var(--border); border-radius: 5px;
+      background: transparent; color: var(--muted);
+      font-size: 8px; font-weight: 600;
     }
 
     .drive-button:hover { background: var(--panel-2); color: var(--text); }
@@ -530,24 +478,11 @@
     .drive-button:disabled { opacity: .5; cursor: wait; }
 
     .tabs {
-      height: 42px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      margin-top: 8px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel);
+      height: 42px; display: grid; grid-template-columns: repeat(3, 1fr);
+      margin-top: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel);
     }
 
-    .tab {
-      height: 100%;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      font-size: 8px;
-      font-weight: 600;
-    }
-
+    .tab { height: 100%; border: 0; background: transparent; color: var(--muted); font-size: 8px; font-weight: 600; }
     .tab:first-child { border-radius: 5px 0 0 5px; }
     .tab:last-child { border-radius: 0 5px 5px 0; }
     .tab:hover { color: var(--text); }
@@ -556,13 +491,7 @@
     .panel { display: none; margin-top: 8px; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); }
     .panel.active { display: block; }
 
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 14px 12px;
-      border-bottom: 1px solid var(--border);
-    }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 12px; border-bottom: 1px solid var(--border); }
 
     .panel-title h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: -.2px; }
     .panel-title p { margin: 4px 0 0; color: var(--muted); font-size: 8px; line-height: 1.4; }
@@ -572,23 +501,12 @@
 
     .form { padding: 14px; }
     .field { margin-bottom: 12px; }
-
-    .field label {
-      display: block;
-      margin-bottom: 6px;
-      color: #b4b5af;
-      font-size: 8px;
-      font-weight: 600;
-    }
+    .field label { display: block; margin-bottom: 6px; color: #b4b5af; font-size: 8px; font-weight: 600; }
 
     .input, .textarea {
-      width: 100%;
-      outline: none;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      background: var(--input);
-      color: var(--text);
-      font-size: 9px;
+      width: 100%; outline: none;
+      border: 1px solid var(--border); border-radius: 5px;
+      background: var(--input); color: var(--text); font-size: 9px;
     }
 
     .input { height: 39px; padding: 0 10px; }
@@ -600,28 +518,20 @@
     .form-actions { display: flex; gap: 6px; margin-top: 4px; }
 
     .create-button {
-      height: 37px;
-      flex: 1;
-      border: 1px solid var(--orange);
-      border-radius: 5px;
-      background: var(--orange);
-      color: white;
-      font-size: 9px;
-      font-weight: 700;
+      height: 37px; flex: 1;
+      border: 1px solid var(--orange); border-radius: 5px;
+      background: var(--orange); color: white;
+      font-size: 9px; font-weight: 700;
     }
 
     .create-button:hover { background: var(--orange-hover); border-color: var(--orange-hover); }
     .create-button:disabled { opacity: .5; cursor: wait; }
 
     .clear-button {
-      height: 37px;
-      padding: 0 14px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 600;
+      height: 37px; padding: 0 14px;
+      border: 1px solid var(--border); border-radius: 5px;
+      background: transparent; color: var(--muted);
+      font-size: 9px; font-weight: 600;
     }
 
     .clear-button:hover { background: var(--panel-2); color: var(--text); }
@@ -633,23 +543,15 @@
     .files { padding: 9px; }
 
     .file-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      min-height: 58px;
-      padding: 9px 10px;
-      margin-bottom: 5px;
-      border: 1px solid var(--border-soft);
-      border-radius: 5px;
-      background: #11120f;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      min-height: 58px; padding: 9px 10px; margin-bottom: 5px;
+      border: 1px solid var(--border-soft); border-radius: 5px; background: #11120f;
     }
 
     .file-row:last-child { margin-bottom: 0; }
     .file-row:hover { border-color: var(--border); background: #151613; }
 
     .file-info { min-width: 0; }
-
     .file-name { overflow: hidden; color: var(--text); font-size: 9px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
     .file-date { margin-top: 3px; color: var(--muted); font-size: 7px; }
 
@@ -728,7 +630,7 @@
       .tab { font-size: 6.5px; }
     }
 
-    /* GLOBAL SVG SAFETY */
+    /* SVG SAFETY */
 
     .rojak-ai-fab-icon svg { width: 100% !important; height: 100% !important; max-width: 20px !important; max-height: 20px !important; display: block !important; }
     .rojak-ai-icon-button svg { width: 13px !important; height: 13px !important; max-width: 13px !important; max-height: 13px !important; display: block !important; }
@@ -740,6 +642,152 @@
     .rdk-music-play svg { width: 14px !important; height: 14px !important; max-width: 14px !important; max-height: 14px !important; }
     .rdk-music-volume svg { width: 13px !important; height: 13px !important; max-width: 13px !important; max-height: 13px !important; }
     .rdk-music-wave { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; }
+
+    /* ============================================================
+       DIAGNOSTIC LOG CONSOLE
+    ============================================================ */
+
+    .rdk-log-fab {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 99998;
+      width: 42px;
+      height: 42px;
+      display: none;
+      place-items: center;
+      border: 1px solid #4a3530;
+      border-radius: 50%;
+      background: #1a1310;
+      color: #ff8888;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .55);
+    }
+
+    .rdk-log-fab.visible {
+      display: grid;
+      animation: rdkLogPulse 1.6s infinite;
+    }
+
+    @keyframes rdkLogPulse {
+      0%, 100% { box-shadow: 0 8px 22px rgba(0, 0, 0, .55), 0 0 0 0 rgba(255, 136, 136, .4); }
+      50% { box-shadow: 0 8px 22px rgba(0, 0, 0, .55), 0 0 0 8px rgba(255, 136, 136, 0); }
+    }
+
+    .rdk-log-panel {
+      position: fixed;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      z-index: 99999;
+      max-height: 60vh;
+      display: none;
+      flex-direction: column;
+      border: 1px solid #4a3530;
+      border-radius: 10px;
+      background: #14100e;
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .7);
+      overflow: hidden;
+    }
+
+    .rdk-log-panel.open { display: flex; }
+
+    .rdk-log-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #4a3530;
+      background: #1f1714;
+    }
+
+    .rdk-log-head-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #ffb896;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .rdk-log-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 9px;
+      background: #ff8888;
+      color: #1a0f0d;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .rdk-log-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rdk-log-btn {
+      height: 26px;
+      padding: 0 10px;
+      border: 1px solid #4a3530;
+      border-radius: 5px;
+      background: transparent;
+      color: #d0b8b0;
+      font: inherit;
+      font-size: 9px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .rdk-log-btn:hover { background: #2a1f1c; color: #eeeeea; }
+
+    .rdk-log-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 10px 12px;
+      font-size: 10px;
+      line-height: 1.5;
+      color: #d0b8b0;
+    }
+
+    .rdk-log-entry {
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      border-left: 3px solid #4a3530;
+      border-radius: 4px;
+      background: #1a1512;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .rdk-log-entry.info { border-color: #8ab8d0; color: #b8d0e0; }
+    .rdk-log-entry.ok { border-color: #8fd09a; color: #b8dfba; }
+    .rdk-log-entry.warn { border-color: #f0c674; color: #f0dcb0; }
+    .rdk-log-entry.error { border-color: #ff8888; color: #ffb0b0; }
+
+    .rdk-log-entry .rdk-log-time {
+      display: block;
+      margin-bottom: 2px;
+      color: #7a6a64;
+      font-size: 9px;
+    }
+
+    .rdk-log-empty {
+      padding: 30px 15px;
+      text-align: center;
+      color: #6a6a64;
+      font-size: 10px;
+    }
   </style>
 
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
@@ -747,6 +795,192 @@
 </head>
 
 <body>
+
+  <!-- DIAGNOSTIC LOG CONSOLE -->
+
+  <button id="rdkLogFab" class="rdk-log-fab" type="button" title="Buka Log">
+    <span id="rdkLogFabCount">0</span>
+  </button>
+
+  <div id="rdkLogPanel" class="rdk-log-panel">
+    <div class="rdk-log-head">
+      <div class="rdk-log-head-title">
+        <span>Console Log</span>
+        <span id="rdkLogCount" class="rdk-log-count">0</span>
+      </div>
+      <div class="rdk-log-actions">
+        <button id="rdkLogCopy" class="rdk-log-btn" type="button">Copy</button>
+        <button id="rdkLogClear" class="rdk-log-btn" type="button">Clear</button>
+        <button id="rdkLogClose" class="rdk-log-btn" type="button">Tutup</button>
+      </div>
+    </div>
+    <div id="rdkLogBody" class="rdk-log-body">
+      <div class="rdk-log-empty">Belum ada log. Coba refresh / login.</div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       RDK_LOG — Console Log On-Screen
+    ============================================================ */
+
+    window.RDK_LOG = (function () {
+      const body = document.getElementById("rdkLogBody");
+      const panel = document.getElementById("rdkLogPanel");
+      const fab = document.getElementById("rdkLogFab");
+      const fabCount = document.getElementById("rdkLogFabCount");
+      const countEl = document.getElementById("rdkLogCount");
+      const btnClose = document.getElementById("rdkLogClose");
+      const btnClear = document.getElementById("rdkLogClear");
+      const btnCopy = document.getElementById("rdkLogCopy");
+
+      let logCount = 0;
+      let errorCount = 0;
+      let items = [];
+
+      function timeStr() {
+        const d = new Date();
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return hh + ":" + mm + ":" + ss;
+      }
+
+      function add(msg, type) {
+        type = type || "info";
+        logCount++;
+        if (type === "error") errorCount++;
+
+        items.push({ time: timeStr(), msg: msg, type: type });
+        if (items.length > 200) items.shift();
+
+        render();
+      }
+
+      function render() {
+        if (!body) return;
+
+        if (!items.length) {
+          body.innerHTML = '<div class="rdk-log-empty">Belum ada log.</div>';
+        } else {
+          body.innerHTML = items.map(function (it) {
+            return '<div class="rdk-log-entry ' + it.type + '">' +
+              '<span class="rdk-log-time">' + it.time + '</span>' +
+              escapeHtml(it.msg) +
+            '</div>';
+          }).join("");
+          body.scrollTop = body.scrollHeight;
+        }
+
+        if (countEl) countEl.textContent = String(logCount);
+
+        if (fabCount) {
+          fabCount.textContent = errorCount > 0 ? String(errorCount) : String(logCount);
+        }
+
+        if (fab) {
+          fab.classList.add("visible");
+          if (errorCount > 0) {
+            fab.style.color = "#ff8888";
+          } else {
+            fab.style.color = "#8fd09a";
+          }
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      function open() {
+        if (panel) panel.classList.add("open");
+      }
+
+      function close() {
+        if (panel) panel.classList.remove("open");
+      }
+
+      function clear() {
+        items = [];
+        logCount = 0;
+        errorCount = 0;
+        render();
+      }
+
+      function copy() {
+        const text = items.map(function (it) {
+          return "[" + it.time + "] [" + it.type + "] " + it.msg;
+        }).join("\n");
+
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(function () {
+            add("Log di-copy ke clipboard", "ok");
+          }).catch(function () {
+            alert("Gagal copy. Screenshot manual aja.");
+          });
+        } else {
+          alert("Copy tidak didukung. Screenshot manual aja.");
+        }
+      }
+
+      if (fab) fab.addEventListener("click", open);
+      if (btnClose) btnClose.addEventListener("click", close);
+      if (btnClear) btnClear.addEventListener("click", clear);
+      if (btnCopy) btnCopy.addEventListener("click", copy);
+
+      // Override console.log / warn / error → juga tampil di panel
+      const origLog = console.log;
+      const origWarn = console.warn;
+      const origError = console.error;
+
+      console.log = function () {
+        origLog.apply(console, arguments);
+        add(Array.from(arguments).map(String).join(" "), "info");
+      };
+
+      console.warn = function () {
+        origWarn.apply(console, arguments);
+        add(Array.from(arguments).map(String).join(" "), "warn");
+      };
+
+      console.error = function () {
+        origError.apply(console, arguments);
+        add(Array.from(arguments).map(String).join(" "), "error");
+      };
+
+      // Catch global errors
+      window.addEventListener("error", function (e) {
+        add("GLOBAL ERROR: " + (e.message || "unknown"), "error");
+      });
+
+      window.addEventListener("unhandledrejection", function (e) {
+        var reason = e.reason;
+        var msg = "?";
+        if (reason) {
+          if (typeof reason === "string") msg = reason;
+          else if (reason.message) msg = (reason.code || "") + " " + reason.message;
+          else msg = String(reason);
+        }
+        add("UNHANDLED REJECTION: " + msg, "error");
+      });
+
+      // Initial log
+      add("=== Console started ===", "info");
+      add("UA: " + navigator.userAgent.slice(0, 80), "info");
+      add("URL: " + location.href, "info");
+
+      return {
+        add: add,
+        open: open,
+        close: close,
+        clear: clear,
+        copy: copy
+      };
+    })();
+  </script>
 
   <!-- BROADCAST NOTIFICATION -->
 
@@ -1028,7 +1262,7 @@
     };
 
     window.gapiLoaded = function () {
-      console.log("Google API loaded");
+      if (window.RDK_LOG) window.RDK_LOG.add("gapi.js loaded", "ok");
       if (typeof window.gapi === "undefined") return;
       window.gapi.load("client", function () {
         window.gapi.client.init({
@@ -1037,26 +1271,23 @@
           ]
         }).then(function () {
           window.RDK_GOOGLE.gapiInited = true;
-          console.log("Google Drive API siap.");
+          if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap", "ok");
         }).catch(function (error) {
-          console.error("GAPI init error:", error);
+          if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
         });
       });
     };
 
     window.gisLoaded = function () {
-      console.log("Google Identity Services loaded");
-      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-        console.error("Google Identity Services tidak tersedia.");
-        return;
-      }
+      if (window.RDK_LOG) window.RDK_LOG.add("gis client loaded", "ok");
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return;
       window.RDK_GOOGLE.tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
         scope: "https://www.googleapis.com/auth/drive.file",
         callback: ""
       });
       window.RDK_GOOGLE.gisInited = true;
-      console.log("Google OAuth siap.");
+      if (window.RDK_LOG) window.RDK_LOG.add("Google OAuth siap", "ok");
     };
   </script>
 
@@ -1092,6 +1323,7 @@
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
+    const LOG = window.RDK_LOG || { add: function(){} };
     const $ = id => document.getElementById(id);
 
     let accessToken = null;
@@ -1110,25 +1342,29 @@
     let broadcastUnsub = null;
     let broadcastAutoHideTimer = null;
 
-    setPersistence(auth, browserLocalPersistence).catch(function () {});
+    LOG.add("Module utama loaded", "ok");
+
+    setPersistence(auth, browserLocalPersistence).then(function () {
+      LOG.add("Persistence: LOCAL", "ok");
+    }).catch(function (e) {
+      LOG.add("Persistence error: " + e.message, "error");
+    });
 
     function hideLoading() {
-      if (window.__RDK_FINISH_LOADING__) {
-        window.__RDK_FINISH_LOADING__();
-      }
+      if (window.__RDK_FINISH_LOADING__) window.__RDK_FINISH_LOADING__();
       const loading = $("loadingScreen");
-      if (loading && loading.style.display !== "none") {
-        loading.style.display = "none";
-      }
+      if (loading && loading.style.display !== "none") loading.style.display = "none";
     }
 
     function showLogin() {
+      LOG.add("showLogin()", "warn");
       hideLoading();
       $("app").style.display = "none";
       $("loginScreen").style.display = "flex";
     }
 
     function showApp() {
+      LOG.add("showApp() → masuk app", "ok");
       hideLoading();
       $("loginScreen").style.display = "none";
       $("app").style.display = "block";
@@ -1136,6 +1372,7 @@
 
     function loginError(message) {
       $("loginError").textContent = message;
+      LOG.add("Login error UI: " + message, "error");
     }
 
     function setStatus(message, type = "") {
@@ -1211,10 +1448,11 @@
       }
 
       applyDriveConnectedUI();
+      LOG.add("Drive token restored", "ok");
       return true;
     }
 
-    /* BROADCAST NOTIFICATION */
+    /* BROADCAST */
 
     function getDismissedBroadcasts() {
       try {
@@ -1222,9 +1460,7 @@
         if (!raw) return [];
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        return [];
-      }
+      } catch (e) { return []; }
     }
 
     function dismissBroadcast(id) {
@@ -1259,18 +1495,15 @@
     function hideBroadcastNotif(instant) {
       const notif = $("broadcastNotif");
       if (!notif) return;
-
       if (broadcastAutoHideTimer) {
         clearTimeout(broadcastAutoHideTimer);
         broadcastAutoHideTimer = null;
       }
-
       if (instant) {
         notif.classList.remove("open");
         notif.classList.remove("hiding");
         return;
       }
-
       notif.classList.add("hiding");
       setTimeout(function () {
         notif.classList.remove("open");
@@ -1286,41 +1519,34 @@
 
       if (!notif || !bodyEl) return;
 
-      // Cek sudah di-dismiss
       const dismissed = getDismissedBroadcasts();
       if (dismissed.indexOf(broadcast.id) !== -1) return;
 
-      // Set isi
       bodyEl.textContent = broadcast.message || "";
       const date = toBroadcastDate(broadcast.createdAt);
       timeEl.textContent = date ? timeAgoNotif(date) : "";
 
-      // Tampilkan
       notif.classList.remove("open");
       notif.classList.remove("hiding");
-      // Force reflow biar animasi restart
       void notif.offsetWidth;
       notif.classList.add("open");
 
-      // Auto-hide
       if (broadcastAutoHideTimer) clearTimeout(broadcastAutoHideTimer);
       broadcastAutoHideTimer = setTimeout(function () {
         hideBroadcastNotif(false);
       }, BROADCAST_AUTO_HIDE_MS);
 
-      // Close button handler (sekali)
       if (closeBtn && !closeBtn.dataset.bound) {
         closeBtn.dataset.bound = "1";
         closeBtn.addEventListener("click", function () {
           hideBroadcastNotif(false);
-          // Tandai dismiss broadcast saat ini
           const currentId = notif.dataset.broadcastId;
           if (currentId) dismissBroadcast(currentId);
         });
       }
 
-      // Simpan ID broadcast aktif di dataset
       notif.dataset.broadcastId = broadcast.id;
+      LOG.add("Broadcast ditampilkan: " + broadcast.message.slice(0, 40), "ok");
     }
 
     function startBroadcastListener() {
@@ -1329,7 +1555,7 @@
         broadcastUnsub = null;
       }
 
-      if (D && D.log) D.log("Broadcast listener: start");
+      LOG.add("Broadcast listener: start", "info");
 
       try {
         const broadcastsRef = collection(db, "broadcasts");
@@ -1338,7 +1564,6 @@
         broadcastUnsub = onSnapshot(q, function (snapshot) {
           if (snapshot.empty) return;
 
-          // Cari broadcast aktif terbaru
           let latest = null;
           snapshot.forEach(function (doc) {
             if (latest) return;
@@ -1350,24 +1575,19 @@
 
           if (!latest) return;
 
-          // Cek sudah di-dismiss
           const dismissed = getDismissedBroadcasts();
           if (dismissed.indexOf(latest.id) !== -1) return;
 
-          // Cek apakah notif sudah menampilkan broadcast ini
           const notif = $("broadcastNotif");
-          if (notif && notif.dataset.broadcastId === latest.id && notif.classList.contains("open")) {
-            return;
-          }
+          if (notif && notif.dataset.broadcastId === latest.id && notif.classList.contains("open")) return;
 
-          // Tampilkan
           showBroadcastNotif(latest);
         }, function (error) {
-          console.warn("[Broadcast] Listener error:", error);
+          LOG.add("Broadcast listener error: " + (error.code || "") + " " + (error.message || ""), "error");
         });
 
       } catch (error) {
-        console.warn("[Broadcast] Gagal setup listener:", error);
+        LOG.add("Broadcast setup error: " + (error.message || error), "error");
       }
     }
 
@@ -1386,9 +1606,13 @@
 
     function ensureProfile(user) {
       const ref = doc(db, "users", user.uid);
+      LOG.add("ensureProfile: getDoc users/" + user.uid.slice(0, 8) + "...", "info");
 
       return getDoc(ref).then(function (snapshot) {
+        LOG.add("getDoc OK — exists: " + snapshot.exists(), "ok");
+
         if (!snapshot.exists()) {
+          LOG.add("User baru — setDoc...", "info");
           return setDoc(ref, {
             uid: user.uid,
             name: user.displayName || "User",
@@ -1399,17 +1623,23 @@
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           }).then(function () {
+            LOG.add("setDoc OK — user dibuat", "ok");
             return "member";
           });
         }
 
         const data = snapshot.data();
         const role = data.role === "admin" ? "admin" : "member";
+        LOG.add("Role user: " + role, "ok");
 
         updateDoc(ref, {
           lastLoginAt: serverTimestamp(),
           updatedAt: serverTimestamp()
-        }).catch(function () {});
+        }).then(function () {
+          LOG.add("lastLoginAt updated", "ok");
+        }).catch(function (e) {
+          LOG.add("updateDoc lastLoginAt gagal: " + (e.code || "") + " " + (e.message || ""), "warn");
+        });
 
         return role;
       });
@@ -1432,15 +1662,18 @@
 
     function loadProfile(user) {
       currentUser = user;
+      LOG.add("loadProfile: " + (user.email || user.uid.slice(0, 8)), "info");
 
       return ensureProfile(user).then(function (role) {
         currentRole = role;
         fillProfileUI(user, role);
+        LOG.add("loadProfile selesai → showApp", "ok");
         showApp();
       });
     }
 
     function loadProfileFallback(user) {
+      LOG.add("FALLBACK: masuk app tanpa Firestore", "warn");
       currentUser = user;
       currentRole = "member";
       fillProfileUI(user, "member");
@@ -1452,6 +1685,8 @@
     function loginGoogle() {
       const button = $("loginButton");
       loginError("");
+      LOG.add("=== KLIK LOGIN GOOGLE ===", "info");
+
       button.disabled = true;
       const label = button.querySelector("span");
       if (label) label.textContent = "Membuka Google...";
@@ -1459,8 +1694,12 @@
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
 
-      signInWithPopup(auth, provider).catch(function (error) {
-        console.error("Login error:", error);
+      LOG.add("Coba signInWithPopup...", "info");
+
+      signInWithPopup(auth, provider).then(function (result) {
+        LOG.add("signInWithPopup OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
+      }).catch(function (error) {
+        LOG.add("signInWithPopup ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
 
         if (
           error.code === "auth/popup-blocked" ||
@@ -1468,7 +1707,9 @@
           error.code === "auth/cancelled-popup-request" ||
           error.code === "auth/operation-not-supported-in-this-environment"
         ) {
+          LOG.add("Fallback ke signInWithRedirect...", "warn");
           signInWithRedirect(auth, provider).catch(function (err2) {
+            LOG.add("signInWithRedirect ERROR: " + (err2.code || "") + " — " + (err2.message || ""), "error");
             loginError("Login gagal: " + (err2.code || err2.message));
             button.disabled = false;
             if (label) label.textContent = "Continue with Google";
@@ -1493,11 +1734,16 @@
 
     onAuthStateChanged(auth, function (user) {
       if (!user) {
+        LOG.add("onAuthStateChanged: user NULL → showLogin", "warn");
         stopBroadcastListener();
         hideBroadcastNotif(true);
         showLogin();
         return;
       }
+
+      LOG.add("onAuthStateChanged: USER MASUK", "ok");
+      LOG.add("  uid: " + user.uid.slice(0, 10) + "...", "ok");
+      LOG.add("  email: " + (user.email || "-"), "ok");
 
       $("loadingText").textContent = "Memuat profil...";
 
@@ -1505,7 +1751,9 @@
         restoreDriveToken();
         startBroadcastListener();
       }).catch(function (error) {
-        console.error("[Auth] loadProfile error:", error);
+        LOG.add("loadProfile GAGAL", "error");
+        LOG.add("  code: " + (error.code || "(no code)"), "error");
+        LOG.add("  message: " + (error.message || "(no message)"), "error");
 
         if (error && (
           error.code === "permission-denied" ||
@@ -1513,17 +1761,23 @@
           error.code === "failed-precondition" ||
           error.code === "deadline-exceeded"
         )) {
+          LOG.add("→ Firestore error, pakai fallback", "warn");
           loadProfileFallback(user);
           startBroadcastListener();
           return;
         }
 
+        LOG.add("→ Error tidak dikenali, showLogin", "error");
         showLogin();
       });
     });
 
-    getRedirectResult(auth).catch(function (error) {
-      console.error("Redirect result:", error);
+    getRedirectResult(auth).then(function (result) {
+      if (result && result.user) {
+        LOG.add("getRedirectResult OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
+      }
+    }).catch(function (error) {
+      LOG.add("getRedirectResult ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
     });
 
     /* WAIT GOOGLE */
@@ -1676,7 +1930,6 @@
           $("fileContent").value = "";
           return loadRecentFiles();
         }).catch(function (error) {
-          console.error(error);
           setStatus("Gagal membuat file: " + error.message, "error");
         }).finally(function () {
           $("createButton").disabled = false;
@@ -1742,8 +1995,6 @@
           };
         });
       }).catch(function (error) {
-        console.error(error);
-
         if (error && error.status === 401) {
           accessToken = null;
           clearDriveToken();
@@ -1753,7 +2004,6 @@
           $("filesList").innerHTML = '<div class="empty">Sesi habis. Hubungkan Drive kembali.</div>';
           return;
         }
-
         $("filesList").innerHTML = '<div class="empty">Gagal memuat file.</div>';
       });
     }
@@ -1769,8 +2019,7 @@
       }).then(function (response) {
         const file = response.result;
         window.open(file.webViewLink || ("https://drive.google.com/file/d/" + fileId + "/view"), "_blank");
-      }).catch(function (error) {
-        console.error(error);
+      }).catch(function () {
         alert("Gagal membuka file.");
       });
     }
@@ -1821,8 +2070,7 @@
         $("profileStatus").textContent = "Profil berhasil disimpan.";
         $("profileStatus").className = "status success";
       }).catch(function (error) {
-        console.error(error);
-        $("profileStatus").textContent = "Gagal menyimpan profil.";
+        $("profileStatus").textContent = "Gagal menyimpan profil: " + (error.code || error.message);
         $("profileStatus").className = "status error";
       }).finally(function () {
         $("saveProfile").disabled = false;
@@ -1830,13 +2078,9 @@
       });
     };
 
-    /* ADMIN */
-
     $("adminButton").onclick = function () {
       window.location.href = "./admin.html";
     };
-
-    /* LOGOUT */
 
     $("logoutButton").onclick = function () {
       if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
@@ -1859,8 +2103,6 @@
 
       signOut(auth);
     };
-
-    /* TABS */
 
     document.querySelectorAll(".tab").forEach(function (tab) {
       tab.addEventListener("click", function () {
