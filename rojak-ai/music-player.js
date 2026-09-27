@@ -1,73 +1,66 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Custom Music Player + Mini Player
-   Gain boost 2.5x, waveform bell curve, lirik typewriter.
+   ROJAK DRIVEK1T — Music Player (Spotify-style)
+   Multi-track playlist, mini player, no lyrics.
 ============================================================ */
 
 (function () {
   "use strict";
 
-  const TRACK = {
-    title: "Tante Culik Aku Dong",
+  /* ---------------------------------------------------------
+     🎵 PLAYLIST — TAMBAH LAGU DI SINI
+     Letakkan file MP3 di folder music/
+  --------------------------------------------------------- */
+
+  const PLAYLIST = [
+  {
+    title: "Teh Hijau",
     artist: "King Rojak",
-    src: "./music/tante-culik-aku-dong.mp3"
-  };
-
-  const LYRICS = [
-    { t: 0,  text: "Tanteee" },
-    { t: 2,  text: "Sudah Terbiasa" },
-    { t: 4,  text: "Terjadi Tante" },
-    { t: 5,  text: "Teman Datang" },
-    { t: 7,  text: "Ketika Lagi" },
-    { t: 8,  text: "Butuh Sajaaa" },
-    { t: 10, text: "Coba Kalo" },
-    { t: 11, text: "Lagi Susahh" },
-    { t: 13, text: "Mereka Semua" },
-    { t: 15, text: "Menghilaang" }
-  ];
-
-  const TYPE_SPEED_MS = 55;
-  const ERASE_SPEED_MS = 25;
-  const HOLD_AFTER_TYPE = 300;
-
-  const WAVE_BARS = 72;
-  const WAVE_GAP = 3;
-  const WAVE_MIN_H = 3;
-  const WAVE_ENVELOPE = true;
-  const WAVE_ENVELOPE_POWER = 1.35;
+    src: "./music/Teh Hijau.mp3",
+    cover: "./music/Teh Hijau.jpge"
+  },
+  {
+    title: "Sesi Potret",
+    artist: "Artis 2",
+    src: "./music/Sesi Potret.mp3",
+    cover: "./music/Sesi Potret.jpeg"
+  },
+  {
+    title: "Dunia Yang Nanti",
+    artist: "Artis 3",
+    src: "./music/Dunia Yang Nanti.mp3",
+    cover: "./music/iqro'.jpge"
+  }
+];
 
   const GAIN_BOOST = 2.5;
-
-  const MINI_BARS = 14;
-  const MINI_GAP = 2;
 
   const state = {
     audio: null,
     audioCtx: null,
-    analyser: null,
-    sourceNode: null,
     gainNode: null,
-    waveAnimId: null,
-    miniAnimId: null,
+    currentIndex: 0,
     duration: 0,
+    currentTime: 0,
+    volume: 1,
     isPlaying: false,
     loop: false,
+    shuffle: false,
+    dragging: false,
     ready: false,
-    analyserOK: false,
-    fallbackTime: 0,
-    freqData: null,
     miniOpen: false,
     miniDismissed: false,
-    currentLyricIndex: -1,
-    typewriterTimer: null,
-    typewriterPhase: "idle",
-    typedChars: 0,
-    activeLyricText: ""
+    durationCache: {}
   };
 
   const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
   const ICON_PLAY = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20 6 4"/></svg>`;
   const ICON_PAUSE = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`;
+  const ICON_PREV = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="19 20 9 12 19 4 19 20"/><rect x="5" y="4" width="2" height="16"/></svg>`;
+  const ICON_NEXT = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="4" width="2" height="16"/></svg>`;
+  const ICON_SHUFFLE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>`;
   const ICON_LOOP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
+  const ICON_VOL_HIGH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+  const ICON_VOL_MUTE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
 
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
@@ -92,7 +85,16 @@
     return node;
   }
 
-  /* ---------------- BUILD MAIN PLAYER ---------------- */
+  function formatTime(sec) {
+    if (!isFinite(sec) || sec < 0) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return m + ":" + (s < 10 ? "0" + s : s);
+  }
+
+  /* ---------------------------------------------------------
+     BUILD MAIN PLAYER
+  --------------------------------------------------------- */
 
   function buildPlayer() {
     const section = el("section", {
@@ -100,61 +102,190 @@
       id: "rdkMusicSection"
     });
 
+    /* NOW PLAYING */
+    const coverWrap = el("div", {
+      class: "rdk-music-cover",
+      id: "rdkMusicCover"
+    });
+
+    const coverPlaceholder = el("div", {
+      class: "rdk-music-cover-placeholder",
+      id: "rdkMusicCoverPlaceholder",
+      html: ICON_MUSIC
+    });
+
+    const coverImg = el("img", {
+      id: "rdkMusicCoverImg",
+      alt: "Cover",
+      style: "display:none;"
+    });
+
+    coverWrap.appendChild(coverPlaceholder);
+    coverWrap.appendChild(coverImg);
+
+    const nowTitle = el("div", {
+      class: "rdk-music-now-title",
+      id: "rdkMusicNowTitle",
+      text: PLAYLIST[0] ? PLAYLIST[0].title : "Tidak ada lagu"
+    });
+
+    const nowArtist = el("div", {
+      class: "rdk-music-now-artist",
+      id: "rdkMusicNowArtist",
+      text: PLAYLIST[0] ? PLAYLIST[0].artist : ""
+    });
+
+    const badge = el("div", { class: "rdk-music-now-badge" }, [
+      el("span", { class: "rdk-music-now-badge-dot" }),
+      el("span", { text: "Now Playing" })
+    ]);
+
+    const nowMeta = el("div", { class: "rdk-music-now-meta" }, [
+      nowTitle,
+      nowArtist,
+      badge
+    ]);
+
+    const now = el("div", { class: "rdk-music-now" }, [coverWrap, nowMeta]);
+
+    /* PLAYLIST */
+    const listHead = el("div", { class: "rdk-music-list-head" }, [
+      el("div", { class: "rdk-music-list-title", text: "Playlist" }),
+      el("div", {
+        class: "rdk-music-list-count",
+        id: "rdkMusicListCount",
+        text: PLAYLIST.length + " lagu"
+      })
+    ]);
+
+    const trackList = el("div", {
+      class: "rdk-music-tracklist",
+      id: "rdkMusicTrackList"
+    });
+
+    const list = el("div", { class: "rdk-music-list" }, [listHead, trackList]);
+
+    /* CONTROLS */
+    const curTime = el("span", {
+      class: "rdk-music-progress-time",
+      id: "rdkMusicTimeCur",
+      text: "0:00"
+    });
+
+    const progressTrack = el("div", { class: "rdk-music-progress-track" }, [
+      el("div", { class: "rdk-music-progress-fill", id: "rdkMusicProgressFill" })
+    ]);
+
+    const progressThumb = el("div", {
+      class: "rdk-music-progress-thumb",
+      id: "rdkMusicProgressThumb"
+    });
+
+    const progressBar = el("div", {
+      class: "rdk-music-progress-bar",
+      id: "rdkMusicProgressBar"
+    }, [progressTrack, progressThumb]);
+
+    const durTime = el("span", {
+      class: "rdk-music-progress-time rdk-music-progress-time-right",
+      id: "rdkMusicTimeDur",
+      text: "0:00"
+    });
+
+    const progressRow = el("div", { class: "rdk-music-progress-row" }, [
+      curTime, progressBar, durTime
+    ]);
+
+    /* BUTTONS */
+    const shuffleBtn = el("button", {
+      class: "rdk-music-ctrl",
+      type: "button",
+      id: "rdkMusicShuffle",
+      title: "Acak",
+      "aria-label": "Acak",
+      html: ICON_SHUFFLE
+    });
+
+    const prevBtn = el("button", {
+      class: "rdk-music-ctrl",
+      type: "button",
+      id: "rdkMusicPrev",
+      title: "Sebelumnya",
+      "aria-label": "Sebelumnya",
+      html: ICON_PREV
+    });
+
     const playBtn = el("button", {
-      class: "rdk-music-play", type: "button", id: "rdkMusicPlay",
-      title: "Play", "aria-label": "Play", html: ICON_PLAY
+      class: "rdk-music-play",
+      type: "button",
+      id: "rdkMusicPlay",
+      title: "Play",
+      "aria-label": "Play",
+      html: ICON_PLAY
+    });
+
+    const nextBtn = el("button", {
+      class: "rdk-music-ctrl",
+      type: "button",
+      id: "rdkMusicNext",
+      title: "Selanjutnya",
+      "aria-label": "Selanjutnya",
+      html: ICON_NEXT
     });
 
     const loopBtn = el("button", {
-      class: "rdk-music-btn", type: "button", id: "rdkMusicLoop",
-      title: "Loop", "aria-label": "Loop", html: ICON_LOOP
+      class: "rdk-music-ctrl",
+      type: "button",
+      id: "rdkMusicLoop",
+      title: "Ulangi",
+      "aria-label": "Ulangi",
+      html: ICON_LOOP
     });
 
-    const headerActions = el("div", { class: "rdk-music-header-actions" }, [
-      loopBtn, playBtn
+    const buttons = el("div", { class: "rdk-music-buttons" }, [
+      shuffleBtn, prevBtn, playBtn, nextBtn, loopBtn
     ]);
 
-    const header = el("div", { class: "rdk-music-header" }, [
-      el("div", { class: "rdk-music-icon", html: ICON_MUSIC }),
-      el("div", { class: "rdk-music-meta" }, [
-        el("div", { class: "rdk-music-title", text: TRACK.title }),
-        el("div", { class: "rdk-music-artist", text: TRACK.artist })
-      ]),
-      headerActions
+    /* VOLUME */
+    const volIcon = el("span", { id: "rdkMusicVolIcon", html: ICON_VOL_HIGH });
+
+    const volInput = el("input", {
+      type: "range",
+      id: "rdkMusicVolume",
+      min: "0",
+      max: "1",
+      step: "0.01",
+      value: "1"
+    });
+
+    const volValue = el("span", {
+      class: "rdk-music-volume-value",
+      id: "rdkMusicVolValue",
+      text: "100"
+    });
+
+    const volWrap = el("div", { class: "rdk-music-volume" }, [volInput]);
+
+    const volumeRow = el("div", { class: "rdk-music-volume-row" }, [
+      volIcon, volWrap, volValue
     ]);
 
-    const waveWrap = el("div", { class: "rdk-music-wave-wrap" }, [
-      el("canvas", { class: "rdk-music-wave", id: "rdkMusicWave" }),
-      el("div", {
-        class: "rdk-music-wave-empty", id: "rdkMusicWaveEmpty",
-        text: "Tekan play untuk memulai"
-      })
+    const controlsWrap = el("div", { class: "rdk-music-controls-wrap" }, [
+      progressRow,
+      buttons,
+      volumeRow
     ]);
 
-    const lyricLine = el("div", {
-      class: "rdk-music-lyric-line", id: "rdkMusicLyricLine"
-    }, [
-      el("span", {
-        class: "rdk-music-lyric-text", id: "rdkMusicLyricText", text: ""
-      }),
-      el("span", {
-        class: "rdk-music-cursor", id: "rdkMusicCursor", text: "|"
-      })
-    ]);
-
-    const lyricWrap = el("div", { class: "rdk-music-lyric-wrap" }, [
-      el("div", { class: "rdk-music-lyric-title", text: "Lirik" }),
-      lyricLine
-    ]);
-
-    section.appendChild(header);
-    section.appendChild(waveWrap);
-    section.appendChild(lyricWrap);
+    section.appendChild(now);
+    section.appendChild(list);
+    section.appendChild(controlsWrap);
 
     return section;
   }
 
-  /* ---------------- BUILD MINI PLAYER ---------------- */
+  /* ---------------------------------------------------------
+     BUILD MINI PLAYER
+  --------------------------------------------------------- */
 
   function buildMiniPlayer() {
     const mini = el("div", {
@@ -162,250 +293,220 @@
       id: "rdkMusicMini"
     });
 
-    const icon = el("div", {
-      class: "rdk-music-mini-icon",
+    const coverWrap = el("div", { class: "rdk-music-mini-cover" });
+
+    const coverPlaceholder = el("div", {
+      class: "rdk-music-mini-cover-placeholder",
+      id: "rdkMusicMiniCoverPlaceholder",
       html: ICON_MUSIC
     });
 
-    const meta = el("div", { class: "rdk-music-mini-meta" }, [
-      el("div", { class: "rdk-music-mini-title", text: TRACK.title }),
-      el("div", { class: "rdk-music-mini-artist", text: TRACK.artist })
-    ]);
-
-    const miniWave = el("canvas", {
-      class: "rdk-music-mini-wave",
-      id: "rdkMusicMiniWave"
+    const coverImg = el("img", {
+      id: "rdkMusicMiniCoverImg",
+      alt: "Cover",
+      style: "display:none;"
     });
 
-    const loopBtn = el("button", {
-      class: "rdk-music-mini-btn", type: "button", id: "rdkMusicMiniLoop",
-      title: "Loop", "aria-label": "Loop", html: ICON_LOOP
+    coverWrap.appendChild(coverPlaceholder);
+    coverWrap.appendChild(coverImg);
+
+    const title = el("div", {
+      class: "rdk-music-mini-title",
+      id: "rdkMusicMiniTitle",
+      text: PLAYLIST[0] ? PLAYLIST[0].title : "Tidak ada lagu"
+    });
+
+    const artist = el("div", {
+      class: "rdk-music-mini-artist",
+      id: "rdkMusicMiniArtist",
+      text: PLAYLIST[0] ? PLAYLIST[0].artist : ""
+    });
+
+    const meta = el("div", { class: "rdk-music-mini-meta" }, [title, artist]);
+
+    const prevBtn = el("button", {
+      class: "rdk-music-mini-btn",
+      type: "button",
+      id: "rdkMusicMiniPrev",
+      title: "Sebelumnya",
+      "aria-label": "Sebelumnya",
+      html: ICON_PREV
     });
 
     const playBtn = el("button", {
-      class: "rdk-music-mini-btn rdk-music-mini-play", type: "button", id: "rdkMusicMiniPlay",
-      title: "Play", "aria-label": "Play", html: ICON_PLAY
+      class: "rdk-music-mini-btn rdk-music-mini-play",
+      type: "button",
+      id: "rdkMusicMiniPlay",
+      title: "Play",
+      "aria-label": "Play",
+      html: ICON_PLAY
+    });
+
+    const nextBtn = el("button", {
+      class: "rdk-music-mini-btn",
+      type: "button",
+      id: "rdkMusicMiniNext",
+      title: "Selanjutnya",
+      "aria-label": "Selanjutnya",
+      html: ICON_NEXT
     });
 
     const closeBtn = el("button", {
-      class: "rdk-music-mini-close", type: "button", id: "rdkMusicMiniClose",
-      title: "Sembunyikan", "aria-label": "Sembunyikan mini player", html: "×"
+      class: "rdk-music-mini-close",
+      type: "button",
+      id: "rdkMusicMiniClose",
+      title: "Sembunyikan",
+      "aria-label": "Sembunyikan",
+      html: "×"
     });
 
     const controls = el("div", { class: "rdk-music-mini-controls" }, [
-      loopBtn, playBtn, closeBtn
+      prevBtn, playBtn, nextBtn, closeBtn
     ]);
 
-    mini.appendChild(icon);
+    mini.appendChild(coverWrap);
     mini.appendChild(meta);
-    mini.appendChild(miniWave);
     mini.appendChild(controls);
 
     return mini;
   }
 
-  /* ---------------- MOUNT ---------------- */
+  /* ---------------------------------------------------------
+     RENDER PLAYLIST
+  --------------------------------------------------------- */
 
-  function mount() {
-    const oldSpotify = document.querySelector(".spotify-section");
-    const player = buildPlayer();
+  function renderTrackList() {
+    const container = document.getElementById("rdkMusicTrackList");
+    if (!container) return;
 
-    if (oldSpotify && oldSpotify.parentNode) {
-      oldSpotify.parentNode.replaceChild(player, oldSpotify);
+    container.innerHTML = "";
+
+    PLAYLIST.forEach((track, i) => {
+      const isActive = i === state.currentIndex;
+
+      const numEl = el("div", {
+        class: "rdk-music-track-num",
+        text: String(i + 1).padStart(2, "0")
+      });
+
+      const eqEl = el("div", { class: "rdk-music-eq" }, [
+        el("span"), el("span"), el("span"), el("span")
+      ]);
+
+      const info = el("div", { class: "rdk-music-track-info" }, [
+        el("div", { class: "rdk-music-track-title", text: track.title }),
+        el("div", { class: "rdk-music-track-artist", text: track.artist })
+      ]);
+
+      const durEl = el("div", {
+        class: "rdk-music-track-duration",
+        text: state.durationCache[track.src]
+          ? formatTime(state.durationCache[track.src])
+          : "--:--"
+      });
+
+      const row = el("div", {
+        class: "rdk-music-track" + (isActive ? " rdk-music-track-active" : ""),
+        "data-index": String(i)
+      }, [numEl, eqEl, info, durEl]);
+
+      row.addEventListener("click", () => {
+        playTrack(i);
+      });
+
+      container.appendChild(row);
+    });
+  }
+
+  /* ---------------------------------------------------------
+     UPDATE NOW PLAYING
+  --------------------------------------------------------- */
+
+  function updateNowPlaying() {
+    const track = PLAYLIST[state.currentIndex];
+    if (!track) return;
+
+    // Main player
+    const titleEl = document.getElementById("rdkMusicNowTitle");
+    const artistEl = document.getElementById("rdkMusicNowArtist");
+    if (titleEl) titleEl.textContent = track.title;
+    if (artistEl) artistEl.textContent = track.artist;
+
+    // Cover
+    updateCoverUI(track);
+
+    // Mini
+    const miniTitle = document.getElementById("rdkMusicMiniTitle");
+    const miniArtist = document.getElementById("rdkMusicMiniArtist");
+    if (miniTitle) miniTitle.textContent = track.title;
+    if (miniArtist) miniArtist.textContent = track.artist;
+
+    // Track list
+    document.querySelectorAll(".rdk-music-track").forEach((row, i) => {
+      row.classList.toggle("rdk-music-track-active", i === state.currentIndex);
+    });
+  }
+
+  function updateCoverUI(track) {
+    const mainImg = document.getElementById("rdkMusicCoverImg");
+    const mainPlaceholder = document.getElementById("rdkMusicCoverPlaceholder");
+    const miniImg = document.getElementById("rdkMusicMiniCoverImg");
+    const miniPlaceholder = document.getElementById("rdkMusicMiniCoverPlaceholder");
+
+    if (track.cover) {
+      if (mainImg) { mainImg.src = track.cover; mainImg.style.display = "block"; }
+      if (mainPlaceholder) mainPlaceholder.style.display = "none";
+      if (miniImg) { miniImg.src = track.cover; miniImg.style.display = "block"; }
+      if (miniPlaceholder) miniPlaceholder.style.display = "none";
     } else {
-      const footer = document.querySelector(".footer");
-      if (footer && footer.parentNode) {
-        footer.parentNode.insertBefore(player, footer);
-      } else {
-        document.body.appendChild(player);
-      }
-    }
-
-    const mini = buildMiniPlayer();
-    document.body.appendChild(mini);
-
-    const audio = new Audio();
-    audio.preload = "auto";
-    audio.src = TRACK.src;
-    audio.volume = 1.0;
-    state.audio = audio;
-
-    audio.addEventListener("loadedmetadata", () => {
-      state.duration = audio.duration || 0;
-    });
-
-    audio.addEventListener("canplay", () => {
-      state.ready = true;
-      const emptyEl = document.getElementById("rdkMusicWaveEmpty");
-      if (emptyEl) emptyEl.classList.add("rdk-music-hidden");
-    });
-
-    audio.addEventListener("timeupdate", () => {
-      updateLyricForTime(audio.currentTime);
-    });
-
-    audio.addEventListener("play", () => {
-      state.isPlaying = true;
-      updatePlayButtons();
-      ensureAudioContext();
-      startWaveAnimation();
-      if (state.miniOpen) startMiniWaveAnimation();
-      updateLyricForTime(audio.currentTime, true);
-    });
-
-    audio.addEventListener("pause", () => {
-      state.isPlaying = false;
-      updatePlayButtons();
-      stopWaveAnimation();
-      stopMiniWaveAnimation();
-      stopTypewriter();
-    });
-
-    audio.addEventListener("ended", () => {
-      state.isPlaying = false;
-      updatePlayButtons();
-      stopWaveAnimation();
-      stopMiniWaveAnimation();
-      stopTypewriter();
-      if (state.loop) {
-        audio.currentTime = 0;
-        resetLyricState();
-        audio.play().catch(() => {});
-      }
-    });
-
-    audio.addEventListener("error", () => {
-      console.error("[Music] Gagal load:", TRACK.src, audio.error);
-      const emptyEl = document.getElementById("rdkMusicWaveEmpty");
-      if (emptyEl) {
-        emptyEl.textContent = "Lagu tidak ditemukan. Cek folder music/";
-        emptyEl.classList.remove("rdk-music-hidden");
-      }
-    });
-
-    const playBtn = document.getElementById("rdkMusicPlay");
-    if (playBtn) playBtn.addEventListener("click", togglePlay);
-
-    const loopBtn = document.getElementById("rdkMusicLoop");
-    if (loopBtn) loopBtn.addEventListener("click", toggleLoop);
-
-    const miniPlayBtn = document.getElementById("rdkMusicMiniPlay");
-    if (miniPlayBtn) {
-      miniPlayBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        togglePlay();
-      });
-    }
-
-    const miniLoopBtn = document.getElementById("rdkMusicMiniLoop");
-    if (miniLoopBtn) {
-      miniLoopBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        toggleLoop();
-      });
-    }
-
-    const miniCloseBtn = document.getElementById("rdkMusicMiniClose");
-    if (miniCloseBtn) {
-      miniCloseBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        state.miniDismissed = true;
-        closeMini();
-      });
-    }
-
-    mini.addEventListener("click", e => {
-      if (e.target.closest("button")) return;
-      scrollToMainPlayer();
-    });
-
-    setupMiniVisibility();
-
-    window.addEventListener("resize", () => {
-      resizeCanvas();
-      resizeMiniCanvas();
-      if (!state.isPlaying) {
-        drawIdleWave();
-        drawMiniIdleWave();
-      }
-    });
-
-    requestAnimationFrame(() => {
-      resizeCanvas();
-      resizeMiniCanvas();
-      drawIdleWave();
-      drawMiniIdleWave();
-    });
-  }
-
-  /* ---------------- MINI VISIBILITY ---------------- */
-
-  function setupMiniVisibility() {
-    const section = document.getElementById("rdkMusicSection");
-    if (!section) return;
-
-    function checkVisibility() {
-      if (state.miniDismissed) return;
-      const rect = section.getBoundingClientRect();
-      const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-      const partiallyVisible = rect.bottom > 80 && rect.top < window.innerHeight - 80;
-
-      if (partiallyVisible && !fullyVisible) {
-        // Player masih kelihatan sebagian → jangan munculkan mini
-        closeMini();
-      } else if (!partiallyVisible) {
-        // Player tidak kelihatan → munculkan mini
-        openMini();
-      } else {
-        closeMini();
-      }
-    }
-
-    if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver(
-        entries => {
-          for (const entry of entries) {
-            if (state.miniDismissed) return;
-            if (!entry.isIntersecting) openMini();
-            else closeMini();
-          }
-        },
-        { threshold: 0.2 }
-      );
-      observer.observe(section);
-    } else {
-      window.addEventListener("scroll", checkVisibility, { passive: true });
+      if (mainImg) mainImg.style.display = "none";
+      if (mainPlaceholder) mainPlaceholder.style.display = "grid";
+      if (miniImg) miniImg.style.display = "none";
+      if (miniPlaceholder) miniPlaceholder.style.display = "grid";
     }
   }
 
-  function openMini() {
-    const mini = document.getElementById("rdkMusicMini");
-    if (!mini || state.miniOpen) return;
-    state.miniOpen = true;
-    mini.classList.add("rdk-music-mini-open");
-    if (state.isPlaying) startMiniWaveAnimation();
-    else drawMiniIdleWave();
+  /* ---------------------------------------------------------
+     PLAY TRACK
+  --------------------------------------------------------- */
+
+  function playTrack(index, autoplay) {
+    if (!PLAYLIST[index]) return;
+
+    const track = PLAYLIST[index];
+
+    state.currentIndex = index;
+
+    const audio = state.audio;
+    if (!audio) return;
+
+    audio.src = track.src;
+    audio.load();
+
+    updateNowPlaying();
+
+    if (autoplay !== false) {
+      ensureAudioContext(true);
+      const p = audio.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(err => console.error("[Music] Play error:", err));
+      }
+    }
+
+    // Reset progress
+    state.currentTime = 0;
+    state.duration = state.durationCache[track.src] || 0;
+    updateProgressUI();
   }
 
-  function closeMini() {
-    const mini = document.getElementById("rdkMusicMini");
-    if (!mini || !state.miniOpen) return;
-    state.miniOpen = false;
-    mini.classList.remove("rdk-music-mini-open");
-  }
-
-  function scrollToMainPlayer() {
-    const section = document.getElementById("rdkMusicSection");
-    if (!section) return;
-    state.miniDismissed = false;
-    section.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-
-  /* ---------------- PLAY / PAUSE / LOOP ---------------- */
+  /* ---------------------------------------------------------
+     PLAY / PAUSE
+  --------------------------------------------------------- */
 
   function togglePlay() {
     const audio = state.audio;
     if (!audio) return;
+
     if (audio.paused) {
       ensureAudioContext(true);
       const p = audio.play();
@@ -415,17 +516,6 @@
     } else {
       audio.pause();
     }
-  }
-
-  function toggleLoop() {
-    state.loop = !state.loop;
-    if (state.audio) state.audio.loop = state.loop;
-
-    const mainLoop = document.getElementById("rdkMusicLoop");
-    if (mainLoop) mainLoop.classList.toggle("rdk-music-btn-active", state.loop);
-
-    const miniLoop = document.getElementById("rdkMusicMiniLoop");
-    if (miniLoop) miniLoop.classList.toggle("rdk-music-btn-active", state.loop);
   }
 
   function updatePlayButtons() {
@@ -445,9 +535,117 @@
       miniBtn.title = label;
       miniBtn.setAttribute("aria-label", label);
     }
+
+    const section = document.getElementById("rdkMusicSection");
+    if (section) section.classList.toggle("rdk-music-paused", !state.isPlaying);
   }
 
-  /* ---------------- AUDIO CONTEXT + GAIN ---------------- */
+  function nextTrack() {
+    if (PLAYLIST.length === 0) return;
+
+    let nextIndex;
+    if (state.shuffle && PLAYLIST.length > 1) {
+      do {
+        nextIndex = Math.floor(Math.random() * PLAYLIST.length);
+      } while (nextIndex === state.currentIndex);
+    } else {
+      nextIndex = (state.currentIndex + 1) % PLAYLIST.length;
+    }
+
+    playTrack(nextIndex);
+  }
+
+  function prevTrack() {
+    if (PLAYLIST.length === 0) return;
+
+    const audio = state.audio;
+    if (audio && audio.currentTime > 3) {
+      audio.currentTime = 0;
+      return;
+    }
+
+    let prevIndex;
+    if (state.shuffle && PLAYLIST.length > 1) {
+      do {
+        prevIndex = Math.floor(Math.random() * PLAYLIST.length);
+      } while (prevIndex === state.currentIndex);
+    } else {
+      prevIndex = (state.currentIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+    }
+
+    playTrack(prevIndex);
+  }
+
+  /* ---------------------------------------------------------
+     PROGRESS
+  --------------------------------------------------------- */
+
+  function updateProgressUI() {
+    const dur = state.duration || 0;
+    const cur = state.currentTime || 0;
+    const pct = dur > 0 ? (cur / dur) * 100 : 0;
+
+    const fill = document.getElementById("rdkMusicProgressFill");
+    const thumb = document.getElementById("rdkMusicProgressThumb");
+    const curEl = document.getElementById("rdkMusicTimeCur");
+
+    if (fill) fill.style.width = pct + "%";
+    if (thumb) thumb.style.left = pct + "%";
+    if (curEl) curEl.textContent = formatTime(cur);
+  }
+
+  function setupProgressDrag() {
+    const bar = document.getElementById("rdkMusicProgressBar");
+    if (!bar) return;
+
+    function seekFromEvent(e) {
+      const rect = bar.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const pct = Math.max(0, Math.min(1, x / rect.width));
+      const dur = state.duration || 0;
+      if (dur > 0) {
+        state.currentTime = pct * dur;
+        updateProgressUI();
+        return state.currentTime;
+      }
+      return null;
+    }
+
+    function startDrag(e) {
+      if (!state.ready && state.duration === 0) return;
+      state.dragging = true;
+      bar.classList.add("rdk-music-dragging");
+      seekFromEvent(e);
+      e.preventDefault();
+    }
+
+    function moveDrag(e) {
+      if (!state.dragging) return;
+      seekFromEvent(e);
+      e.preventDefault();
+    }
+
+    function endDrag(e) {
+      if (!state.dragging) return;
+      state.dragging = false;
+      bar.classList.remove("rdk-music-dragging");
+      const t = seekFromEvent(e);
+      if (t !== null && state.audio) {
+        state.audio.currentTime = t;
+      }
+    }
+
+    bar.addEventListener("mousedown", startDrag);
+    document.addEventListener("mousemove", moveDrag);
+    document.addEventListener("mouseup", endDrag);
+    bar.addEventListener("touchstart", startDrag, { passive: false });
+    document.addEventListener("touchmove", moveDrag, { passive: false });
+    document.addEventListener("touchend", endDrag);
+  }
+
+  /* ---------------------------------------------------------
+     AUDIO CONTEXT + GAIN
+  --------------------------------------------------------- */
 
   function ensureAudioContext() {
     if (state.audioCtx) {
@@ -465,371 +663,285 @@
       if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
       const source = ctx.createMediaElementSource(state.audio);
-      const analyser = ctx.createAnalyser();
       const gainNode = ctx.createGain();
 
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.65;
-      analyser.minDecibels = -90;
-      analyser.maxDecibels = -10;
       gainNode.gain.value = GAIN_BOOST;
 
-      source.connect(analyser);
-      analyser.connect(gainNode);
+      source.connect(gainNode);
       gainNode.connect(ctx.destination);
 
-      state.freqData = new Uint8Array(analyser.frequencyBinCount);
       state.audioCtx = ctx;
-      state.analyser = analyser;
       state.sourceNode = source;
       state.gainNode = gainNode;
-      state.analyserOK = true;
     } catch (err) {
       console.error("[Music] AudioContext error:", err);
-      state.analyserOK = false;
     }
   }
 
-  /* ---------------- CANVAS RESIZE ---------------- */
+  /* ---------------------------------------------------------
+     MINI VISIBILITY
+  --------------------------------------------------------- */
 
-  function resizeCanvas() {
-    const canvas = document.getElementById("rdkMusicWave");
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const w = Math.max(1, Math.floor(rect.width));
-    const h = Math.max(1, Math.floor(rect.height));
-    const dpr = window.devicePixelRatio || 1;
-    const newW = Math.floor(w * dpr);
-    const newH = Math.floor(h * dpr);
-    if (canvas.width !== newW || canvas.height !== newH) {
-      canvas.width = newW;
-      canvas.height = newH;
-      const ctx = canvas.getContext("2d");
-      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-  }
+  function setupMiniVisibility() {
+    const section = document.getElementById("rdkMusicSection");
+    if (!section) return;
 
-  function resizeMiniCanvas() {
-    const canvas = document.getElementById("rdkMusicMiniWave");
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const w = Math.max(1, Math.floor(rect.width));
-    const h = Math.max(1, Math.floor(rect.height));
-    const dpr = window.devicePixelRatio || 1;
-    const newW = Math.floor(w * dpr);
-    const newH = Math.floor(h * dpr);
-    if (canvas.width !== newW || canvas.height !== newH) {
-      canvas.width = newW;
-      canvas.height = newH;
-      const ctx = canvas.getContext("2d");
-      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-  }
-
-  /* ---------------- ENVELOPE ---------------- */
-
-  function envelope(i, total) {
-    if (!WAVE_ENVELOPE) return 1;
-    const x = (i / (total - 1)) * 2 - 1;
-    const bell = Math.cos((x * Math.PI) / 2);
-    return Math.pow(Math.max(0, bell), WAVE_ENVELOPE_POWER);
-  }
-
-  /* ---------------- MAIN WAVE ---------------- */
-
-  function drawIdleWave() {
-    const canvas = document.getElementById("rdkMusicWave");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.width / dpr;
-    const h = canvas.height / dpr;
-    const mid = h / 2;
-    ctx.clearRect(0, 0, w, h);
-    const bars = WAVE_BARS;
-    const gap = WAVE_GAP;
-    const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
-    ctx.fillStyle = "#3a3b37";
-    for (let i = 0; i < bars; i++) {
-      const x = i * (barW + gap);
-      const env = envelope(i, bars);
-      const barH = Math.max(2, WAVE_MIN_H + env * 6);
-      ctx.fillRect(x, mid - barH / 2, barW, barH);
-    }
-  }
-
-  function startWaveAnimation() {
-    if (state.waveAnimId) return;
-    const canvas = document.getElementById("rdkMusicWave");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    resizeCanvas();
-
-    function frame() {
-      state.waveAnimId = requestAnimationFrame(frame);
-      const dpr = window.devicePixelRatio || 1;
-      const w = canvas.width / dpr;
-      const h = canvas.height / dpr;
-      const mid = h / 2;
-      ctx.clearRect(0, 0, w, h);
-      const bars = WAVE_BARS;
-      const gap = WAVE_GAP;
-      const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
-      let usedAnalyser = false;
-
-      if (state.analyser && state.analyserOK && state.freqData) {
-        state.analyser.getByteFrequencyData(state.freqData);
-        let maxVal = 0;
-        for (let i = 0; i < state.freqData.length; i++) {
-          if (state.freqData[i] > maxVal) maxVal = state.freqData[i];
-        }
-        if (maxVal > 0) {
-          usedAnalyser = true;
-          const usable = Math.floor(state.freqData.length * 0.55);
-          for (let i = 0; i < bars; i++) {
-            const norm = i / (bars - 1);
-            const idx = Math.floor(Math.pow(norm, 0.85) * (usable - 1));
-            const v = state.freqData[idx] / 255;
-            const env = envelope(i, bars);
-            const barH = Math.max(WAVE_MIN_H, WAVE_MIN_H + (v * env) * (h * 0.92));
-            const x = i * (barW + gap);
-            const alpha = 0.4 + v * 0.6;
-            ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
-            ctx.fillRect(x, mid - barH / 2, barW, barH);
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            if (state.miniDismissed) return;
+            if (!entry.isIntersecting) openMini();
+            else closeMini();
           }
+        },
+        { threshold: 0.2 }
+      );
+      observer.observe(section);
+    } else {
+      window.addEventListener("scroll", () => {
+        if (state.miniDismissed) return;
+        const rect = section.getBoundingClientRect();
+        const visible = rect.bottom > 80 && rect.top < window.innerHeight - 80;
+        visible ? closeMini() : openMini();
+      }, { passive: true });
+    }
+  }
+
+  function openMini() {
+    const mini = document.getElementById("rdkMusicMini");
+    if (!mini || state.miniOpen) return;
+    state.miniOpen = true;
+    mini.classList.add("rdk-music-mini-open");
+  }
+
+  function closeMini() {
+    const mini = document.getElementById("rdkMusicMini");
+    if (!mini || !state.miniOpen) return;
+    state.miniOpen = false;
+    mini.classList.remove("rdk-music-mini-open");
+  }
+
+  function scrollToMainPlayer() {
+    const section = document.getElementById("rdkMusicSection");
+    if (!section) return;
+    state.miniDismissed = false;
+    section.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  /* ---------------------------------------------------------
+     VOLUME
+  --------------------------------------------------------- */
+
+  function setupVolume() {
+    const input = document.getElementById("rdkMusicVolume");
+    const value = document.getElementById("rdkMusicVolValue");
+    const icon = document.getElementById("rdkMusicVolIcon");
+
+    if (!input) return;
+
+    function updateSliderFill(v) {
+      input.style.setProperty("--val", (v * 100) + "%");
+    }
+
+    updateSliderFill(1);
+
+    input.addEventListener("input", e => {
+      const v = parseFloat(e.target.value);
+      state.volume = v;
+      if (state.audio) state.audio.volume = v;
+      if (value) value.textContent = Math.round(v * 100);
+      if (icon) icon.innerHTML = v === 0 ? ICON_VOL_MUTE : ICON_VOL_HIGH;
+      updateSliderFill(v);
+    });
+  }
+
+  /* ---------------------------------------------------------
+     MOUNT
+  --------------------------------------------------------- */
+
+  function mount() {
+    const oldSpotify = document.querySelector(".spotify-section");
+    const player = buildPlayer();
+
+    if (oldSpotify && oldSpotify.parentNode) {
+      oldSpotify.parentNode.replaceChild(player, oldSpotify);
+    } else {
+      const footer = document.querySelector(".footer");
+      if (footer && footer.parentNode) {
+        footer.parentNode.insertBefore(player, footer);
+      } else {
+        document.body.appendChild(player);
+      }
+    }
+
+    const mini = buildMiniPlayer();
+    document.body.appendChild(mini);
+
+    /* AUDIO */
+    const audio = new Audio();
+    audio.preload = "metadata";
+    audio.volume = 1.0;
+    if (PLAYLIST[0]) audio.src = PLAYLIST[0].src;
+    state.audio = audio;
+
+    audio.addEventListener("loadedmetadata", () => {
+      state.duration = audio.duration || 0;
+      state.ready = true;
+
+      // Cache duration untuk track ini
+      const track = PLAYLIST[state.currentIndex];
+      if (track) {
+        state.durationCache[track.src] = state.duration;
+        // Update durasi di list
+        const rows = document.querySelectorAll(".rdk-music-track");
+        const row = rows[state.currentIndex];
+        if (row) {
+          const durEl = row.querySelector(".rdk-music-track-duration");
+          if (durEl) durEl.textContent = formatTime(state.duration);
         }
       }
 
-      if (!usedAnalyser) {
-        state.fallbackTime += 0.12;
-        for (let i = 0; i < bars; i++) {
-          const env = envelope(i, bars);
-          const base =
-            Math.sin(state.fallbackTime + i * 0.35) * 0.5 +
-            Math.sin(state.fallbackTime * 1.7 + i * 0.18) * 0.3 +
-            Math.sin(state.fallbackTime * 0.6 + i * 0.9) * 0.2;
-          const v = Math.abs(base) * env;
-          const barH = Math.max(WAVE_MIN_H, WAVE_MIN_H + v * (h * 0.75));
-          const x = i * (barW + gap);
-          const alpha = 0.4 + v * 0.5;
-          ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
-          ctx.fillRect(x, mid - barH / 2, barW, barH);
-        }
+      const durEl = document.getElementById("rdkMusicTimeDur");
+      if (durEl) durEl.textContent = formatTime(state.duration);
+      updateProgressUI();
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      if (state.dragging) return;
+      state.currentTime = audio.currentTime;
+      updateProgressUI();
+    });
+
+    audio.addEventListener("play", () => {
+      state.isPlaying = true;
+      updatePlayButtons();
+      ensureAudioContext();
+    });
+
+    audio.addEventListener("pause", () => {
+      state.isPlaying = false;
+      updatePlayButtons();
+    });
+
+    audio.addEventListener("ended", () => {
+      if (state.loop) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else {
+        nextTrack();
       }
+    });
+
+    audio.addEventListener("error", () => {
+      console.error("[Music] Gagal load:", audio.src);
+    });
+
+    /* BUTTONS */
+    const playBtn = document.getElementById("rdkMusicPlay");
+    if (playBtn) playBtn.addEventListener("click", togglePlay);
+
+    const prevBtn = document.getElementById("rdkMusicPrev");
+    if (prevBtn) prevBtn.addEventListener("click", prevTrack);
+
+    const nextBtn = document.getElementById("rdkMusicNext");
+    if (nextBtn) nextBtn.addEventListener("click", nextTrack);
+
+    const shuffleBtn = document.getElementById("rdkMusicShuffle");
+    if (shuffleBtn) {
+      shuffleBtn.addEventListener("click", () => {
+        state.shuffle = !state.shuffle;
+        shuffleBtn.classList.toggle("rdk-music-ctrl-active", state.shuffle);
+      });
     }
-    frame();
-  }
 
-  function stopWaveAnimation() {
-    if (state.waveAnimId) {
-      cancelAnimationFrame(state.waveAnimId);
-      state.waveAnimId = null;
+    const loopBtn = document.getElementById("rdkMusicLoop");
+    if (loopBtn) {
+      loopBtn.addEventListener("click", () => {
+        state.loop = !state.loop;
+        audio.loop = state.loop;
+        loopBtn.classList.toggle("rdk-music-ctrl-active", state.loop);
+      });
     }
-    drawIdleWave();
-  }
 
-  /* ---------------- MINI WAVE ---------------- */
-
-  function drawMiniIdleWave() {
-    const canvas = document.getElementById("rdkMusicMiniWave");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.width / dpr;
-    const h = canvas.height / dpr;
-    const mid = h / 2;
-    ctx.clearRect(0, 0, w, h);
-    const bars = MINI_BARS;
-    const gap = MINI_GAP;
-    const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
-    ctx.fillStyle = "#3a3b37";
-    for (let i = 0; i < bars; i++) {
-      const x = i * (barW + gap);
-      const env = envelope(i, bars);
-      const barH = Math.max(2, 2 + env * 4);
-      ctx.fillRect(x, mid - barH / 2, barW, barH);
+    /* MINI BUTTONS */
+    const miniPlay = document.getElementById("rdkMusicMiniPlay");
+    if (miniPlay) {
+      miniPlay.addEventListener("click", e => {
+        e.stopPropagation();
+        togglePlay();
+      });
     }
-  }
 
-  function startMiniWaveAnimation() {
-    if (state.miniAnimId) return;
-    const canvas = document.getElementById("rdkMusicMiniWave");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    resizeMiniCanvas();
+    const miniPrev = document.getElementById("rdkMusicMiniPrev");
+    if (miniPrev) {
+      miniPrev.addEventListener("click", e => {
+        e.stopPropagation();
+        prevTrack();
+      });
+    }
 
-    function frame() {
-      state.miniAnimId = requestAnimationFrame(frame);
-      const dpr = window.devicePixelRatio || 1;
-      const w = canvas.width / dpr;
-      const h = canvas.height / dpr;
-      const mid = h / 2;
-      ctx.clearRect(0, 0, w, h);
-      const bars = MINI_BARS;
-      const gap = MINI_GAP;
-      const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
-      let usedAnalyser = false;
+    const miniNext = document.getElementById("rdkMusicMiniNext");
+    if (miniNext) {
+      miniNext.addEventListener("click", e => {
+        e.stopPropagation();
+        nextTrack();
+      });
+    }
 
-      if (state.analyser && state.analyserOK && state.freqData) {
-        state.analyser.getByteFrequencyData(state.freqData);
-        let maxVal = 0;
-        for (let i = 0; i < state.freqData.length; i++) {
-          if (state.freqData[i] > maxVal) maxVal = state.freqData[i];
+    const miniClose = document.getElementById("rdkMusicMiniClose");
+    if (miniClose) {
+      miniClose.addEventListener("click", e => {
+        e.stopPropagation();
+        state.miniDismissed = true;
+        closeMini();
+      });
+    }
+
+    mini.addEventListener("click", e => {
+      if (e.target.closest("button")) return;
+      scrollToMainPlayer();
+    });
+
+    /* SETUP */
+    setupProgressDrag();
+    setupVolume();
+    setupMiniVisibility();
+    renderTrackList();
+    updateNowPlaying();
+
+    // Coba preload durasi tiap lagu (biar list durasi muncul)
+    PLAYLIST.forEach((track, i) => {
+      if (i === state.currentIndex) return;
+      const probe = document.createElement("audio");
+      probe.preload = "metadata";
+      probe.src = track.src;
+      probe.addEventListener("loadedmetadata", () => {
+        state.durationCache[track.src] = probe.duration;
+        const rows = document.querySelectorAll(".rdk-music-track");
+        const row = rows[i];
+        if (row) {
+          const durEl = row.querySelector(".rdk-music-track-duration");
+          if (durEl) durEl.textContent = formatTime(probe.duration);
         }
-        if (maxVal > 0) {
-          usedAnalyser = true;
-          const usable = Math.floor(state.freqData.length * 0.55);
-          for (let i = 0; i < bars; i++) {
-            const norm = i / (bars - 1);
-            const idx = Math.floor(Math.pow(norm, 0.85) * (usable - 1));
-            const v = state.freqData[idx] / 255;
-            const env = envelope(i, bars);
-            const barH = Math.max(2, 2 + (v * env) * (h * 0.9));
-            const x = i * (barW + gap);
-            const alpha = 0.5 + v * 0.5;
-            ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
-            ctx.fillRect(x, mid - barH / 2, barW, barH);
-          }
-        }
-      }
+      });
+    });
 
-      if (!usedAnalyser) {
-        state.fallbackTime += 0.14;
-        for (let i = 0; i < bars; i++) {
-          const env = envelope(i, bars);
-          const base = Math.sin(state.fallbackTime + i * 0.5) * 0.7;
-          const v = Math.abs(base) * env;
-          const barH = Math.max(2, 2 + v * (h * 0.7));
-          const x = i * (barW + gap);
-          const alpha = 0.5 + v * 0.5;
-          ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
-          ctx.fillRect(x, mid - barH / 2, barW, barH);
-        }
-      }
-    }
-    frame();
+    // Inisialisasi awal
+    if (PLAYLIST[0]) playTrack(0, false);
   }
 
-  function stopMiniWaveAnimation() {
-    if (state.miniAnimId) {
-      cancelAnimationFrame(state.miniAnimId);
-      state.miniAnimId = null;
-    }
-    drawMiniIdleWave();
-  }
-
-  /* ---------------- LIRIK ---------------- */
-
-  function resetLyricState() {
-    stopTypewriter();
-    state.currentLyricIndex = -1;
-    state.typedChars = 0;
-    state.activeLyricText = "";
-    state.typewriterPhase = "idle";
-    renderLyricText("");
-  }
-
-  function stopTypewriter() {
-    if (state.typewriterTimer) {
-      clearTimeout(state.typewriterTimer);
-      state.typewriterTimer = null;
-    }
-  }
-
-  function renderLyricText(text) {
-    const textEl = document.getElementById("rdkMusicLyricText");
-    if (textEl) textEl.textContent = text;
-  }
-
-  function setCursorVisible(visible) {
-    const cursor = document.getElementById("rdkMusicCursor");
-    if (cursor) cursor.style.opacity = visible ? "1" : "0";
-  }
-
-  function findLyricIndexForTime(time) {
-    let idx = -1;
-    for (let i = 0; i < LYRICS.length; i++) {
-      if (time >= LYRICS[i].t) idx = i;
-      else break;
-    }
-    return idx;
-  }
-
-  function updateLyricForTime(time, force) {
-    const idx = findLyricIndexForTime(time);
-    if (idx === state.currentLyricIndex && !force) return;
-    state.currentLyricIndex = idx;
-    if (idx < 0) {
-      stopTypewriter();
-      state.activeLyricText = "";
-      state.typedChars = 0;
-      state.typewriterPhase = "idle";
-      renderLyricText("");
-      setCursorVisible(false);
-      return;
-    }
-    startTypewriterForIndex(idx);
-  }
-
-  function startTypewriterForIndex(idx) {
-    stopTypewriter();
-    const fullText = LYRICS[idx].text || "";
-    state.activeLyricText = fullText;
-    state.typedChars = 0;
-    state.typewriterPhase = "typing";
-    setCursorVisible(true);
-    renderLyricText("");
-    typeNextChar();
-  }
-
-  function typeNextChar() {
-    if (state.typewriterPhase !== "typing") return;
-    const full = state.activeLyricText;
-    if (state.typedChars >= full.length) {
-      state.typewriterPhase = "holding";
-      state.typewriterTimer = setTimeout(() => {
-        state.typewriterPhase = "erasing";
-        eraseNextChar();
-      }, HOLD_AFTER_TYPE);
-      return;
-    }
-    state.typedChars++;
-    renderLyricText(full.slice(0, state.typedChars));
-    if (!state.isPlaying) return;
-    state.typewriterTimer = setTimeout(typeNextChar, TYPE_SPEED_MS);
-  }
-
-  function eraseNextChar() {
-    if (state.typewriterPhase !== "erasing") return;
-    if (state.typedChars <= 0) {
-      state.typewriterPhase = "idle";
-      renderLyricText("");
-      return;
-    }
-    state.typedChars--;
-    renderLyricText(state.activeLyricText.slice(0, state.typedChars));
-    if (!state.isPlaying) return;
-    state.typewriterTimer = setTimeout(eraseNextChar, ERASE_SPEED_MS);
-  }
-
-  /* ---------------- INIT ---------------- */
+  /* ---------------------------------------------------------
+     INIT
+  --------------------------------------------------------- */
 
   function init() {
     if (document.getElementById("rdkMusicSection")) return;
+    if (PLAYLIST.length === 0) {
+      console.warn("[Music] Playlist kosong.");
+      return;
+    }
     mount();
-    setCursorVisible(false);
-    setTimeout(() => {
-      resizeCanvas();
-      resizeMiniCanvas();
-      if (!state.isPlaying) {
-        drawIdleWave();
-        drawMiniIdleWave();
-      }
-    }, 500);
   }
 
   if (document.readyState === "loading") {

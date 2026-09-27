@@ -1,5 +1,5 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player + Mini Player
+   ROJAK DRIVEK1T — Music Player (Spotify-style)
 ============================================================ */
 
 .rdk-music-section svg,
@@ -12,221 +12,610 @@
 }
 
 /* ============================================================
-   MAIN PLAYER
+   MAIN CARD
 ============================================================ */
 
 .rdk-music-section {
   margin-top: 8px;
   overflow: hidden;
-  border: 1px solid #292a27;
-  border-radius: 8px;
-  background: #151614;
+  border: 1px solid #1f1f1f;
+  border-radius: 10px;
+  background: #181818;
+
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
   -webkit-tap-highlight-color: transparent;
 }
 
-.rdk-music-header {
+/* ============================================================
+   NOW PLAYING (ATAS)
+============================================================ */
+
+.rdk-music-now {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #292a27;
-  background: #10110f;
+  gap: 14px;
+
+  padding: 16px;
 }
 
-.rdk-music-icon {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #2c2d29;
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(228, 86, 50, .12), rgba(228, 86, 50, .02)),
-    #0b0c0a;
-  color: #e45632;
-}
+.rdk-music-cover {
+  width: 92px;
+  height: 92px;
+  flex: 0 0 92px;
 
-.rdk-music-icon svg {
-  width: 16px;
-  height: 16px;
-  max-width: 16px;
-  max-height: 16px;
-}
-
-.rdk-music-meta { min-width: 0; flex: 1 1 auto; }
-
-.rdk-music-title {
   overflow: hidden;
-  color: #eeeeea;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: -.15px;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.rdk-music-artist {
-  overflow: hidden;
-  margin-top: 3px;
-  color: #8b8c86;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: .1px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rdk-music-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-}
-
-/* BUTTONS */
-
-.rdk-music-btn {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid #292a27;
   border-radius: 8px;
-  background: transparent;
-  color: #b4b5af;
-  cursor: pointer;
-  transition: background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
-}
+  background: #282828;
 
-.rdk-music-btn:hover {
-  background: #1e1f1c;
-  color: #eeeeea;
-  border-color: #3b3c38;
-}
-
-.rdk-music-btn:active { transform: scale(.94); }
-
-.rdk-music-btn svg {
-  width: 15px;
-  height: 15px;
-  max-width: 15px;
-  max-height: 15px;
-}
-
-.rdk-music-btn.rdk-music-btn-active {
-  color: #e45632;
-  border-color: rgba(228, 86, 50, .5);
-  background: rgba(228, 86, 50, .08);
-}
-
-.rdk-music-play {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
-  border: 1px solid #e45632;
-  border-radius: 50%;
-  background: #e45632;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(228, 86, 50, .28), inset 0 1px 0 rgba(255, 255, 255, .1);
-}
-
-.rdk-music-play:hover {
-  background: #f0643f;
-  border-color: #f0643f;
-  color: #ffffff;
-}
-
-.rdk-music-play:active { transform: scale(.94); }
-
-.rdk-music-play svg {
-  width: 15px;
-  height: 15px;
-  max-width: 15px;
-  max-height: 15px;
-}
-
-/* WAVE */
-
-.rdk-music-wave-wrap {
   position: relative;
-  height: 210px;
-  padding: 22px 20px;
-  background:
-    radial-gradient(700px 240px at 50% 45%, rgba(228, 86, 50, .055), transparent 70%),
-    #131412;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
 }
 
-.rdk-music-wave {
-  display: block;
+.rdk-music-cover img {
   width: 100%;
   height: 100%;
-  max-width: none;
-  max-height: none;
+  display: block;
+  object-fit: cover;
 }
 
-.rdk-music-wave-empty {
-  position: absolute;
-  inset: 0;
+.rdk-music-cover-placeholder {
+  width: 100%;
+  height: 100%;
+
   display: grid;
   place-items: center;
-  padding: 0 20px;
-  color: #676861;
-  font-size: 10px;
-  text-align: center;
-  pointer-events: none;
+
+  color: #e45632;
+  background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
 }
 
-.rdk-music-wave-empty.rdk-music-hidden { display: none; }
-
-/* LIRIK */
-
-.rdk-music-lyric-wrap {
-  padding: 14px 20px 18px;
-  border-top: 1px solid #292a27;
-  background: #10110f;
+.rdk-music-cover-placeholder svg {
+  width: 32px;
+  height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  opacity: .9;
 }
 
-.rdk-music-lyric-title {
-  margin-bottom: 10px;
-  color: #50514c;
+.rdk-music-now-meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.rdk-music-now-title {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+  line-height: 1.25;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdk-music-now-artist {
+  overflow: hidden;
+  margin-top: 4px;
+
+  color: #b3b3b3;
+
+  font-size: 11px;
+  font-weight: 500;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdk-music-now-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  margin-top: 8px;
+
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  background: rgba(228, 86, 50, .12);
+  color: #e45632;
+
   font-size: 8px;
   font-weight: 700;
-  letter-spacing: 1.2px;
+  letter-spacing: .4px;
   text-transform: uppercase;
 }
 
-.rdk-music-lyric-line {
+.rdk-music-now-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e45632;
+  animation: rdk-music-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes rdk-music-pulse {
+  0%, 100% { opacity: .4; }
+  50% { opacity: 1; }
+}
+
+/* ============================================================
+   PLAYLIST (TENGAH)
+============================================================ */
+
+.rdk-music-list {
+  max-height: 260px;
+  overflow-y: auto;
+
+  padding: 0 8px 8px;
+
+  border-top: 1px solid #1f1f1f;
+
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.rdk-music-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rdk-music-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rdk-music-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+.rdk-music-list-head {
   display: flex;
   align-items: center;
-  min-height: 28px;
-  font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 14px;
+  justify-content: space-between;
+
+  padding: 12px 8px 8px;
+}
+
+.rdk-music-list-title {
+  color: #8a8a8a;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: -.2px;
-  color: #eeeeea;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
-.rdk-music-lyric-text { display: inline-block; color: #eeeeea; }
+.rdk-music-list-count {
+  color: #6a6a6a;
+  font-size: 9px;
+  font-weight: 600;
+}
 
-.rdk-music-cursor {
-  display: inline-block;
-  margin-left: 3px;
+.rdk-music-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 8px;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  transition: background .12s ease;
+}
+
+.rdk-music-track:hover {
+  background: #232323;
+}
+
+.rdk-music-track.rdk-music-track-active {
+  background: #232323;
+}
+
+.rdk-music-track-num {
+  width: 20px;
+  flex: 0 0 20px;
+
+  text-align: center;
+
+  color: #8a8a8a;
+
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdk-music-track-active .rdk-music-track-num {
   color: #e45632;
-  font-weight: 400;
-  animation: rdk-music-blink 1s steps(1) infinite;
 }
 
-@keyframes rdk-music-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+/* Equalizer kecil untuk track yang sedang aktif */
+.rdk-music-eq {
+  width: 20px;
+  height: 14px;
+  flex: 0 0 20px;
+
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+.rdk-music-track-active .rdk-music-eq {
+  display: flex;
+}
+
+.rdk-music-track-active .rdk-music-track-num {
+  display: none;
+}
+
+.rdk-music-eq span {
+  width: 2px;
+  background: #e45632;
+  border-radius: 1px;
+  animation: rdk-music-eq 0.9s ease-in-out infinite;
+}
+
+.rdk-music-eq span:nth-child(1) { height: 40%; animation-delay: -0.3s; }
+.rdk-music-eq span:nth-child(2) { height: 70%; animation-delay: -0.6s; }
+.rdk-music-eq span:nth-child(3) { height: 50%; animation-delay: -0.15s; }
+.rdk-music-eq span:nth-child(4) { height: 85%; animation-delay: -0.45s; }
+
+.rdk-music-section.rdk-music-paused .rdk-music-eq span {
+  animation-play-state: paused;
+}
+
+@keyframes rdk-music-eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.rdk-music-track-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.rdk-music-track-title {
+  overflow: hidden;
+
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -.1px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdk-music-track-active .rdk-music-track-title {
+  color: #e45632;
+}
+
+.rdk-music-track-artist {
+  overflow: hidden;
+  margin-top: 2px;
+
+  color: #a0a0a0;
+
+  font-size: 10px;
+  font-weight: 500;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdk-music-track-duration {
+  flex: 0 0 auto;
+
+  color: #6a6a6a;
+
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   CONTROLS (BAWAH)
+============================================================ */
+
+.rdk-music-controls-wrap {
+  padding: 12px 16px 16px;
+
+  border-top: 1px solid #1f1f1f;
+  background: #141414;
+}
+
+/* Progress */
+
+.rdk-music-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 10px;
+}
+
+.rdk-music-progress-time {
+  flex: 0 0 auto;
+  min-width: 34px;
+
+  color: #a0a0a0;
+
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdk-music-progress-time.rdk-music-progress-time-right {
+  text-align: right;
+}
+
+.rdk-music-progress-bar {
+  position: relative;
+  flex: 1 1 auto;
+
+  height: 14px;
+
+  display: flex;
+  align-items: center;
+
+  cursor: pointer;
+}
+
+.rdk-music-progress-track {
+  width: 100%;
+  height: 3px;
+
+  overflow: hidden;
+
+  border-radius: 2px;
+  background: #3a3a3a;
+
+  transition: height .12s ease;
+}
+
+.rdk-music-progress-bar:hover .rdk-music-progress-track,
+.rdk-music-progress-bar.rdk-music-dragging .rdk-music-progress-track {
+  height: 5px;
+}
+
+.rdk-music-progress-fill {
+  width: 0%;
+  height: 100%;
+
+  border-radius: 2px;
+  background: #ffffff;
+
+  transition: width .08s linear;
+}
+
+.rdk-music-progress-bar:hover .rdk-music-progress-fill,
+.rdk-music-progress-bar.rdk-music-dragging .rdk-music-progress-fill {
+  background: #e45632;
+}
+
+.rdk-music-progress-thumb {
+  position: absolute;
+  top: 50%;
+
+  width: 12px;
+  height: 12px;
+
+  margin-left: -6px;
+
+  border-radius: 50%;
+  background: #ffffff;
+
+  transform: translateY(-50%);
+
+  opacity: 0;
+
+  transition: opacity .15s ease;
+
+  pointer-events: none;
+}
+
+.rdk-music-progress-bar:hover .rdk-music-progress-thumb,
+.rdk-music-progress-bar.rdk-music-dragging .rdk-music-progress-thumb {
+  opacity: 1;
+}
+
+/* Buttons row */
+
+.rdk-music-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 18px;
+}
+
+.rdk-music-ctrl {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: #b3b3b3;
+
+  cursor: pointer;
+
+  transition: color .12s ease, transform .1s ease;
+}
+
+.rdk-music-ctrl:hover {
+  color: #ffffff;
+}
+
+.rdk-music-ctrl:active {
+  transform: scale(.9);
+}
+
+.rdk-music-ctrl svg {
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+}
+
+.rdk-music-ctrl.rdk-music-ctrl-active {
+  color: #e45632;
+}
+
+.rdk-music-ctrl.rdk-music-ctrl-active:hover {
+  color: #f0643f;
+}
+
+/* Play button besar */
+
+.rdk-music-play {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #ffffff;
+  color: #000000;
+
+  display: grid;
+  place-items: center;
+
+  cursor: pointer;
+
+  transition: transform .1s ease, background .12s ease;
+
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+}
+
+.rdk-music-play:hover {
+  background: #f0f0f0;
+  transform: scale(1.04);
+}
+
+.rdk-music-play:active {
+  transform: scale(.96);
+}
+
+.rdk-music-play svg {
+  width: 20px;
+  height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+}
+
+/* Volume row */
+
+.rdk-music-volume-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: 12px;
+
+  padding: 0 6px;
+}
+
+.rdk-music-volume-row svg {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  color: #8a8a8a;
+  flex: 0 0 14px;
+}
+
+.rdk-music-volume {
+  flex: 1 1 auto;
+  height: 14px;
+
+  display: flex;
+  align-items: center;
+
+  cursor: pointer;
+
+  position: relative;
+}
+
+.rdk-music-volume input[type="range"] {
+  width: 100%;
+  height: 3px;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  background: linear-gradient(to right, #e45632 0%, #e45632 var(--val, 100%), #3a3a3a var(--val, 100%), #3a3a3a 100%);
+
+  border-radius: 2px;
+
+  outline: none;
+
+  cursor: pointer;
+}
+
+.rdk-music-volume input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+
+  width: 11px;
+  height: 11px;
+
+  border-radius: 50%;
+  background: #ffffff;
+
+  cursor: pointer;
+
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.rdk-music-volume-row:hover input[type="range"]::-webkit-slider-thumb,
+.rdk-music-volume input[type="range"]:active::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.rdk-music-volume input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+
+  border: 0;
+  border-radius: 50%;
+  background: #ffffff;
+
+  cursor: pointer;
+
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.rdk-music-volume-row:hover input[type="range"]::-moz-range-thumb {
+  opacity: 1;
+}
+
+.rdk-music-volume-value {
+  flex: 0 0 auto;
+  min-width: 26px;
+
+  text-align: right;
+
+  color: #8a8a8a;
+
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================
@@ -246,8 +635,8 @@
 
   padding: 10px 100px 10px 12px;
 
-  border-top: 1px solid #292a27;
-  background: rgba(16, 17, 15, .97);
+  border-top: 1px solid #1f1f1f;
+  background: rgba(20, 20, 20, .98);
 
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -269,32 +658,54 @@
   pointer-events: auto;
 }
 
-.rdk-music-mini-icon {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+.rdk-music-mini-cover {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+
+  overflow: hidden;
+
+  border-radius: 6px;
+  background: #282828;
+}
+
+.rdk-music-mini-cover img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.rdk-music-mini-cover-placeholder {
+  width: 100%;
+  height: 100%;
   display: grid;
   place-items: center;
-  border: 1px solid #2c2d29;
-  border-radius: 6px;
-  background: #0b0c0a;
   color: #e45632;
+  background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
 }
 
-.rdk-music-mini-icon svg {
-  width: 15px;
-  height: 15px;
-  max-width: 15px;
-  max-height: 15px;
+.rdk-music-mini-cover-placeholder svg {
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
 }
 
-.rdk-music-mini-meta { min-width: 0; flex: 1 1 auto; }
+.rdk-music-mini-meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
 
 .rdk-music-mini-title {
   overflow: hidden;
-  color: #eeeeea;
+
+  color: #ffffff;
+
   font-size: 11px;
   font-weight: 700;
+  letter-spacing: -.1px;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -302,27 +713,20 @@
 .rdk-music-mini-artist {
   overflow: hidden;
   margin-top: 2px;
-  color: #8b8c86;
-  font-size: 8px;
+
+  color: #b3b3b3;
+
+  font-size: 9px;
   font-weight: 500;
+
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.rdk-music-mini-wave {
-  display: block;
-  width: 46px;
-  height: 22px;
-  flex: 0 0 46px;
-  max-width: none;
-  max-height: none;
-  opacity: .9;
 }
 
 .rdk-music-mini-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex: 0 0 auto;
 }
 
@@ -330,81 +734,85 @@
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
+
   display: grid;
   place-items: center;
+
   padding: 0;
-  border: 1px solid #292a27;
-  border-radius: 6px;
+
+  border: 0;
   background: transparent;
-  color: #b4b5af;
+
+  color: #b3b3b3;
+
   cursor: pointer;
-  transition: background .15s ease, color .15s ease, border-color .15s ease;
+
+  transition: color .12s ease;
 }
 
 .rdk-music-mini-btn:hover {
-  background: #1e1f1c;
-  color: #eeeeea;
-  border-color: #3b3c38;
+  color: #ffffff;
 }
 
-.rdk-music-mini-btn:active { transform: scale(.94); }
+.rdk-music-mini-btn:active {
+  transform: scale(.94);
+}
 
 .rdk-music-mini-btn svg {
-  width: 14px;
-  height: 14px;
-  max-width: 14px;
-  max-height: 14px;
-}
-
-.rdk-music-mini-btn.rdk-music-btn-active {
-  color: #e45632;
-  border-color: rgba(228, 86, 50, .5);
-  background: rgba(228, 86, 50, .08);
+  width: 16px;
+  height: 16px;
+  max-width: 16px;
+  max-height: 16px;
 }
 
 .rdk-music-mini-play {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border: 1px solid #e45632;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+
   border-radius: 50%;
-  background: #e45632;
-  color: white;
+
+  background: #ffffff;
+  color: #000000;
 }
 
 .rdk-music-mini-play:hover {
-  background: #f0643f;
-  border-color: #f0643f;
-  color: white;
+  background: #f0f0f0;
+  color: #000000;
 }
 
 .rdk-music-mini-play svg {
-  width: 14px;
-  height: 14px;
-  max-width: 14px;
-  max-height: 14px;
+  width: 16px;
+  height: 16px;
+  max-width: 16px;
+  max-height: 16px;
 }
 
 .rdk-music-mini-close {
   width: 26px;
   height: 26px;
   flex: 0 0 26px;
+
   display: grid;
   place-items: center;
+
   padding: 0;
-  border: 1px solid #292a27;
-  border-radius: 6px;
+
+  border: 0;
   background: transparent;
-  color: #8b8c86;
-  font-size: 15px;
+
+  color: #6a6a6a;
+
+  font-size: 16px;
   line-height: 1;
+
   cursor: pointer;
-  transition: background .15s ease, color .15s ease;
+
+  transition: color .12s ease;
 }
 
 .rdk-music-mini-close:hover {
-  background: #1e1f1c;
-  color: #eeeeea;
+  color: #ffffff;
 }
 
 /* ============================================================
@@ -413,66 +821,63 @@
 
 @media (max-width: 600px) {
 
-  .rdk-music-header { gap: 10px; padding: 12px 13px; }
-
-  .rdk-music-icon {
-    width: 34px;
-    height: 34px;
-    flex-basis: 34px;
+  .rdk-music-now {
+    gap: 12px;
+    padding: 14px;
   }
 
-  .rdk-music-title { font-size: 11.5px; }
-  .rdk-music-artist { font-size: 8.5px; }
+  .rdk-music-cover {
+    width: 80px;
+    height: 80px;
+    flex-basis: 80px;
+  }
+
+  .rdk-music-now-title {
+    font-size: 13.5px;
+  }
+
+  .rdk-music-now-artist {
+    font-size: 10px;
+  }
+
+  .rdk-music-list {
+    max-height: 220px;
+  }
+
+  .rdk-music-track {
+    padding: 7px;
+  }
+
+  .rdk-music-track-title {
+    font-size: 11.5px;
+  }
+
+  .rdk-music-track-artist {
+    font-size: 9.5px;
+  }
+
+  .rdk-music-controls-wrap {
+    padding: 12px 12px 14px;
+  }
+
+  .rdk-music-buttons {
+    gap: 14px;
+  }
 
   .rdk-music-play {
-    width: 36px;
-    height: 36px;
-    flex-basis: 36px;
-  }
-
-  .rdk-music-btn {
-    width: 32px;
-    height: 32px;
-    flex-basis: 32px;
-  }
-
-  .rdk-music-wave-wrap {
-    height: 160px;
-    padding: 16px 13px;
-  }
-
-  .rdk-music-lyric-wrap { padding: 12px 13px 16px; }
-
-  .rdk-music-lyric-line {
-    font-size: 13px;
-    min-height: 24px;
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
   }
 
   .rdk-music-mini {
-    padding: 8px 84px 8px 10px;
+    padding: 8px 78px 8px 10px;
     gap: 8px;
   }
 
-  .rdk-music-mini-icon {
-    width: 30px;
-    height: 30px;
-    flex-basis: 30px;
-  }
-
-  .rdk-music-mini-title { font-size: 10.5px; }
-  .rdk-music-mini-artist { font-size: 7.5px; }
-
-  .rdk-music-mini-wave { display: none; }
-
-  .rdk-music-mini-btn {
-    width: 30px;
-    height: 30px;
-    flex-basis: 30px;
-  }
-
-  .rdk-music-mini-play {
-    width: 32px;
-    height: 32px;
-    flex-basis: 32px;
+  .rdk-music-mini-cover {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
   }
 }
