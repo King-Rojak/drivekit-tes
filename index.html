@@ -846,7 +846,7 @@
     }
 
     /* ================================
-       SPOTIFY
+       SPOTIFY (fallback kalau ada)
     ================================= */
 
     .spotify-section {
@@ -1190,10 +1190,97 @@
       }
 
     }
+
+    /* ============================================================
+       ROJAK AI + MUSIC PLAYER — GLOBAL SAFETY
+       Taruh di paling bawah supaya menang urutan load.
+    ============================================================ */
+
+    /* Batasi SVG di chat Rojak AI */
+    .rojak-ai-fab-icon svg {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 20px !important;
+      max-height: 20px !important;
+      display: block !important;
+    }
+
+    .rojak-ai-icon-button svg {
+      width: 13px !important;
+      height: 13px !important;
+      max-width: 13px !important;
+      max-height: 13px !important;
+      display: block !important;
+    }
+
+    .rojak-ai-mini svg {
+      width: 16px !important;
+      height: 16px !important;
+      max-width: 16px !important;
+      max-height: 16px !important;
+      display: block !important;
+    }
+
+    .rojak-ai-send svg {
+      width: 15px !important;
+      height: 15px !important;
+      max-width: 15px !important;
+      max-height: 15px !important;
+      display: block !important;
+    }
+
+    /* Batasi SVG di music player */
+    .rdk-music-section svg {
+      display: block !important;
+      width: 16px !important;
+      height: 16px !important;
+      max-width: 16px !important;
+      max-height: 16px !important;
+      flex-shrink: 0 !important;
+    }
+
+    .rdk-music-icon svg {
+      width: 16px !important;
+      height: 16px !important;
+      max-width: 16px !important;
+      max-height: 16px !important;
+    }
+
+    .rdk-music-btn svg {
+      width: 14px !important;
+      height: 14px !important;
+      max-width: 14px !important;
+      max-height: 14px !important;
+    }
+
+    .rdk-music-play svg {
+      width: 16px !important;
+      height: 16px !important;
+      max-width: 16px !important;
+      max-height: 16px !important;
+    }
+
+    .rdk-music-volume svg {
+      width: 13px !important;
+      height: 13px !important;
+      max-width: 13px !important;
+      max-height: 13px !important;
+    }
+
+    /* Canvas waveform jangan melebar keluar */
+    .rdk-music-wave {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+    }
   </style>
 
   <!-- ROJAK AI STYLES -->
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
+
+  <!-- MUSIC PLAYER STYLES -->
+  <link rel="stylesheet" href="./rojak-ai/music-player.css">
 </head>
 
 <body>
@@ -1584,7 +1671,8 @@
       </section>
 
 
-      <!-- SPOTIFY -->
+      <!-- SPOTIFY (fallback) -->
+      <!-- music-player.js akan otomatis mengganti section ini -->
 
       <section class="spotify-section">
 
@@ -3515,7 +3603,7 @@
 
     }
 
-    </script>
+  </script>
 
   <!-- ROJAK AI WIDGET -->
   <script src="./rojak-ai/rojak-ai.js" defer></script>
