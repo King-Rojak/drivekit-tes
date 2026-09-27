@@ -1,5 +1,5 @@
 /* ============================================================
-   ROJAK AI — Chat Widget Styles
+   ROJAK AI — Chat Widget Styles (Text-only)
 ============================================================ */
 
 /* ---------- FAB ---------- */
@@ -93,7 +93,6 @@
   box-shadow: 0 18px 45px rgba(0, 0, 0, .55);
 
   box-sizing: border-box;
-
   overscroll-behavior: contain;
 }
 
@@ -205,7 +204,7 @@
   height: 13px;
 }
 
-/* ---------- BODY (CHAT AREA) ---------- */
+/* ---------- BODY ---------- */
 
 .rojak-ai-body {
   flex: 1 1 auto;
@@ -221,7 +220,6 @@
     #131412;
 
   -webkit-overflow-scrolling: touch;
-
   overscroll-behavior: contain;
 }
 
@@ -307,15 +305,6 @@
   color: #676861;
 }
 
-.rojak-ai-img {
-  max-width: 200px;
-  max-height: 200px;
-  border-radius: 6px;
-  border: 1px solid #292a27;
-  margin-bottom: 5px;
-  display: block;
-}
-
 /* ---------- TYPING ---------- */
 
 .rojak-ai-typing {
@@ -377,81 +366,6 @@
   color: #eeeeea;
 }
 
-/* ---------- ATTACH ---------- */
-
-.rojak-ai-attach {
-  display: none;
-  align-items: center;
-  gap: 8px;
-
-  margin: 0 10px;
-
-  padding: 6px 8px;
-
-  border: 1px solid #292a27;
-  border-radius: 6px;
-
-  background: #171815;
-}
-
-.rojak-ai-attach.rojak-ai-attach-on {
-  display: flex;
-}
-
-.rojak-ai-attach img {
-  width: 34px;
-  height: 34px;
-  border-radius: 4px;
-  object-fit: cover;
-  border: 1px solid #292a27;
-}
-
-.rojak-ai-attach-info {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 9px;
-  color: #b4b5af;
-}
-
-.rojak-ai-attach-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #eeeeea;
-  font-weight: 600;
-}
-
-.rojak-ai-attach-size {
-  font-size: 8px;
-  color: #676861;
-  margin-top: 1px;
-}
-
-.rojak-ai-attach-remove {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-
-  display: grid;
-  place-items: center;
-
-  border: 1px solid #292a27;
-  border-radius: 4px;
-
-  background: transparent;
-  color: #8b8c86;
-
-  font-size: 13px;
-  line-height: 1;
-
-  cursor: pointer;
-}
-
-.rojak-ai-attach-remove:hover {
-  background: #24211d;
-  color: #d9655c;
-}
-
 /* ---------- FOOTER ---------- */
 
 .rojak-ai-footer {
@@ -506,35 +420,6 @@
 
 .rojak-ai-textarea::placeholder {
   color: #595a55;
-}
-
-.rojak-ai-mini {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-
-  display: grid;
-  place-items: center;
-
-  padding: 0;
-
-  border: 0;
-  border-radius: 6px;
-
-  background: transparent;
-  color: #8b8c86;
-
-  cursor: pointer;
-}
-
-.rojak-ai-mini:hover {
-  background: #1e1f1c;
-  color: #eeeeea;
-}
-
-.rojak-ai-mini svg {
-  width: 16px;
-  height: 16px;
 }
 
 .rojak-ai-send {
@@ -593,7 +478,7 @@
 }
 
 /* ============================================================
-   BODY SCROLL LOCK — aktif saat chat AI terbuka
+   BODY SCROLL LOCK
 ============================================================ */
 
 body.rojak-ai-no-scroll {
@@ -643,4 +528,4 @@ body.rojak-ai-no-scroll {
     max-width: 90%;
     font-size: 11px;
   }
-   }
+                                    }
