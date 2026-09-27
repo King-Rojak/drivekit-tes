@@ -1,7 +1,7 @@
 /* ============================================================
    ROJAK DRIVEK1T — Custom Music Player
-   Waveform analyser robust + fallback visualizer + lirik typewriter
-============================================================ */
+   FIX FINAL: canvas dijamin selalu render waveform.
+   ============================================================ */
 
 (function () {
   "use strict";
@@ -41,6 +41,7 @@
     loop: false,
     ready: false,
     analyserOK: false,
+    fallbackTime: 0,
     currentLyricIndex: -1,
     typewriterTimer: null,
     typewriterPhase: "idle",
@@ -173,20 +174,18 @@
 
     const audio = new Audio();
     audio.preload = "auto";
-    // JANGAN set crossOrigin — sering bikin analyser gagal
     audio.src = TRACK.src;
     state.audio = audio;
 
     audio.addEventListener("loadedmetadata", () => {
       state.duration = audio.duration || 0;
-      console.log("[Music] loadedmetadata, duration:", state.duration);
+      console.log("[Music] duration:", state.duration);
     });
 
     audio.addEventListener("canplay", () => {
       state.ready = true;
       const emptyEl = document.getElementById("rdkMusicWaveEmpty");
       if (emptyEl) emptyEl.classList.add("rdk-music-hidden");
-      console.log("[Music] canplay OK");
     });
 
     audio.addEventListener("timeupdate", () => {
@@ -197,9 +196,9 @@
       state.isPlaying = true;
       updatePlayButton();
       ensureAudioContext();
+      // Selalu jalankan animasi (fallback kalau analyser gagal)
       startWaveAnimation();
       updateLyricForTime(audio.currentTime, true);
-      console.log("[Music] playing, analyserOK:", state.analyserOK);
     });
 
     audio.addEventListener("pause", () => {
@@ -256,8 +255,16 @@
       });
     }
 
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      if (!state.isPlaying) drawIdleWave();
+    });
+
+    // Panggil resizeCanvas SETELAH frame berikutnya biar layout sudah settle
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      drawIdleWave();
+    });
   }
 
   function togglePlay() {
@@ -265,7 +272,6 @@
     if (!audio) return;
 
     if (audio.paused) {
-      // WAJIB resume AudioContext pada user gesture
       ensureAudioContext(true);
       const p = audio.play();
       if (p && typeof p.catch === "function") {
@@ -283,33 +289,20 @@
     btn.title = state.isPlaying ? "Pause" : "Play";
   }
 
-  /**
-   * Inisialisasi AudioContext + Analyser.
-   * forceResume = true → paksa resume (dipanggil dari user gesture).
-   */
   function ensureAudioContext(forceResume) {
-    // Kalau sudah ada, cek state
     if (state.audioCtx) {
       if (state.audioCtx.state === "suspended") {
-        state.audioCtx.resume().then(() => {
-          console.log("[Music] AudioContext resumed");
-        }).catch(err => {
-          console.warn("[Music] Resume gagal:", err);
-        });
+        state.audioCtx.resume().catch(() => {});
       }
       return;
     }
 
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) {
-        console.warn("[Music] AudioContext tidak didukung");
-        return;
-      }
+      if (!AudioCtx) return;
 
       const ctx = new AudioCtx();
 
-      // Resume kalau suspended
       if (ctx.state === "suspended") {
         ctx.resume().catch(() => {});
       }
@@ -328,7 +321,7 @@
       state.sourceNode = source;
       state.analyserOK = true;
 
-      console.log("[Music] AudioContext + Analyser siap, state:", ctx.state);
+      console.log("[Music] AudioContext OK, state:", ctx.state);
     } catch (err) {
       console.error("[Music] AudioContext error:", err);
       state.analyserOK = false;
@@ -338,23 +331,37 @@
   function resizeCanvas() {
     const canvas = document.getElementById("rdkMusicWave");
     if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
+
     const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-    const ctx = canvas.getContext("2d");
-    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const w = Math.max(1, Math.floor(rect.width));
+    const h = Math.max(1, Math.floor(rect.height));
+
+    // Hanya resize kalau ukuran benar-benar beda (biar nggak reset terus)
+    const dpr = window.devicePixelRatio || 1;
+    const newW = Math.floor(w * dpr);
+    const newH = Math.floor(h * dpr);
+
+    if (canvas.width !== newW || canvas.height !== newH) {
+      canvas.width = newW;
+      canvas.height = newH;
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
   }
 
+  /**
+   * Gambar waveform statis (saat idle / paused).
+   * Pakai ukuran dari canvas element langsung.
+   */
   function drawIdleWave() {
     const canvas = document.getElementById("rdkMusicWave");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width;
-    const h = rect.height;
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
     const mid = h / 2;
 
     ctx.clearRect(0, 0, w, h);
@@ -374,19 +381,21 @@
 
   function startWaveAnimation() {
     if (state.waveAnimId) return;
+
     const canvas = document.getElementById("rdkMusicWave");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let fallbackTime = 0;
+    // Pastikan ukuran canvas sudah benar
+    resizeCanvas();
 
     function frame() {
       state.waveAnimId = requestAnimationFrame(frame);
 
-      const rect = canvas.getBoundingClientRect();
-      const w = rect.width;
-      const h = rect.height;
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
       const mid = h / 2;
 
       ctx.clearRect(0, 0, w, h);
@@ -395,19 +404,22 @@
       const gap = 3;
       const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
 
-      const analyser = state.analyser;
+      // Coba pakai analyser dulu
+      let usedAnalyser = false;
+      if (state.analyser && state.analyserOK) {
+        const data = new Uint8Array(state.analyser.frequencyBinCount);
+        state.analyser.getByteFrequencyData(data);
 
-      if (analyser && state.analyserOK) {
-        // Mode real analyser
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(data);
-        const usable = Math.floor(data.length * 0.7);
-
+        // Cek apakah ada data (bukan semua nol)
         let maxVal = 0;
-        for (let i = 0; i < usable; i++) if (data[i] > maxVal) maxVal = data[i];
+        for (let i = 0; i < data.length; i++) {
+          if (data[i] > maxVal) maxVal = data[i];
+        }
 
-        // Kalau data benar-benar nol (analyser nggak dapet suara), pakai fallback
         if (maxVal > 0) {
+          usedAnalyser = true;
+          const usable = Math.floor(data.length * 0.7);
+
           for (let i = 0; i < bars; i++) {
             const idx = Math.floor((i / bars) * usable);
             const v = data[idx] / 255;
@@ -417,24 +429,24 @@
             ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
             ctx.fillRect(x, mid - barH / 2, barW, barH);
           }
-          return;
         }
       }
 
-      // FALLBACK: animasi simulasi (kalau analyser gagal / data kosong)
-      if (state.isPlaying) {
-        fallbackTime += 0.15;
-        for (let i = 0; i < bars; i++) {
-          // Kombinasi sinus biar terlihat natural
-          const base =
-            Math.sin(fallbackTime + i * 0.35) * 0.5 +
-            Math.sin(fallbackTime * 1.7 + i * 0.18) * 0.3 +
-            Math.sin(fallbackTime * 0.6 + i * 0.9) * 0.2;
+      // FALLBACK: kalau analyser nggak ada / nggak dapet data
+      if (!usedAnalyser) {
+        state.fallbackTime += 0.12;
 
-          const v = Math.abs(base); // 0..1
-          const barH = Math.max(4, v * (h * 0.75));
+        // Selalu gambar waveform (biar tidak kosong sama sekali)
+        for (let i = 0; i < bars; i++) {
+          const base =
+            Math.sin(state.fallbackTime + i * 0.35) * 0.5 +
+            Math.sin(state.fallbackTime * 1.7 + i * 0.18) * 0.3 +
+            Math.sin(state.fallbackTime * 0.6 + i * 0.9) * 0.2;
+
+          const v = Math.abs(base);
+          const barH = Math.max(6, v * (h * 0.7));
           const x = i * (barW + gap);
-          const alpha = 0.4 + v * 0.5;
+          const alpha = 0.45 + v * 0.5;
           ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
           ctx.fillRect(x, mid - barH / 2, barW, barH);
         }
@@ -561,8 +573,13 @@
   function init() {
     if (document.getElementById("rdkMusicSection")) return;
     mount();
-    drawIdleWave();
     setCursorVisible(false);
+
+    // Panggil lagi setelah 500ms untuk memastikan canvas sudah ter-render
+    setTimeout(() => {
+      resizeCanvas();
+      if (!state.isPlaying) drawIdleWave();
+    }, 500);
   }
 
   if (document.readyState === "loading") {
