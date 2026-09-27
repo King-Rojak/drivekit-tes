@@ -1,6 +1,6 @@
 /* ============================================================
    ROJAK DRIVEK1T — Custom Music Player
-   Play/Pause di header, waveform besar, lirik typewriter.
+   Waveform analyser robust + fallback visualizer + lirik typewriter
 ============================================================ */
 
 (function () {
@@ -40,6 +40,7 @@
     isPlaying: false,
     loop: false,
     ready: false,
+    analyserOK: false,
     currentLyricIndex: -1,
     typewriterTimer: null,
     typewriterPhase: "idle",
@@ -84,24 +85,17 @@
     });
 
     const playBtn = el("button", {
-      class: "rdk-music-play",
-      type: "button",
-      id: "rdkMusicPlay",
-      title: "Play",
-      html: ICON_PLAY
+      class: "rdk-music-play", type: "button",
+      id: "rdkMusicPlay", title: "Play", html: ICON_PLAY
     });
 
     const loopBtn = el("button", {
-      class: "rdk-music-btn",
-      type: "button",
-      id: "rdkMusicLoop",
-      title: "Loop",
-      html: ICON_LOOP
+      class: "rdk-music-btn", type: "button",
+      id: "rdkMusicLoop", title: "Loop", html: ICON_LOOP
     });
 
     const headerActions = el("div", { class: "rdk-music-header-actions" }, [
-      loopBtn,
-      playBtn
+      loopBtn, playBtn
     ]);
 
     const header = el("div", { class: "rdk-music-header" }, [
@@ -125,39 +119,27 @@
     const volIcon = el("span", { id: "rdkMusicVolIcon", html: ICON_VOL_HIGH });
 
     const volSlider = el("input", {
-      type: "range",
-      id: "rdkMusicVolume",
-      min: "0",
-      max: "1",
-      step: "0.01",
-      value: "1"
+      type: "range", id: "rdkMusicVolume",
+      min: "0", max: "1", step: "0.01", value: "1"
     });
 
     const volValue = el("span", {
       class: "rdk-music-volume-value",
-      id: "rdkMusicVolValue",
-      text: "100"
+      id: "rdkMusicVolValue", text: "100"
     });
 
     const volume = el("div", { class: "rdk-music-volume" }, [
-      volIcon,
-      volSlider,
-      volValue
+      volIcon, volSlider, volValue
     ]);
 
     const lyricLine = el("div", {
-      class: "rdk-music-lyric-line",
-      id: "rdkMusicLyricLine"
+      class: "rdk-music-lyric-line", id: "rdkMusicLyricLine"
     }, [
       el("span", {
-        class: "rdk-music-lyric-text",
-        id: "rdkMusicLyricText",
-        text: ""
+        class: "rdk-music-lyric-text", id: "rdkMusicLyricText", text: ""
       }),
       el("span", {
-        class: "rdk-music-cursor",
-        id: "rdkMusicCursor",
-        text: "|"
+        class: "rdk-music-cursor", id: "rdkMusicCursor", text: "|"
       })
     ]);
 
@@ -190,19 +172,21 @@
     }
 
     const audio = new Audio();
-    audio.preload = "metadata";
-    audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
+    // JANGAN set crossOrigin — sering bikin analyser gagal
     audio.src = TRACK.src;
     state.audio = audio;
 
     audio.addEventListener("loadedmetadata", () => {
       state.duration = audio.duration || 0;
+      console.log("[Music] loadedmetadata, duration:", state.duration);
     });
 
     audio.addEventListener("canplay", () => {
       state.ready = true;
       const emptyEl = document.getElementById("rdkMusicWaveEmpty");
       if (emptyEl) emptyEl.classList.add("rdk-music-hidden");
+      console.log("[Music] canplay OK");
     });
 
     audio.addEventListener("timeupdate", () => {
@@ -215,6 +199,7 @@
       ensureAudioContext();
       startWaveAnimation();
       updateLyricForTime(audio.currentTime, true);
+      console.log("[Music] playing, analyserOK:", state.analyserOK);
     });
 
     audio.addEventListener("pause", () => {
@@ -229,7 +214,6 @@
       updatePlayButton();
       stopWaveAnimation();
       stopTypewriter();
-
       if (state.loop) {
         audio.currentTime = 0;
         resetLyricState();
@@ -238,7 +222,7 @@
     });
 
     audio.addEventListener("error", () => {
-      console.error("[Music] Gagal load:", TRACK.src);
+      console.error("[Music] Gagal load:", TRACK.src, audio.error);
       const emptyEl = document.getElementById("rdkMusicWaveEmpty");
       if (emptyEl) {
         emptyEl.textContent = "Lagu tidak ditemukan. Cek folder music/";
@@ -281,7 +265,8 @@
     if (!audio) return;
 
     if (audio.paused) {
-      ensureAudioContext();
+      // WAJIB resume AudioContext pada user gesture
+      ensureAudioContext(true);
       const p = audio.play();
       if (p && typeof p.catch === "function") {
         p.catch(err => console.error("[Music] Play error:", err));
@@ -298,24 +283,42 @@
     btn.title = state.isPlaying ? "Pause" : "Play";
   }
 
-  function ensureAudioContext() {
+  /**
+   * Inisialisasi AudioContext + Analyser.
+   * forceResume = true → paksa resume (dipanggil dari user gesture).
+   */
+  function ensureAudioContext(forceResume) {
+    // Kalau sudah ada, cek state
     if (state.audioCtx) {
       if (state.audioCtx.state === "suspended") {
-        state.audioCtx.resume().catch(() => {});
+        state.audioCtx.resume().then(() => {
+          console.log("[Music] AudioContext resumed");
+        }).catch(err => {
+          console.warn("[Music] Resume gagal:", err);
+        });
       }
       return;
     }
 
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
+      if (!AudioCtx) {
+        console.warn("[Music] AudioContext tidak didukung");
+        return;
+      }
 
       const ctx = new AudioCtx();
+
+      // Resume kalau suspended
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+
       const source = ctx.createMediaElementSource(state.audio);
       const analyser = ctx.createAnalyser();
 
       analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.smoothingTimeConstant = 0.75;
 
       source.connect(analyser);
       analyser.connect(ctx.destination);
@@ -323,8 +326,12 @@
       state.audioCtx = ctx;
       state.analyser = analyser;
       state.sourceNode = source;
+      state.analyserOK = true;
+
+      console.log("[Music] AudioContext + Analyser siap, state:", ctx.state);
     } catch (err) {
       console.error("[Music] AudioContext error:", err);
+      state.analyserOK = false;
     }
   }
 
@@ -372,7 +379,7 @@
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const analyser = state.analyser;
+    let fallbackTime = 0;
 
     function frame() {
       state.waveAnimId = requestAnimationFrame(frame);
@@ -388,17 +395,46 @@
       const gap = 3;
       const barW = Math.max(1, (w - gap * (bars - 1)) / bars);
 
-      if (analyser) {
+      const analyser = state.analyser;
+
+      if (analyser && state.analyserOK) {
+        // Mode real analyser
         const data = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(data);
         const usable = Math.floor(data.length * 0.7);
 
+        let maxVal = 0;
+        for (let i = 0; i < usable; i++) if (data[i] > maxVal) maxVal = data[i];
+
+        // Kalau data benar-benar nol (analyser nggak dapet suara), pakai fallback
+        if (maxVal > 0) {
+          for (let i = 0; i < bars; i++) {
+            const idx = Math.floor((i / bars) * usable);
+            const v = data[idx] / 255;
+            const barH = Math.max(4, v * (h * 0.92));
+            const x = i * (barW + gap);
+            const alpha = 0.55 + v * 0.45;
+            ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
+            ctx.fillRect(x, mid - barH / 2, barW, barH);
+          }
+          return;
+        }
+      }
+
+      // FALLBACK: animasi simulasi (kalau analyser gagal / data kosong)
+      if (state.isPlaying) {
+        fallbackTime += 0.15;
         for (let i = 0; i < bars; i++) {
-          const idx = Math.floor((i / bars) * usable);
-          const v = data[idx] / 255;
-          const barH = Math.max(4, v * (h * 0.92));
+          // Kombinasi sinus biar terlihat natural
+          const base =
+            Math.sin(fallbackTime + i * 0.35) * 0.5 +
+            Math.sin(fallbackTime * 1.7 + i * 0.18) * 0.3 +
+            Math.sin(fallbackTime * 0.6 + i * 0.9) * 0.2;
+
+          const v = Math.abs(base); // 0..1
+          const barH = Math.max(4, v * (h * 0.75));
           const x = i * (barW + gap);
-          const alpha = 0.55 + v * 0.45;
+          const alpha = 0.4 + v * 0.5;
           ctx.fillStyle = `rgba(228, 86, 50, ${alpha})`;
           ctx.fillRect(x, mid - barH / 2, barW, barH);
         }
