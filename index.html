@@ -1300,7 +1300,7 @@
     }
 
     /* ============================================================
-       TAMBAHAN: GLOBAL SVG SAFETY — Rojak AI + Music Player
+       TAMBAHAN: GLOBAL SVG SAFETY
     ============================================================ */
 
     .rojak-ai-fab-icon svg {
@@ -1378,6 +1378,129 @@
       max-width: 100% !important;
       max-height: 100% !important;
     }
+
+    /* ============================================================
+       DIAGNOSTIC PANEL — Login Debug
+    ============================================================ */
+
+    .rdk-diag {
+      position: fixed;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+
+      z-index: 99999;
+
+      max-height: 45vh;
+
+      display: none;
+      flex-direction: column;
+
+      border: 1px solid #4a3530;
+      border-radius: 8px;
+
+      background: #1a1310;
+
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .65);
+
+      overflow: hidden;
+    }
+
+    .rdk-diag.rdk-diag-open {
+      display: flex;
+    }
+
+    .rdk-diag-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 8px 10px;
+
+      border-bottom: 1px solid #4a3530;
+
+      background: #201814;
+
+      color: #ffb896;
+
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+
+    .rdk-diag-head-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rdk-diag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ff8888;
+      animation: rdk-diag-pulse 1.4s infinite;
+    }
+
+    @keyframes rdk-diag-pulse {
+      0%, 100% { opacity: .4; }
+      50% { opacity: 1; }
+    }
+
+    .rdk-diag-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .rdk-diag-btn {
+      height: 22px;
+      padding: 0 8px;
+
+      border: 1px solid #4a3530;
+      border-radius: 4px;
+
+      background: transparent;
+      color: #d0b8b0;
+
+      font: inherit;
+      font-size: 9px;
+
+      cursor: pointer;
+    }
+
+    .rdk-diag-btn:hover {
+      background: #2a1f1c;
+      color: #eeeeea;
+    }
+
+    .rdk-diag-body {
+      flex: 1 1 auto;
+      min-height: 0;
+
+      overflow-y: auto;
+
+      padding: 8px 10px;
+
+      color: #d0b8b0;
+
+      font-size: 9.5px;
+      line-height: 1.55;
+
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .rdk-diag-line {
+      padding: 1px 0;
+    }
+
+    .rdk-diag-line.rdk-diag-ok { color: #8fd09a; }
+    .rdk-diag-line.rdk-diag-error { color: #ff8888; font-weight: 600; }
+    .rdk-diag-line.rdk-diag-warn { color: #f0c674; }
+    .rdk-diag-line.rdk-diag-info { color: #8ab8d0; }
   </style>
 
   <!-- ROJAK AI STYLES -->
@@ -1388,6 +1511,51 @@
 </head>
 
 <body>
+
+  <!-- =========================================
+       DIAGNOSTIC PANEL
+  ========================================== -->
+
+  <div
+    id="rdkDiag"
+    class="rdk-diag"
+  >
+
+    <div class="rdk-diag-head">
+
+      <div class="rdk-diag-head-title">
+        <span class="rdk-diag-dot"></span>
+        <span>Diagnostic — Login Debug</span>
+      </div>
+
+      <div class="rdk-diag-actions">
+
+        <button
+          id="rdkDiagCopy"
+          class="rdk-diag-btn"
+          type="button"
+        >
+          Copy
+        </button>
+
+        <button
+          id="rdkDiagClose"
+          class="rdk-diag-btn"
+          type="button"
+        >
+          Hide
+        </button>
+
+      </div>
+
+    </div>
+
+    <div
+      id="rdkDiagBody"
+      class="rdk-diag-body"
+    ></div>
+
+  </div>
 
   <!-- =========================================
        LOADING
@@ -1425,19 +1593,16 @@
        LOADING FAILSAFE — 1 DETIK
   ========================================== -->
   <script>
-    // Loading screen: hilang setelah 1 detik atau saat app siap.
     window.__RDK_LOADING_DONE__ = false;
     window.__RDK_LOADING_STARTED_AT__ = Date.now();
     window.__RDK_LOADING_HIDE_TIMER__ = null;
 
-    // Sembunyikan loading setelah 1 detik (maksimal).
     window.__RDK_LOADING_HIDE_TIMER__ = window.setTimeout(function () {
       if (window.__RDK_LOADING_DONE__) return;
       window.__RDK_LOADING_DONE__ = true;
       const loading = document.getElementById("loadingScreen");
       if (loading) loading.style.display = "none";
 
-      // Kalau app & login masih belum tampil, tampilkan login.
       const login = document.getElementById("loginScreen");
       const app = document.getElementById("app");
       const loginVisible = login && login.style.display === "flex";
@@ -1447,7 +1612,6 @@
       }
     }, 1000);
 
-    // Dipanggil oleh kode utama saat app/login sudah siap — sembunyikan loading lebih cepat.
     window.__RDK_FINISH_LOADING__ = function () {
       if (window.__RDK_LOADING_DONE__) return;
       window.__RDK_LOADING_DONE__ = true;
@@ -1456,6 +1620,93 @@
       if (loading) loading.style.display = "none";
     };
   </script>
+
+
+  <!-- =========================================
+       DIAGNOSTIC LOGGER
+  ========================================== -->
+  <script>
+    window.RDK_DIAG = (function () {
+      const panel = document.getElementById("rdkDiag");
+      const body = document.getElementById("rdkDiagBody");
+      const btnClose = document.getElementById("rdkDiagClose");
+      const btnCopy = document.getElementById("rdkDiagCopy");
+
+      let opened = false;
+
+      function ensureOpen() {
+        if (opened) return;
+        opened = true;
+        if (panel) panel.classList.add("rdk-diag-open");
+      }
+
+      function log(msg, type) {
+        if (type === "error") console.error("[RDK]", msg);
+        else if (type === "warn") console.warn("[RDK]", msg);
+        else console.log("[RDK]", msg);
+
+        if (!body) return;
+        ensureOpen();
+
+        const line = document.createElement("div");
+        line.className = "rdk-diag-line" + (type ? " rdk-diag-" + type : "");
+        line.textContent = "› " + msg;
+        body.appendChild(line);
+        body.scrollTop = body.scrollHeight;
+      }
+
+      function copy() {
+        const text = body ? body.textContent : "";
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => {
+            log("Copy ke clipboard berhasil", "ok");
+          }).catch(() => {
+            log("Copy gagal", "error");
+          });
+        } else {
+          log("Clipboard API tidak tersedia", "warn");
+        }
+      }
+
+      function close() {
+        opened = false;
+        if (panel) panel.classList.remove("rdk-diag-open");
+      }
+
+      if (btnClose) btnClose.addEventListener("click", close);
+      if (btnCopy) btnCopy.addEventListener("click", copy);
+
+      log("=== Diagnostic started ===", "info");
+      log("user-agent: " + navigator.userAgent.slice(0, 90), "info");
+      log("location: " + location.href, "info");
+      log("origin: " + location.origin, "info");
+
+      window.addEventListener("error", function (e) {
+        log("GLOBAL ERROR: " + (e.message || "unknown"), "error");
+        if (e.filename) {
+          log("  at " + e.filename + ":" + (e.lineno || "?"), "error");
+        }
+      });
+
+      window.addEventListener("unhandledrejection", function (e) {
+        const reason = e.reason;
+        let msg = "?";
+        if (reason) {
+          if (typeof reason === "string") msg = reason;
+          else if (reason.message) msg = reason.code ? reason.code + " — " + reason.message : reason.message;
+          else msg = String(reason);
+        }
+        log("UNHANDLED REJECTION: " + msg, "error");
+      });
+
+      return {
+        log: log,
+        copy: copy,
+        close: close
+      };
+    })();
+  </script>
+
 
   <!-- =========================================
        LOGIN
@@ -2006,86 +2257,54 @@
 
     window.gapiLoaded = function () {
 
-      console.log(
-        "Google API loaded"
-      );
+      console.log("Google API loaded");
+      if (window.RDK_DIAG) window.RDK_DIAG.log("gapi.js loaded", "ok");
 
-
-      if (
-        typeof window.gapi ===
-        "undefined"
-      ) {
-
-        console.error(
-          "Google API tidak tersedia."
-        );
-
+      if (typeof window.gapi === "undefined") {
+        console.error("Google API tidak tersedia.");
+        if (window.RDK_DIAG) window.RDK_DIAG.log("gapi undefined", "error");
         return;
-
       }
 
+      window.gapi.load("client", async function () {
 
-      window.gapi.load(
-        "client",
-        async function () {
+        try {
 
-          try {
+          await window.gapi.client.init({
+            discoveryDocs: [
+              "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
+            ]
+          });
 
-            await window.gapi.client.init({
+          window.RDK_GOOGLE.gapiInited = true;
 
-              discoveryDocs: [
+          console.log("Google Drive API siap.");
+          if (window.RDK_DIAG) window.RDK_DIAG.log("Google Drive API siap", "ok");
 
-                "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
-
-              ]
-
-            });
-
-            window.RDK_GOOGLE.gapiInited =
-              true;
-
-
-            console.log(
-              "Google Drive API siap."
-            );
-
-
-          } catch (error) {
-
-            console.error(
-              "GAPI init error:",
-              error
-            );
-
-          }
-
+        } catch (error) {
+          console.error("GAPI init error:", error);
+          if (window.RDK_DIAG) window.RDK_DIAG.log("GAPI init error: " + (error.message || error), "error");
         }
-      );
+
+      });
 
     };
 
 
     window.gisLoaded = function () {
 
-      console.log(
-        "Google Identity Services loaded"
-      );
-
+      console.log("Google Identity Services loaded");
+      if (window.RDK_DIAG) window.RDK_DIAG.log("gis client loaded", "ok");
 
       if (
         !window.google ||
         !window.google.accounts ||
         !window.google.accounts.oauth2
       ) {
-
-        console.error(
-          "Google Identity Services tidak tersedia."
-        );
-
+        console.error("Google Identity Services tidak tersedia.");
+        if (window.RDK_DIAG) window.RDK_DIAG.log("GIS tidak tersedia", "error");
         return;
-
       }
-
 
       window.RDK_GOOGLE.tokenClient =
         window.google.accounts.oauth2.initTokenClient({
@@ -2100,14 +2319,10 @@
 
         });
 
+      window.RDK_GOOGLE.gisInited = true;
 
-      window.RDK_GOOGLE.gisInited =
-        true;
-
-
-      console.log(
-        "Google OAuth siap."
-      );
+      console.log("Google OAuth siap.");
+      if (window.RDK_DIAG) window.RDK_DIAG.log("Google OAuth siap", "ok");
 
     };
 
@@ -2134,20 +2349,36 @@
       const button = document.getElementById("loginButton");
       if (!button || button.onclick) return;
 
+      if (window.RDK_DIAG) {
+        window.RDK_DIAG.log("Login fallback aktif (modul utama mungkin lambat)", "warn");
+      }
+
       button.addEventListener("click", async function () {
         const old = button.querySelector("span")?.textContent || "Continue with Google";
         button.disabled = true;
         const label = button.querySelector("span");
         if (label) label.textContent = "Membuka Google...";
 
+        if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: klik login → load Firebase...", "info");
+
         try {
           const firebase = await import("./firebase-config.js");
+          if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: firebase-config.js loaded", "ok");
+
           const authModule = await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js");
+          if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: firebase-auth.js loaded", "ok");
+
           const provider = new authModule.GoogleAuthProvider();
           provider.setCustomParameters({ prompt: "select_account" });
+
+          if (window.RDK_DIAG) window.RDK_DIAG.log("Fallback: memanggil signInWithRedirect...", "info");
+
           await authModule.signInWithRedirect(firebase.auth, provider);
         } catch (error) {
           console.error("Login fallback error:", error);
+          if (window.RDK_DIAG) {
+            window.RDK_DIAG.log("Fallback ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
+          }
           const errorBox = document.getElementById("loginError");
           if (errorBox) errorBox.textContent = "Login gagal: " + (error.code || error.message || "coba lagi");
           button.disabled = false;
@@ -2202,6 +2433,12 @@
 
     const googleState =
       window.RDK_GOOGLE;
+
+
+    const D = window.RDK_DIAG;
+
+
+    if (D) D.log("Module utama loaded", "ok");
 
 
     /* =========================================
@@ -2283,14 +2520,16 @@
 
     async function ensureProfile(user) {
 
+      if (D) D.log("ensureProfile: cek dokumen di Firestore...", "info");
+
       const ref = doc(db, "users", user.uid);
       const snapshot = await getDoc(ref);
 
-
       if (!snapshot.exists()) {
 
-        await setDoc(ref, {
+        if (D) D.log("ensureProfile: user baru — buat dokumen", "info");
 
+        await setDoc(ref, {
           uid: user.uid,
           name: user.displayName || "User",
           email: user.email || "",
@@ -2298,17 +2537,20 @@
           role: "member",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
-
         });
+
+        if (D) D.log("ensureProfile: dokumen berhasil dibuat", "ok");
 
         return "member";
 
       }
 
-
       const data = snapshot.data();
+      const role = data.role === "admin" ? "admin" : "member";
 
-      return data.role === "admin" ? "admin" : "member";
+      if (D) D.log("ensureProfile: user sudah ada, role = " + role, "ok");
+
+      return role;
 
     }
 
@@ -2360,33 +2602,41 @@
       try {
 
         loginError("");
+        if (D) D.log("--- KLIK LOGIN GOOGLE ---", "info");
 
         button.disabled = true;
         button.querySelector("span")?.textContent = "Membuka Google...";
 
+        if (D) D.log("Membuat GoogleAuthProvider...", "info");
 
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: "select_account" });
-
 
         const isMobile = /Android|iPhone|iPad|iPod/i.test(
           navigator.userAgent || ""
         );
 
+        if (D) D.log("isMobile: " + isMobile, "info");
 
         if (isMobile) {
+          if (D) D.log("Memanggil signInWithRedirect (mobile)...", "info");
           await signInWithRedirect(auth, provider);
+          if (D) D.log("signInWithRedirect selesai — tunggu balik dari Google...", "ok");
           return;
         }
 
-
+        if (D) D.log("Memanggil signInWithPopup (desktop)...", "info");
         await signInWithPopup(auth, provider);
-
+        if (D) D.log("signInWithPopup selesai", "ok");
 
       } catch (error) {
 
         console.error("Login error:", error);
-
+        if (D) {
+          D.log("LOGIN ERROR", "error");
+          D.log("  code: " + (error.code || "(no code)"), "error");
+          D.log("  message: " + (error.message || "(no message)"), "error");
+        }
 
         if (
           error.code === "auth/popup-blocked" ||
@@ -2394,45 +2644,30 @@
         ) {
 
           try {
-
-            await signInWithRedirect(
-              auth,
-              new GoogleAuthProvider()
-            );
-
+            if (D) D.log("Mencoba fallback signInWithRedirect...", "warn");
+            await signInWithRedirect(auth, new GoogleAuthProvider());
             return;
-
           } catch (redirectError) {
-
             console.error(redirectError);
-
+            if (D) D.log("Redirect fallback error: " + redirectError.message, "error");
           }
 
         }
 
-
         if (error.code === "auth/unauthorized-domain") {
-
-          loginError(
-            "Domain website belum diizinkan di Firebase Authorized domains."
-          );
-
+          loginError("Domain website belum diizinkan di Firebase Authorized domains.");
+          if (D) D.log("→ Fix: tambah domain di Firebase Console → Auth → Authorized domains", "error");
+        } else if (error.code === "auth/redirect-uri-mismatch") {
+          loginError("Redirect URI belum didaftarkan di Google Cloud Console.");
+          if (D) D.log("→ Fix: tambah redirect URI di Google Cloud Console", "error");
         } else {
-
-          loginError(
-            "Login gagal: " + (error.code || error.message)
-          );
-
+          loginError("Login gagal: " + (error.code || error.message));
         }
 
-
       } finally {
-
         button.disabled = false;
-
         const label = button.querySelector("span");
         if (label) label.textContent = "Continue with Google";
-
       }
 
     }
@@ -2448,34 +2683,51 @@
     onAuthStateChanged(auth, async user => {
 
       if (!user) {
+        if (D) D.log("onAuthStateChanged: user NULL → showLogin", "warn");
         showLogin();
         return;
+      }
+
+      if (D) {
+        D.log("onAuthStateChanged: USER MASUK", "ok");
+        D.log("  uid: " + user.uid, "ok");
+        D.log("  email: " + (user.email || "-"), "ok");
       }
 
       $("loadingText").textContent = "Memuat profil...";
 
       try {
-
         await loadProfile(user);
-
+        if (D) D.log("loadProfile BERHASIL → showApp", "ok");
       } catch (error) {
-
         console.error(error);
-        showLogin();
+        if (D) {
+          D.log("loadProfile GAGAL", "error");
+          D.log("  code: " + (error.code || "(no code)"), "error");
+          D.log("  message: " + (error.message || "(no message)"), "error");
+        }
 
+        if (error.code === "permission-denied") {
+          if (D) D.log("→ Fix: Firestore Rules tolak akses. Buka Firebase Console → Firestore → Rules", "error");
+        } else if (error.code === "unavailable") {
+          if (D) D.log("→ Fix: Firestore tidak bisa diakses. Cek koneksi / Firestore status.", "error");
+        }
+
+        showLogin();
       }
 
     });
 
 
     try {
-
+      if (D) D.log("Memanggil getRedirectResult...", "info");
       await getRedirectResult(auth);
-
+      if (D) D.log("getRedirectResult selesai", "ok");
     } catch (error) {
-
       console.error("Redirect result:", error);
-
+      if (D) {
+        D.log("getRedirectResult ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
+      }
     }
 
 
