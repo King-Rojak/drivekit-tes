@@ -45,6 +45,13 @@ export default async function handler(req, res) {
         content: message.content.slice(0, 12000)
       }));
 
+    if (!cleanMessages.length) {
+      return res.status(400).json({
+        error: "EMPTY_MESSAGES",
+        message: "Tidak ada pesan yang bisa diproses."
+      });
+    }
+
     const systemPrompt = `
 Kamu adalah "Rojak AI", CS dan tutor resmi untuk website Rojak DriveK1t.
 
@@ -210,19 +217,17 @@ Ingat: kamu adalah CS dan tutor teks untuk Rojak DriveK1t. Fokus membantu penggu
           headers: {
             "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
             "Content-Type": "application/json",
-            "HTTP-Referer": process.env.SITE_URL || "https://rojok-drivek1t.vercel.app",
+            "HTTP-Referer": process.env.SITE_URL || "https://rojak-drivek1t.vercel.app",
             "X-Title": "Rojak DriveK1t"
           },
           body: JSON.stringify({
-            // Tetap OpenRouter. Jika OPENROUTER_MODEL diisi, gunakan model itu.
-            // Jika kosong, Free Models Router memilih model gratis yang sesuai.
             model: process.env.OPENROUTER_MODEL || "openrouter/free",
             messages: [
               { role: "system", content: systemPrompt },
               ...cleanMessages
             ],
             temperature: 0.4,
-            max_tokens: 4096,
+            max_tokens: 1500,
             provider: {
               allow_fallbacks: true
             }
@@ -270,10 +275,9 @@ Ingat: kamu adalah CS dan tutor teks untuk Rojak DriveK1t. Fokus membantu penggu
     }
 
     const answer =
-      data?.choices?.[0]?.message?.content ||
+      (data?.choices?.[0]?.message?.content || "").trim() ||
       "Maaf, Rojak AI tidak mendapatkan jawaban.";
 
-    // Kirim dalam format { reply } sesuai frontend kita
     return res.status(200).json({
       reply: answer,
       model: data?.model || null
