@@ -1,0 +1,614 @@
+/* ============================================================
+   RDK PREMIUM — Visual refinement layer
+   Bukan override, tapi enhancement di atas tokens.
+   Semua efek harus punya alasan UX, bukan sekadar dekorasi.
+============================================================ */
+
+/* ============================================================
+   1. BACKGROUND — layered depth
+============================================================ */
+
+body {
+  position: relative;
+  overflow-x: hidden;
+  background: var(--rdk-c-bg);
+}
+
+/* Grid halus — signature Rojak */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: var(--rdk-grid-opacity);
+  background-image:
+    linear-gradient(var(--rdk-grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rdk-grid-color-2) 1px, transparent 1px);
+  background-size: var(--rdk-grid-size) var(--rdk-grid-size);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 85%);
+  animation: rdkGridDrift 90s linear infinite;
+}
+
+@keyframes rdkGridDrift {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 44px 44px, 44px 44px; }
+}
+
+/* Ambient glow — 2 titik cahaya lembut */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 400px at 15% -5%, rgba(228, 86, 50, .045), transparent 70%),
+    radial-gradient(ellipse 500px 380px at 90% 100%, rgba(105, 184, 121, .025), transparent 70%);
+  animation: rdkAmbient 24s ease-in-out infinite alternate;
+}
+
+@keyframes rdkAmbient {
+  0%   { opacity: .7; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.06); }
+}
+
+/* Rail — garis diagonal yang bergerak pelan */
+.rdk-rail {
+  position: fixed;
+  top: 0;
+  left: -30vw;
+  width: 1px;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--rdk-rail-color) 20%,
+    var(--rdk-rail-color) 80%,
+    transparent 100%
+  );
+  opacity: 0;
+  animation: rdkRailMove var(--rdk-rail-duration) linear infinite;
+  box-shadow: 0 0 32px 2px var(--rdk-rail-glow);
+}
+
+.rdk-rail.rdk-rail-2 {
+  animation-delay: 6s;
+  opacity: .5;
+}
+
+@keyframes rdkRailMove {
+  0%   { transform: translateX(0) rotate(0); opacity: 0; }
+  5%   { opacity: .55; }
+  50%  { opacity: .2; }
+  95%  { opacity: .4; }
+  100% { transform: translateX(160vw) rotate(0); opacity: 0; }
+}
+
+/* ============================================================
+   2. TEXT — mask reveal per line
+============================================================ */
+
+.rdk-reveal-text {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.rdk-reveal-text > span {
+  display: inline-block;
+  transform: translateY(110%);
+  animation: rdkTextRise 900ms var(--rdk-ease-out) forwards;
+  will-change: transform;
+}
+
+.rdk-reveal-text > span:nth-child(2) { animation-delay: 80ms; }
+.rdk-reveal-text > span:nth-child(3) { animation-delay: 160ms; }
+.rdk-reveal-text > span:nth-child(4) { animation-delay: 240ms; }
+.rdk-reveal-text > span:nth-child(5) { animation-delay: 320ms; }
+
+@keyframes rdkTextRise {
+  to { transform: translateY(0); }
+}
+
+/* Heading di login — letter spacing animate */
+.login-box h1,
+.page-head h1,
+.loading-text {
+  animation: rdkLetterBreathe 6s ease-in-out infinite;
+}
+
+@keyframes rdkLetterBreathe {
+  0%, 100% { letter-spacing: -.6px; }
+  50%      { letter-spacing: -.2px; }
+}
+
+/* ============================================================
+   3. CARD — premium treatment
+============================================================ */
+
+.drive-card,
+.panel,
+.summary-card,
+.user-card,
+.broadcast-item,
+.broadcast-form,
+.rdk-music-section,
+.spotify-section,
+.login-box,
+.login-feature {
+  position: relative;
+  transition:
+    transform var(--rdk-t-slow),
+    border-color var(--rdk-t-base),
+    background var(--rdk-t-base),
+    box-shadow var(--rdk-t-slow);
+  will-change: transform;
+}
+
+/* Noise texture — SVG inline, subtle */
+.drive-card::before,
+.panel::before,
+.summary-card::before,
+.user-card::before,
+.broadcast-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: .04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Hover lift — hanya di desktop dengan pointer presisi */
+@media (pointer: fine) {
+  .drive-card:hover,
+  .panel:hover,
+  .summary-card:hover,
+  .user-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--rdk-c-border-bright);
+    box-shadow:
+      var(--rdk-shadow-3),
+      var(--rdk-inset-highlight);
+  }
+}
+
+/* Inner glow untuk card aktif */
+.user-card.self,
+.broadcast-item.active-broadcast {
+  box-shadow:
+    var(--rdk-inset-highlight),
+    0 0 0 1px var(--rdk-c-accent-line) inset;
+}
+
+/* Summary card — angka count-up */
+.summary-value {
+  font-variant-numeric: tabular-nums;
+  transition: color var(--rdk-t-fast);
+}
+
+.summary-card:hover .summary-value {
+  color: var(--rdk-c-accent);
+}
+
+/* ============================================================
+   4. BUTTON — physical + magnetic
+============================================================ */
+
+button,
+.tab,
+.google-login,
+.admin-tab {
+  transition:
+    transform var(--rdk-t-fast),
+    background var(--rdk-t-fast),
+    border-color var(--rdk-t-fast),
+    color var(--rdk-t-fast),
+    box-shadow var(--rdk-t-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sheen — garis cahaya lewat saat hover */
+button::after,
+.google-login::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, .06) 50%,
+    transparent 70%
+  );
+  transition: left 700ms var(--rdk-ease-out);
+}
+
+button:hover::after,
+.google-login:hover::after {
+  left: 100%;
+}
+
+/* Primary button — accent glow saat hover */
+.create-button:hover,
+.broadcast-send:hover,
+.open-drive-button:hover,
+.google-login:hover {
+  box-shadow:
+    var(--rdk-shadow-accent-md),
+    var(--rdk-inset-highlight);
+}
+
+/* Active press — physical */
+button:active {
+  transform: translateY(1px) scale(.985);
+}
+
+/* Focus ring — konsisten */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.admin-tab:focus-visible {
+  outline: 1.5px solid var(--rdk-c-accent);
+  outline-offset: 2px;
+  border-radius: var(--rdk-r-sm);
+}
+
+/* ============================================================
+   5. TAB — sliding indicator dengan clip-path
+============================================================ */
+
+.tabs,
+.admin-tabs {
+  position: relative;
+}
+
+.tab,
+.admin-tab {
+  position: relative;
+  z-index: 1;
+}
+
+.tab.active::before,
+.admin-tab.active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--rdk-r-sm);
+  background: var(--rdk-c-surface-3);
+  z-index: -1;
+  animation: rdkTabIn 480ms var(--rdk-ease-overshoot);
+}
+
+@keyframes rdkTabIn {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   6. INPUT — border draw + focus glow
+============================================================ */
+
+.input,
+.textarea,
+.search-input,
+.filter-select,
+.role-select,
+.broadcast-textarea,
+.rojak-ai-textarea {
+  transition:
+    border-color var(--rdk-t-fast),
+    box-shadow var(--rdk-t-fast),
+    background var(--rdk-t-fast);
+}
+
+.input:focus,
+.textarea:focus,
+.search-input:focus,
+.filter-select:focus,
+.role-select:focus,
+.broadcast-textarea:focus {
+  border-color: var(--rdk-c-border-focus);
+  box-shadow:
+    0 0 0 3px var(--rdk-c-accent-soft),
+    var(--rdk-inset-highlight);
+}
+
+/* ============================================================
+   7. LIST — staggered reveal (JS-driven)
+============================================================ */
+
+.rdk-stagger > * {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: rdkStaggerIn 620ms var(--rdk-ease-out) forwards;
+}
+
+@keyframes rdkStaggerIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   8. MODAL — cinematic open
+============================================================ */
+
+.modal {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 320ms var(--rdk-ease-out),
+    visibility 320ms;
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+}
+
+.modal.open {
+  opacity: 1;
+  visibility: visible;
+  backdrop-filter: blur(8px) saturate(.9);
+  -webkit-backdrop-filter: blur(8px) saturate(.9);
+}
+
+.modal-box {
+  transform: translateY(24px) scale(.96);
+  opacity: 0;
+  transition:
+    transform 520ms var(--rdk-ease-overshoot),
+    opacity 320ms var(--rdk-ease-out);
+}
+
+.modal.open .modal-box {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* ============================================================
+   9. STATUS DOT — pulse
+============================================================ */
+
+.drive-dot.connected,
+.rojak-ai-status-dot,
+.login-badge-dot {
+  animation: rdkDotBreathe 2.6s var(--rdk-ease-in-out) infinite;
+}
+
+@keyframes rdkDotBreathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 4px transparent;
+    opacity: .85;
+  }
+}
+
+/* ============================================================
+   10. LOADING SKELETON — shimmer
+============================================================ */
+
+.rdk-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--rdk-c-surface-2);
+  border-radius: var(--rdk-r-sm);
+}
+
+.rdk-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, .035) 50%,
+    transparent 100%
+  );
+  animation: rdkShimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes rdkShimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ============================================================
+   11. BROADCAST NOTIF — spring from top
+============================================================ */
+
+.broadcast-notif.open {
+  animation: rdkNotifIn 640ms var(--rdk-ease-overshoot) both;
+}
+
+@keyframes rdkNotifIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px) scale(.96);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.005);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Accent bar di kiri notif — bergerak */
+.broadcast-notif::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--rdk-c-accent) 50%,
+    transparent 100%
+  );
+  animation: rdkNotifBar 1.4s var(--rdk-ease-in-out) infinite;
+}
+
+@keyframes rdkNotifBar {
+  0%, 100% { opacity: .4; }
+  50%      { opacity: 1; }
+}
+
+/* ============================================================
+   12. CURSOR — presence (desktop only)
+============================================================ */
+
+@media (pointer: fine) {
+  .rdk-cursor-dot,
+  .rdk-cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--rdk-z-cursor);
+    pointer-events: none;
+    border-radius: 50%;
+    will-change: transform;
+    mix-blend-mode: difference;
+  }
+
+  .rdk-cursor-dot {
+    width: 5px;
+    height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    background: #ffffff;
+    transition: width 200ms var(--rdk-ease-out),
+                height 200ms var(--rdk-ease-out),
+                margin 200ms var(--rdk-ease-out),
+                background 200ms var(--rdk-ease-out);
+  }
+
+  .rdk-cursor-ring {
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border: 1px solid rgba(255, 255, 255, .5);
+    transition: width 260ms var(--rdk-ease-out),
+                height 260ms var(--rdk-ease-out),
+                margin 260ms var(--rdk-ease-out),
+                border-color 260ms var(--rdk-ease-out),
+                opacity 260ms var(--rdk-ease-out);
+    opacity: .6;
+  }
+
+  /* Hover state — membesar saat di atas elemen interaktif */
+  .rdk-cursor-hover .rdk-cursor-dot {
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    background: var(--rdk-c-accent);
+  }
+
+  .rdk-cursor-hover .rdk-cursor-ring {
+    width: 46px;
+    height: 46px;
+    margin: -23px 0 0 -23px;
+    border-color: var(--rdk-c-accent);
+    opacity: .5;
+  }
+
+  /* Sembunyikan cursor default pada body */
+  body.rdk-cursor-active,
+  body.rdk-cursor-active * {
+    cursor: none !important;
+  }
+}
+
+/* ============================================================
+   13. MAGNETIC BUTTON — JS-assisted
+============================================================ */
+
+.rdk-magnetic {
+  transition: transform 240ms var(--rdk-ease-spring);
+}
+
+/* ============================================================
+   14. AMBIENT — auto hover untuk demo / idle
+============================================================ */
+
+.rdk-ambient-pulse {
+  animation: rdkAmbientPulse 4s ease-in-out infinite;
+}
+
+@keyframes rdkAmbientPulse {
+  0%, 100% { opacity: .7; }
+  50%      { opacity: 1; }
+}
+
+/* ============================================================
+   15. RESPONSIVE — kurangi di mobile untuk performa
+============================================================ */
+
+@media (max-width: 640px) {
+  body::before {
+    background-size: 32px 32px;
+    opacity: .12;
+  }
+
+  .rdk-rail {
+    display: none;
+  }
+
+  body::after {
+    animation: none;
+  }
+
+  /* Matikan hover lift di mobile */
+  .drive-card:hover,
+  .panel:hover,
+  .summary-card:hover,
+  .user-card:hover {
+    transform: none;
+  }
+}
+
+/* ============================================================
+   16. ACCESSIBILITY
+============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  body::after,
+  .rdk-rail {
+    display: none;
+  }
+
+  .rdk-reveal-text > span {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
