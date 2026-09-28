@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0d0e0b">
   <title>Rojak DriveK1t</title>
   <link rel="icon" type="image/png" href="https://files.catbox.moe/jsc22m.jpg">
+
+  <!-- FONTS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -278,15 +284,7 @@
       overflow: hidden;
     }
 
-    .broadcast-notif.open {
-      display: flex;
-      animation: broadcastSlideDown .35s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    @keyframes broadcastSlideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .broadcast-notif.open { display: flex; }
 
     .broadcast-header {
       display: flex;
@@ -738,6 +736,11 @@
       font-size: 10px;
     }
   </style>
+
+  <!-- RDK PREMIUM SYSTEM -->
+  <link rel="stylesheet" href="./rojak-ai/rdk-tokens.css">
+  <link rel="stylesheet" href="./rojak-ai/rdk-motion.css">
+  <link rel="stylesheet" href="./rojak-ai/rdk-premium.css">
 
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
   <link rel="stylesheet" href="./rojak-ai/music-player.css">
@@ -1250,7 +1253,6 @@
 
     LOG.add("Module utama loaded", "ok");
 
-    // Cek koneksi
     function isOnline() {
       return navigator.onLine !== false;
     }
@@ -1437,7 +1439,6 @@
         const role = data.role === "admin" ? "admin" : "member";
         LOG.add("Role user: " + role, "ok");
 
-        // Update lastLoginAt (fire & forget)
         updateDoc(ref, {
           lastLoginAt: serverTimestamp(),
           updatedAt: serverTimestamp()
@@ -1484,7 +1485,6 @@
       LOG.add("FALLBACK: masuk app tanpa Firestore", "warn");
       currentUser = user;
 
-      // Pakai role cache kalau ada
       const cachedRole = loadRoleCache();
       currentRole = cachedRole;
       LOG.add("Pakai role dari cache: " + cachedRole, "warn");
@@ -1911,7 +1911,6 @@
       $("connectDriveButton").textContent = "Connect Drive";
       setDriveStatus("Belum terhubung");
 
-      // Hapus cache role (tapi biarkan profile cache)
       try { localStorage.removeItem(ROLE_CACHE_KEY); } catch (e) {}
 
       signOut(auth);
@@ -1958,5 +1957,9 @@
 
   <script src="./rojak-ai/rojak-ai.js" defer></script>
   <script src="./rojak-ai/music-player.js" defer></script>
+
+  <!-- RDK PREMIUM MOTION -->
+  <script src="./rojak-ai/rdk-motion.js" defer></script>
+  <script src="./rojak-ai/rdk-premium.js" defer></script>
 </body>
 </html>
