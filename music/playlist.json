@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Dunia Yang Nanti",
+    "artist": "Rojak DriveK1t",
+    "src": "./music/dunia-yang-nanti.mp3",
+    "cover": "./music/playlist-cover.jpeg"
+  },
+  {
+    "title": "Sesi Potret",
+    "artist": "Rojak DriveK1t",
+    "src": "./music/sesi-potret.mp3",
+    "cover": "./music/playlist-cover.jpeg"
+  },
+  {
+    "title": "Teh Hijau",
+    "artist": "Rojak DriveK1t",
+    "src": "./music/teh-hijau.mp3",
+    "cover": "./music/playlist-cover.jpeg"
+  }
+]
