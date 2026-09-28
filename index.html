@@ -288,14 +288,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .broadcast-notif.hiding {
-      animation: broadcastSlideUp .25s ease forwards;
-    }
-
-    @keyframes broadcastSlideUp {
-      to { opacity: 0; transform: translateY(-20px); }
-    }
-
     .broadcast-header {
       display: flex;
       align-items: center;
@@ -344,7 +336,6 @@
       font-size: 17px;
       line-height: 1;
       cursor: pointer;
-      transition: background .12s ease, color .12s ease;
     }
 
     .broadcast-close:hover { background: rgba(228, 86, 50, .15); color: var(--text); }
@@ -358,33 +349,6 @@
       word-wrap: break-word;
       overflow-wrap: anywhere;
       white-space: pre-wrap;
-    }
-
-    .broadcast-progress {
-      height: 2px;
-      background: rgba(228, 86, 50, .2);
-      overflow: hidden;
-    }
-
-    .broadcast-progress-bar {
-      height: 100%;
-      width: 100%;
-      background: var(--orange);
-      transform-origin: left center;
-    }
-
-    .broadcast-notif.open .broadcast-progress-bar {
-      animation: broadcastCountdown 8s linear forwards;
-    }
-
-    @keyframes broadcastCountdown {
-      from { transform: scaleX(1); }
-      to { transform: scaleX(0); }
-    }
-
-    @media (max-width: 480px) {
-      .broadcast-notif { top: 8px; left: 8px; right: 8px; }
-      .broadcast-body { font-size: 12.5px; padding: 11px 13px 13px; }
     }
 
     /* APP */
@@ -718,11 +682,7 @@
       font-weight: 800;
     }
 
-    .rdk-log-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+    .rdk-log-actions { display: flex; align-items: center; gap: 6px; }
 
     .rdk-log-btn {
       height: 26px;
@@ -900,7 +860,6 @@
       if (btnClear) btnClear.addEventListener("click", clear);
       if (btnCopy) btnCopy.addEventListener("click", copy);
 
-      // Override console methods
       const origLog = console.log;
       const origWarn = console.warn;
       const origError = console.error;
@@ -958,9 +917,6 @@
       <button id="broadcastClose" class="broadcast-close" type="button" aria-label="Tutup">×</button>
     </div>
     <div class="broadcast-body" id="broadcastBody"></div>
-    <div class="broadcast-progress">
-      <div class="broadcast-progress-bar"></div>
-    </div>
   </div>
 
   <!-- LOADING -->
@@ -1289,9 +1245,12 @@
     const DRIVE_TOKEN_TIME_KEY = "rdk_drive_token_time";
     const DRIVE_TOKEN_MAX_AGE = 55 * 60 * 1000;
 
+    const ROLE_CACHE_KEY = "rdk_role_cache";
+    const PROFILE_CACHE_KEY = "rdk_profile_cache";
+
     LOG.add("Module utama loaded", "ok");
 
-    // Cek koneksi online
+    // Cek koneksi
     function isOnline() {
       return navigator.onLine !== false;
     }
@@ -1305,6 +1264,8 @@
     }).catch(function (e) {
       LOG.add("Persistence error: " + e.message, "warn");
     });
+
+    /* SCREEN */
 
     function hideLoading() {
       if (window.__RDK_FINISH_LOADING__) window.__RDK_FINISH_LOADING__();
@@ -1339,6 +1300,44 @@
     function setDriveStatus(text, type = "") {
       $("driveStatus").textContent = text;
       $("driveDot").className = "drive-dot " + type;
+    }
+
+    /* ROLE & PROFILE CACHE */
+
+    function saveRoleCache(role) {
+      try {
+        localStorage.setItem(ROLE_CACHE_KEY, role);
+      } catch (e) {}
+    }
+
+    function loadRoleCache() {
+      try {
+        return localStorage.getItem(ROLE_CACHE_KEY) || "member";
+      } catch (e) {
+        return "member";
+      }
+    }
+
+    function saveProfileCache(user, role) {
+      try {
+        localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({
+          uid: user.uid,
+          email: user.email || "",
+          name: user.displayName || "",
+          photoURL: user.photoURL || "",
+          role: role
+        }));
+      } catch (e) {}
+    }
+
+    function loadProfileCache() {
+      try {
+        const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
     }
 
     /* DRIVE TOKEN */
@@ -1408,12 +1407,11 @@
       return true;
     }
 
-    /* PROFILE — DENGAN RETRY */
+    /* PROFILE */
 
-    function ensureProfile(user, retryCount) {
-      retryCount = retryCount || 0;
+    function ensureProfile(user) {
       const ref = doc(db, "users", user.uid);
-      LOG.add("ensureProfile: getDoc users/" + user.uid.slice(0, 8) + "... (try " + (retryCount + 1) + ")", "info");
+      LOG.add("ensureProfile: getDoc users/" + user.uid.slice(0, 8) + "...", "info");
 
       return getDoc(ref).then(function (snapshot) {
         LOG.add("getDoc OK — exists: " + snapshot.exists(), "ok");
@@ -1450,20 +1448,6 @@
         });
 
         return role;
-      }).catch(function (err) {
-        LOG.add("ensureProfile error: " + (err.code || "") + " " + (err.message || ""), "error");
-
-        // Retry sekali kalau offline/unavailable
-        if (retryCount < 2 && (err.code === "unavailable" || err.message === "Failed to get document because the client is offline.")) {
-          LOG.add("Retry ensureProfile dalam 3 detik...", "warn");
-          return new Promise(function (resolve) {
-            setTimeout(function () {
-              resolve(ensureProfile(user, retryCount + 1));
-            }, 3000);
-          });
-        }
-
-        throw err;
       });
     }
 
@@ -1488,6 +1472,8 @@
 
       return ensureProfile(user).then(function (role) {
         currentRole = role;
+        saveRoleCache(role);
+        saveProfileCache(user, role);
         fillProfileUI(user, role);
         LOG.add("loadProfile selesai → showApp", "ok");
         showApp();
@@ -1497,18 +1483,22 @@
     function loadProfileFallback(user) {
       LOG.add("FALLBACK: masuk app tanpa Firestore", "warn");
       currentUser = user;
-      currentRole = "member";
-      fillProfileUI(user, "member");
+
+      // Pakai role cache kalau ada
+      const cachedRole = loadRoleCache();
+      currentRole = cachedRole;
+      LOG.add("Pakai role dari cache: " + cachedRole, "warn");
+
+      fillProfileUI(user, cachedRole);
       showApp();
     }
 
-    /* LOGIN — DENGAN RETRY */
+    /* LOGIN */
 
-    function loginGoogle(retryCount) {
-      retryCount = retryCount || 0;
+    function loginGoogle() {
       const button = $("loginButton");
       loginError("");
-      LOG.add("=== KLIK LOGIN GOOGLE === (try " + (retryCount + 1) + ")", "info");
+      LOG.add("=== KLIK LOGIN GOOGLE ===", "info");
 
       if (!isOnline()) {
         loginError("Tidak ada koneksi internet. Periksa WiFi/data seluler kamu.");
@@ -1532,32 +1522,10 @@
       }).catch(function (error) {
         LOG.add("signInWithPopup ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
 
-        // Handle network error — kasih pesan yang jelas
         if (error.code === "auth/network-request-failed") {
-          if (retryCount < 1) {
-            LOG.add("Network error — coba lagi dalam 2 detik...", "warn");
-            loginError("Koneksi lambat, mencoba ulang...");
-
-            setTimeout(function () {
-              loginGoogle(retryCount + 1);
-            }, 2000);
-            return;
-          }
-
           loginError("Koneksi ke Google gagal. Periksa sinyal HP kamu, lalu coba lagi.");
-          button.disabled = false;
-          if (label) label.textContent = "Continue with Google";
-          return;
-        }
-
-        // Handle popup blocked → fallback redirect
-        if (
-          error.code === "auth/popup-blocked" ||
-          error.code === "auth/popup-closed-by-user" ||
-          error.code === "auth/cancelled-popup-request" ||
-          error.code === "auth/operation-not-supported-in-this-environment"
-        ) {
-          LOG.add("Popup blocked — fallback ke signInWithRedirect...", "warn");
+        } else if (error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user") {
+          LOG.add("Popup blocked — fallback signInWithRedirect...", "warn");
           signInWithRedirect(auth, provider).catch(function (err2) {
             LOG.add("signInWithRedirect ERROR: " + (err2.code || "") + " — " + (err2.message || ""), "error");
             loginError("Login gagal: " + (err2.code || err2.message));
@@ -1565,9 +1533,7 @@
             if (label) label.textContent = "Continue with Google";
           });
           return;
-        }
-
-        if (error.code === "auth/unauthorized-domain") {
+        } else if (error.code === "auth/unauthorized-domain") {
           loginError("Domain website belum diizinkan di Firebase Authorized domains.");
         } else {
           loginError("Login gagal: " + (error.code || error.message));
@@ -1578,7 +1544,7 @@
       });
     }
 
-    $("loginButton").onclick = function () { loginGoogle(0); };
+    $("loginButton").onclick = loginGoogle;
 
     /* AUTH STATE */
 
@@ -1915,6 +1881,7 @@
         $("profileUserName").textContent = name;
         $("profileStatus").textContent = "Profil berhasil disimpan.";
         $("profileStatus").className = "status success";
+        saveProfileCache(currentUser, currentRole);
       }).catch(function (error) {
         $("profileStatus").textContent = "Gagal menyimpan profil: " + (error.code || error.message);
         $("profileStatus").className = "status error";
@@ -1943,6 +1910,9 @@
       $("connectDriveButton").classList.remove("connected");
       $("connectDriveButton").textContent = "Connect Drive";
       setDriveStatus("Belum terhubung");
+
+      // Hapus cache role (tapi biarkan profile cache)
+      try { localStorage.removeItem(ROLE_CACHE_KEY); } catch (e) {}
 
       signOut(auth);
     };
