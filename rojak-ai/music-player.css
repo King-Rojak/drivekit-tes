@@ -1,542 +1,106 @@
 /* ============================================================
-   ROJAK DRIVEK1T — Music Player
+   RDK MUSIC — Volume Slider + Extras (append)
 ============================================================ */
-
-.rdk-music-section svg,
-.rdk-music-mini svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: 20px;
-  max-height: 20px;
-}
-
-.rdk-music-section {
-  margin-top: 8px;
-  overflow: hidden;
-  border: 1px solid #1f1f1f;
-  border-radius: 10px;
-  background: #181818;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ───────── HEADER PLAYLIST ───────── */
-
-.rdk-music-playlist-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: linear-gradient(180deg, #232323 0%, #181818 100%);
-}
-
-.rdk-music-playlist-cover {
-  width: 64px;
-  height: 64px;
-  flex: 0 0 64px;
-  overflow: hidden;
-  border-radius: 6px;
-  background: #282828;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
-  display: grid;
-  place-items: center;
-  color: #555;
-}
-
-.rdk-music-playlist-cover img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.rdk-music-playlist-cover svg {
-  width: 24px;
-  height: 24px;
-  max-width: 24px;
-  max-height: 24px;
-}
-
-.rdk-music-playlist-meta {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.rdk-music-playlist-name {
-  overflow: hidden;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -.4px;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rdk-music-playlist-owner {
-  margin-top: 4px;
-  color: #b3b3b3;
-  font-size: 10px;
-  font-weight: 500;
-}
-
-/* ───────── PLAYLIST ───────── */
-
-.rdk-music-list {
-  max-height: 320px;
-  overflow-y: auto;
-  padding: 4px 8px 8px;
-  border-top: 1px solid #1f1f1f;
-  scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
-}
-
-.rdk-music-list::-webkit-scrollbar { width: 6px; }
-.rdk-music-list::-webkit-scrollbar-track { background: transparent; }
-.rdk-music-list::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
-}
-
-.rdk-music-track {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background .12s ease;
-}
-
-.rdk-music-track:hover { background: #232323; }
-.rdk-music-track.rdk-music-track-active { background: #232323; }
-
-.rdk-music-track-num {
-  width: 22px;
-  flex: 0 0 22px;
-  text-align: center;
-  color: #8a8a8a;
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Equalizer — default hidden */
-.rdk-music-eq {
-  width: 22px;
-  height: 14px;
-  flex: 0 0 22px;
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-}
-
-/* Equalizer — hanya tampil kalau audio PLAYING */
-.rdk-music-track.rdk-music-track-active .rdk-music-eq {
-  display: flex;
-}
-
-/* Nomor track — sembunyikan kalau track aktif */
-.rdk-music-track.rdk-music-track-active .rdk-music-track-num {
-  display: none;
-}
-
-.rdk-music-eq span {
-  width: 2.5px;
-  background: #e45632;
-  border-radius: 1px;
-  animation: rdk-music-eq 0.9s ease-in-out infinite;
-  transform-origin: bottom;
-}
-
-.rdk-music-eq span:nth-child(1) { height: 40%; animation-delay: -0.3s; }
-.rdk-music-eq span:nth-child(2) { height: 70%; animation-delay: -0.6s; }
-.rdk-music-eq span:nth-child(3) { height: 50%; animation-delay: -0.15s; }
-.rdk-music-eq span:nth-child(4) { height: 85%; animation-delay: -0.45s; }
-
-@keyframes rdk-music-eq {
-  0%, 100% { transform: scaleY(0.35); }
-  50% { transform: scaleY(1); }
-}
-
-.rdk-music-track-info {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.rdk-music-track-title {
-  overflow: hidden;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -.1px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rdk-music-track.rdk-music-track-active .rdk-music-track-title {
-  color: #e45632;
-}
-
-.rdk-music-track-artist {
-  overflow: hidden;
-  margin-top: 2px;
-  color: #a0a0a0;
-  font-size: 10.5px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ───────── NOW BAR ───────── */
-
-.rdk-music-nowbar {
-  padding: 10px 14px 14px;
-  border-top: 1px solid #1f1f1f;
-  background: #141414;
-}
-
-.rdk-music-nowbar-title {
-  overflow: hidden;
-  margin-bottom: 8px;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: -.1px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rdk-music-nowbar-title span {
-  color: #8a8a8a;
-  font-weight: 500;
-}
-
-.rdk-music-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.rdk-music-iconbtn {
-  width: 26px;
-  height: 26px;
-  flex: 0 0 26px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #b3b3b3;
-  cursor: pointer;
-  transition: color .12s ease, transform .1s ease;
-}
-
-.rdk-music-iconbtn:hover { color: #ffffff; }
-.rdk-music-iconbtn:active { transform: scale(.9); }
-
-.rdk-music-iconbtn svg {
-  width: 18px;
-  height: 18px;
-  max-width: 18px;
-  max-height: 18px;
-}
-
-.rdk-music-progress {
-  position: relative;
-  flex: 1 1 auto;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.rdk-music-progress-track {
-  width: 100%;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: #3a3a3a;
-  transition: height .12s ease;
-}
-
-.rdk-music-progress:hover .rdk-music-progress-track,
-.rdk-music-progress.rdk-music-dragging .rdk-music-progress-track { height: 5px; }
-
-.rdk-music-progress-fill {
-  width: 0%;
-  height: 100%;
-  border-radius: 2px;
-  background: #ffffff;
-  transition: width .08s linear;
-}
-
-.rdk-music-progress:hover .rdk-music-progress-fill,
-.rdk-music-progress.rdk-music-dragging .rdk-music-progress-fill { background: #e45632; }
-
-.rdk-music-progress-thumb {
-  position: absolute;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
-  border-radius: 50%;
-  background: #ffffff;
-  transform: translateY(-50%);
-  opacity: 0;
-  transition: opacity .15s ease;
-  pointer-events: none;
-}
-
-.rdk-music-progress:hover .rdk-music-progress-thumb,
-.rdk-music-progress.rdk-music-dragging .rdk-music-progress-thumb { opacity: 1; }
-
-.rdk-music-play {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border: 0;
-  border-radius: 50%;
-  background: #ffffff;
-  color: #000000;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: transform .12s ease, background .12s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
-}
-
-.rdk-music-play:hover { background: #f0f0f0; transform: scale(1.05); }
-.rdk-music-play:active { transform: scale(.95); }
-
-.rdk-music-play svg {
-  width: 14px;
-  height: 14px;
-  max-width: 14px;
-  max-height: 14px;
-}
-
-.rdk-music-time {
-  flex: 0 0 auto;
-  min-width: 42px;
-  text-align: right;
-  color: #8a8a8a;
-  font-size: 10px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
 
 .rdk-music-extras {
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
+  gap: 2px;
 }
 
-.rdk-music-extras .rdk-music-iconbtn {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-}
-
-.rdk-music-extras .rdk-music-iconbtn svg {
-  width: 15px;
-  height: 15px;
-  max-width: 15px;
-  max-height: 15px;
-}
-
-.rdk-music-extras .rdk-music-iconbtn.rdk-music-ctrl-active {
-  color: #e45632;
-}
-
-/* ───────── MINI PLAYER ───────── */
-
-.rdk-music-mini {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 7500;
+/* Volume slider (hidden by default, muncul saat hover di icon volume) */
+.rdk-music-volume-wrap {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 100px 10px 12px;
-  border-top: 1px solid #1f1f1f;
-  background: rgba(20, 20, 20, .98);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  transform: translateY(110%);
-  opacity: 0;
-  pointer-events: none;
-  transition: transform .28s cubic-bezier(.4, 0, .2, 1), opacity .22s ease;
 }
 
-.rdk-music-mini.rdk-music-mini-open {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.rdk-music-mini-cover {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+.rdk-music-volume-slider {
+  width: 0;
+  height: 3px;
+  margin-left: 0;
   overflow: hidden;
-  border-radius: 6px;
-  background: #282828;
-  display: grid;
-  place-items: center;
-  color: #555;
+  border-radius: 2px;
+  background: #3a3a3a;
+  cursor: pointer;
+  transition: width 240ms var(--rdk-ease-out, cubic-bezier(.16,1,.3,1)),
+              margin-left 240ms var(--rdk-ease-out, cubic-bezier(.16,1,.3,1));
+  position: relative;
 }
 
-.rdk-music-mini-cover img {
-  width: 100%;
+.rdk-music-volume-wrap:hover .rdk-music-volume-slider,
+.rdk-music-volume-slider.rdk-music-volume-active {
+  width: 60px;
+  margin-left: 6px;
+}
+
+.rdk-music-volume-slider-fill {
+  width: 80%;
   height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.rdk-music-mini-cover svg {
-  width: 18px;
-  height: 18px;
-  max-width: 18px;
-  max-height: 18px;
-}
-
-.rdk-music-mini-meta { min-width: 0; flex: 1 1 auto; }
-
-.rdk-music-mini-title {
-  overflow: hidden;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rdk-music-mini-artist {
-  overflow: hidden;
-  margin-top: 2px;
-  color: #b3b3b3;
-  font-size: 9px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rdk-music-mini-controls {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-}
-
-.rdk-music-mini-btn {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #b3b3b3;
-  cursor: pointer;
-  transition: color .12s ease;
-}
-
-.rdk-music-mini-btn:hover { color: #ffffff; }
-.rdk-music-mini-btn:active { transform: scale(.94); }
-
-.rdk-music-mini-btn svg {
-  width: 18px;
-  height: 18px;
-  max-width: 18px;
-  max-height: 18px;
-}
-
-.rdk-music-mini-play {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  border-radius: 50%;
+  border-radius: 2px;
   background: #ffffff;
-  color: #000000;
+  transition: background 200ms ease;
 }
 
-.rdk-music-mini-play:hover { background: #f0f0f0; color: #000000; }
-
-.rdk-music-mini-play svg {
-  width: 16px;
-  height: 16px;
-  max-width: 16px;
-  max-height: 16px;
+.rdk-music-volume-wrap:hover .rdk-music-volume-slider-fill {
+  background: #e45632;
 }
 
-.rdk-music-mini-close {
-  width: 26px;
-  height: 26px;
-  flex: 0 0 26px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #6a6a6a;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  transition: color .12s ease;
+/* Track yang sedang playing — signature line */
+.rdk-music-track.rdk-music-track-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e45632;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 12px 1px rgba(228, 86, 50, .35);
 }
 
-.rdk-music-mini-close:hover { color: #ffffff; }
+.rdk-music-track {
+  position: relative;
+  overflow: hidden;
+}
 
-/* ───────── MOBILE ───────── */
+/* Track yang baru di-klik — flash */
+.rdk-music-track.rdk-music-flash {
+  animation: rdkMusicFlash 400ms ease;
+}
+
+@keyframes rdkMusicFlash {
+  0%   { background: rgba(228, 86, 50, .18); }
+  100% { background: transparent; }
+}
+
+/* Mini player — posisikan di kiri biar tidak tabrakan dengan Rojak AI FAB */
+.rdk-music-mini {
+  padding-right: 90px;
+}
 
 @media (max-width: 600px) {
-
-  .rdk-music-playlist-header {
-    padding: 12px 13px;
-    gap: 12px;
-  }
-
-  .rdk-music-playlist-cover {
-    width: 56px;
-    height: 56px;
-    flex-basis: 56px;
-  }
-
-  .rdk-music-playlist-name { font-size: 14.5px; }
-
-  .rdk-music-list { max-height: 260px; padding: 2px 6px 6px; }
-  .rdk-music-track { padding: 7px 8px; gap: 9px; }
-  .rdk-music-track-title { font-size: 12px; }
-  .rdk-music-track-artist { font-size: 10px; }
-
-  .rdk-music-nowbar { padding: 9px 12px 12px; }
-  .rdk-music-nowbar-title { font-size: 11.5px; margin-bottom: 7px; }
-  .rdk-music-row { gap: 8px; }
-
-  .rdk-music-iconbtn { width: 24px; height: 24px; flex-basis: 24px; }
-  .rdk-music-iconbtn svg { width: 16px; height: 16px; max-width: 16px; max-height: 16px; }
-
-  .rdk-music-play { width: 32px; height: 32px; flex-basis: 32px; }
-  .rdk-music-play svg { width: 13px; height: 13px; max-width: 13px; max-height: 13px; }
-
-  .rdk-music-time { font-size: 9.5px; min-width: 38px; }
-
-  .rdk-music-extras .rdk-music-iconbtn {
-    width: 22px;
-    height: 22px;
-    flex-basis: 22px;
-  }
-
   .rdk-music-mini {
-    padding: 8px 78px 8px 10px;
-    gap: 8px;
+    padding-right: 72px;
   }
+}
+
+/* Volume icon button — sedikit lebih lebar untuk hitbox */
+.rdk-music-extras .rdk-music-iconbtn {
+  min-width: 24px;
+}
+
+/* Progress thumb saat dragging — glow */
+.rdk-music-progress.rdk-music-dragging .rdk-music-progress-thumb {
+  box-shadow: 0 0 0 4px rgba(228, 86, 50, .2);
+}
+
+/* Play button saat playing — accent pulse */
+.rdk-music-play:has(svg rect) {
+  animation: rdkMusicPlayPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes rdkMusicPlayPulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+  50%      { box-shadow: 0 2px 16px rgba(228, 86, 50, .4), 0 2px 8px rgba(0, 0, 0, .35); }
 }
