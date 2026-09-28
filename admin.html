@@ -878,7 +878,7 @@
       .brand-badge { display: none; }
     }
   </style>
-<link rel="stylesheet" href="./rojak-ai/rdk-motion.css">
+  <!-- <link rel="stylesheet" href="./rojak-ai/rdk-motion.css"> -->
 </head>
 
 <body>
@@ -1377,7 +1377,6 @@
       setBroadcastStatus("Mengirim broadcast...");
 
       try {
-        // Nonaktifkan semua broadcast lama dulu
         const existingSnap = await getDocs(collection(db, "broadcasts"));
         const deactivatePromises = [];
         existingSnap.forEach(function (docSnap) {
@@ -1392,7 +1391,6 @@
           await Promise.all(deactivatePromises);
         }
 
-        // Buat broadcast baru yang aktif
         await addDoc(collection(db, "broadcasts"), {
           message: message,
           active: true,
@@ -1430,7 +1428,6 @@
     async function toggleBroadcastActive(id, currentActive) {
       try {
         if (!currentActive) {
-          // Aktifkan ini — nonaktifkan yang lain dulu
           const existingSnap = await getDocs(collection(db, "broadcasts"));
           const deactivatePromises = [];
           existingSnap.forEach(function (docSnap) {
@@ -1503,7 +1500,6 @@
           `;
         }).join("");
 
-        // Attach handlers
         document.querySelectorAll("[data-toggle-id]").forEach(function (btn) {
           btn.addEventListener("click", function () {
             const id = btn.dataset.toggleId;
@@ -1540,7 +1536,6 @@
       window.location.href = "./index.html";
     };
 
-    // Tabs
     document.querySelectorAll(".admin-tab").forEach(function (tab) {
       tab.addEventListener("click", function () {
         const tabName = tab.dataset.tab;
@@ -1555,12 +1550,10 @@
       });
     });
 
-    // User filters
     $("searchInput").addEventListener("input", applyFiltersAndRender);
     $("filterRole").addEventListener("change", applyFiltersAndRender);
     $("sortBy").addEventListener("change", applyFiltersAndRender);
 
-    // Broadcast actions
     $("broadcastSend").onclick = sendBroadcast;
     $("broadcastClear").onclick = function () {
       $("broadcastMessage").value = "";
@@ -1569,7 +1562,6 @@
     };
     $("broadcastMessage").addEventListener("input", updateBroadcastCount);
 
-    // Auth
     onAuthStateChanged(auth, async user => {
       if (!user) {
         showLogin();
@@ -1596,6 +1588,6 @@
 
     getRedirectResult(auth).catch(error => console.error(error));
   </script>
-<script src="./rojak-ai/rdk-motion.js" defer></script>
+<!-- <script src="./rojak-ai/rdk-motion.js" defer></script> -->
 </body>
 </html>
