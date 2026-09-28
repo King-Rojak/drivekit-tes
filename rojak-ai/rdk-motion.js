@@ -22,6 +22,18 @@
     observer.observe(loading,{attributes:true,attributeFilter:["style","class"]});
   }
 
+  // If the loading element was not available yet, retry once after DOM ready.
+  if (!loading) {
+    document.addEventListener("DOMContentLoaded", function(){
+      const el = document.getElementById("loadingScreen");
+      if (!el) return;
+      const observer = new MutationObserver(function(){
+        if (getComputedStyle(el).display === "none") el.classList.add("rdk-loading-exit");
+      });
+      observer.observe(el,{attributes:true,attributeFilter:["style","class"]});
+    }, {once:true});
+  }
+
   // Ripple-like micro feedback without changing button markup.
   document.addEventListener("pointerdown", function(e){
     const target = e.target.closest("button,.tab");
