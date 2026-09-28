@@ -643,9 +643,7 @@
     .rdk-music-volume svg { width: 13px !important; height: 13px !important; max-width: 13px !important; max-height: 13px !important; }
     .rdk-music-wave { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; }
 
-    /* ============================================================
-       DIAGNOSTIC LOG CONSOLE
-    ============================================================ */
+    /* DIAGNOSTIC LOG CONSOLE */
 
     .rdk-log-fab {
       position: fixed;
@@ -666,9 +664,7 @@
       box-shadow: 0 8px 22px rgba(0, 0, 0, .55);
     }
 
-    .rdk-log-fab.visible {
-      display: grid;
-    }
+    .rdk-log-fab.visible { display: grid; }
 
     .rdk-log-panel {
       position: fixed;
@@ -706,7 +702,6 @@
       color: #ffb896;
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: .2px;
     }
 
     .rdk-log-count {
@@ -786,12 +781,9 @@
 
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
   <link rel="stylesheet" href="./rojak-ai/music-player.css">
-  <!-- <link rel="stylesheet" href="./rojak-ai/rdk-motion.css"> -->
 </head>
 
 <body>
-
-  <!-- DIAGNOSTIC LOG CONSOLE -->
 
   <button id="rdkLogFab" class="rdk-log-fab" type="button" title="Buka Log">
     <span id="rdkLogFabCount">0</span>
@@ -815,10 +807,6 @@
   </div>
 
   <script>
-    /* ============================================================
-       RDK_LOG — Console Log On-Screen
-    ============================================================ */
-
     window.RDK_LOG = (function () {
       const body = document.getElementById("rdkLogBody");
       const panel = document.getElementById("rdkLogPanel");
@@ -868,18 +856,11 @@
         }
 
         if (countEl) countEl.textContent = String(logCount);
-
-        if (fabCount) {
-          fabCount.textContent = errorCount > 0 ? String(errorCount) : String(logCount);
-        }
+        if (fabCount) fabCount.textContent = errorCount > 0 ? String(errorCount) : String(logCount);
 
         if (fab) {
           fab.classList.add("visible");
-          if (errorCount > 0) {
-            fab.style.color = "#ff8888";
-          } else {
-            fab.style.color = "#8fd09a";
-          }
+          fab.style.color = errorCount > 0 ? "#ff8888" : "#8fd09a";
         }
       }
 
@@ -890,14 +871,8 @@
           .replaceAll(">", "&gt;");
       }
 
-      function open() {
-        if (panel) panel.classList.add("open");
-        if (fab) fab.classList.add("visible");
-      }
-
-      function close() {
-        if (panel) panel.classList.remove("open");
-      }
+      function open() { if (panel) panel.classList.add("open"); }
+      function close() { if (panel) panel.classList.remove("open"); }
 
       function clear() {
         items = [];
@@ -917,8 +892,6 @@
           }).catch(function () {
             alert("Gagal copy. Screenshot manual aja.");
           });
-        } else {
-          alert("Copy tidak didukung. Screenshot manual aja.");
         }
       }
 
@@ -927,7 +900,7 @@
       if (btnClear) btnClear.addEventListener("click", clear);
       if (btnCopy) btnCopy.addEventListener("click", copy);
 
-      // Override console.log / warn / error → juga tampil di panel
+      // Override console methods
       const origLog = console.log;
       const origWarn = console.warn;
       const origError = console.error;
@@ -936,18 +909,15 @@
         origLog.apply(console, arguments);
         add(Array.from(arguments).map(String).join(" "), "info");
       };
-
       console.warn = function () {
         origWarn.apply(console, arguments);
         add(Array.from(arguments).map(String).join(" "), "warn");
       };
-
       console.error = function () {
         origError.apply(console, arguments);
         add(Array.from(arguments).map(String).join(" "), "error");
       };
 
-      // Catch global errors
       window.addEventListener("error", function (e) {
         add("GLOBAL ERROR: " + (e.message || "unknown"), "error");
       });
@@ -963,18 +933,11 @@
         add("UNHANDLED REJECTION: " + msg, "error");
       });
 
-      // Initial log
       add("=== Console started ===", "info");
       add("UA: " + navigator.userAgent.slice(0, 80), "info");
       add("URL: " + location.href, "info");
 
-      return {
-        add: add,
-        open: open,
-        close: close,
-        clear: clear,
-        copy: copy
-      };
+      return { add: add, open: open, close: close, clear: clear, copy: copy };
     })();
   </script>
 
@@ -1328,10 +1291,19 @@
 
     LOG.add("Module utama loaded", "ok");
 
+    // Cek koneksi online
+    function isOnline() {
+      return navigator.onLine !== false;
+    }
+
+    if (!isOnline()) {
+      LOG.add("Device OFFLINE — cek koneksi internet", "error");
+    }
+
     setPersistence(auth, browserLocalPersistence).then(function () {
       LOG.add("Persistence: LOCAL", "ok");
     }).catch(function (e) {
-      LOG.add("Persistence error: " + e.message, "error");
+      LOG.add("Persistence error: " + e.message, "warn");
     });
 
     function hideLoading() {
@@ -1436,11 +1408,12 @@
       return true;
     }
 
-    /* PROFILE */
+    /* PROFILE — DENGAN RETRY */
 
-    function ensureProfile(user) {
+    function ensureProfile(user, retryCount) {
+      retryCount = retryCount || 0;
       const ref = doc(db, "users", user.uid);
-      LOG.add("ensureProfile: getDoc users/" + user.uid.slice(0, 8) + "...", "info");
+      LOG.add("ensureProfile: getDoc users/" + user.uid.slice(0, 8) + "... (try " + (retryCount + 1) + ")", "info");
 
       return getDoc(ref).then(function (snapshot) {
         LOG.add("getDoc OK — exists: " + snapshot.exists(), "ok");
@@ -1477,6 +1450,20 @@
         });
 
         return role;
+      }).catch(function (err) {
+        LOG.add("ensureProfile error: " + (err.code || "") + " " + (err.message || ""), "error");
+
+        // Retry sekali kalau offline/unavailable
+        if (retryCount < 2 && (err.code === "unavailable" || err.message === "Failed to get document because the client is offline.")) {
+          LOG.add("Retry ensureProfile dalam 3 detik...", "warn");
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              resolve(ensureProfile(user, retryCount + 1));
+            }, 3000);
+          });
+        }
+
+        throw err;
       });
     }
 
@@ -1515,12 +1502,19 @@
       showApp();
     }
 
-    /* LOGIN */
+    /* LOGIN — DENGAN RETRY */
 
-    function loginGoogle() {
+    function loginGoogle(retryCount) {
+      retryCount = retryCount || 0;
       const button = $("loginButton");
       loginError("");
-      LOG.add("=== KLIK LOGIN GOOGLE ===", "info");
+      LOG.add("=== KLIK LOGIN GOOGLE === (try " + (retryCount + 1) + ")", "info");
+
+      if (!isOnline()) {
+        loginError("Tidak ada koneksi internet. Periksa WiFi/data seluler kamu.");
+        LOG.add("Login gagal: OFFLINE", "error");
+        return;
+      }
 
       button.disabled = true;
       const label = button.querySelector("span");
@@ -1533,16 +1527,37 @@
 
       signInWithPopup(auth, provider).then(function (result) {
         LOG.add("signInWithPopup OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
+        button.disabled = false;
+        if (label) label.textContent = "Continue with Google";
       }).catch(function (error) {
         LOG.add("signInWithPopup ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
 
+        // Handle network error — kasih pesan yang jelas
+        if (error.code === "auth/network-request-failed") {
+          if (retryCount < 1) {
+            LOG.add("Network error — coba lagi dalam 2 detik...", "warn");
+            loginError("Koneksi lambat, mencoba ulang...");
+
+            setTimeout(function () {
+              loginGoogle(retryCount + 1);
+            }, 2000);
+            return;
+          }
+
+          loginError("Koneksi ke Google gagal. Periksa sinyal HP kamu, lalu coba lagi.");
+          button.disabled = false;
+          if (label) label.textContent = "Continue with Google";
+          return;
+        }
+
+        // Handle popup blocked → fallback redirect
         if (
           error.code === "auth/popup-blocked" ||
           error.code === "auth/popup-closed-by-user" ||
           error.code === "auth/cancelled-popup-request" ||
           error.code === "auth/operation-not-supported-in-this-environment"
         ) {
-          LOG.add("Fallback ke signInWithRedirect...", "warn");
+          LOG.add("Popup blocked — fallback ke signInWithRedirect...", "warn");
           signInWithRedirect(auth, provider).catch(function (err2) {
             LOG.add("signInWithRedirect ERROR: " + (err2.code || "") + " — " + (err2.message || ""), "error");
             loginError("Login gagal: " + (err2.code || err2.message));
@@ -1563,7 +1578,7 @@
       });
     }
 
-    $("loginButton").onclick = loginGoogle;
+    $("loginButton").onclick = function () { loginGoogle(0); };
 
     /* AUTH STATE */
 
@@ -1582,7 +1597,6 @@
 
       loadProfile(user).then(function () {
         restoreDriveToken();
-        // startBroadcastListener();  // ← comment: butuh composite index
       }).catch(function (error) {
         LOG.add("loadProfile GAGAL", "error");
         LOG.add("  code: " + (error.code || "(no code)"), "error");
@@ -1974,7 +1988,5 @@
 
   <script src="./rojak-ai/rojak-ai.js" defer></script>
   <script src="./rojak-ai/music-player.js" defer></script>
-
-  <!-- <script src="./rojak-ai/rdk-motion.js" defer></script> -->
 </body>
 </html>
