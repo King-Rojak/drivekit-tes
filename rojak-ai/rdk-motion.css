@@ -1,313 +1,488 @@
-
 /* ============================================================
-   RDK PREMIUM MOTION SYSTEM
-   Purpose: cinematic, professional motion without AI/SaaS look.
+   RDK MOTION SYSTEM — Fase 1: Foundation
+   Cinematic technical utility. Bukan template AI.
 ============================================================ */
 
-:root{
-  --rdk-motion: cubic-bezier(.22,.8,.24,1);
-  --rdk-fast: 180ms var(--rdk-motion);
-  --rdk-med: 420ms var(--rdk-motion);
-  --rdk-slow: 760ms var(--rdk-motion);
+/* ---------- MOTION VARIABLES ---------- */
+
+:root {
+  /* Easing curves — "bahasa gerak" satu sistem */
+  --rdk-ease-out: cubic-bezier(.16, 1, .3, 1);
+  --rdk-ease-in: cubic-bezier(.7, 0, .84, 0);
+  --rdk-ease-in-out: cubic-bezier(.83, 0, .17, 1);
+  --rdk-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+
+  /* Durations — konsisten */
+  --rdk-dur-instant: 100ms;
+  --rdk-dur-fast: 180ms;
+  --rdk-dur-base: 280ms;
+  --rdk-dur-slow: 480ms;
+  --rdk-dur-cinematic: 800ms;
+
+  /* Distance — konsisten */
+  --rdk-dist-sm: 6px;
+  --rdk-dist-md: 14px;
+  --rdk-dist-lg: 24px;
+
+  /* Composed transitions */
+  --rdk-t-fast: var(--rdk-dur-fast) var(--rdk-ease-out);
+  --rdk-t-base: var(--rdk-dur-base) var(--rdk-ease-out);
+  --rdk-t-slow: var(--rdk-dur-slow) var(--rdk-ease-out);
+  --rdk-t-spring: var(--rdk-dur-base) var(--rdk-ease-spring);
 }
 
-/* Subtle texture + moving technical rail */
-body{
-  position:relative;
-  overflow-x:hidden;
+/* ---------- BACKGROUND TEXTURE ---------- */
+
+body {
+  position: relative;
+  overflow-x: hidden;
 }
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:-2;
-  pointer-events:none;
-  opacity:.16;
+
+/* Grid subtle — bukan gradient, tapi pattern halus */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: .22;
   background-image:
-    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-  background-size:42px 42px;
-  mask-image:linear-gradient(to bottom, #000, transparent 78%);
-}
-body::after{
-  content:"";
-  position:fixed;
-  top:0;
-  left:-18vw;
-  width:1px;
-  height:100vh;
-  z-index:-1;
-  pointer-events:none;
-  background:#e45632;
-  opacity:.0;
-  box-shadow:0 0 28px 3px rgba(228,86,50,.16);
-  animation:rdkRail 9s linear infinite;
-}
-@keyframes rdkRail{
-  0%{transform:translateX(0);opacity:0}
-  8%{opacity:.45}
-  48%{opacity:.18}
-  100%{transform:translateX(136vw);opacity:0}
+    linear-gradient(rgba(255, 255, 255, .028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .02) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 90%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 90%);
 }
 
-/* Loading: logo + progress line */
-.loading-screen{
-  transition:opacity 560ms var(--rdk-motion), visibility 560ms;
+/* Vertical line bergerak — signature detail */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: -20vw;
+  width: 1px;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background: #e45632;
+  opacity: 0;
+  box-shadow: 0 0 30px 2px rgba(228, 86, 50, .18);
+  animation: rdkRail 10s linear infinite;
 }
-.loading-screen.rdk-loading-exit{
-  opacity:0;
-  visibility:hidden;
-}
-.loading-logo{
-  animation:rdkLogoIn 800ms var(--rdk-motion) both;
-}
-.loading-text{
-  animation:rdkTextIn 700ms .16s var(--rdk-motion) both;
-}
-.loading-box::after{
-  content:"";
-  display:block;
-  width:0;
-  height:1px;
-  margin:14px auto 0;
-  background:var(--orange,#e45632);
-  animation:rdkLoadLine 900ms .1s var(--rdk-motion) forwards;
-}
-@keyframes rdkLogoIn{from{opacity:0;transform:scale(.82) rotate(-5deg)}to{opacity:1;transform:none}}
-@keyframes rdkTextIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-@keyframes rdkLoadLine{to{width:62px}}
 
-/* Login */
-.login-screen{
-  animation:rdkPageIn 650ms var(--rdk-motion) both;
+@keyframes rdkRail {
+  0%   { transform: translateX(0); opacity: 0; }
+  10%  { opacity: .5; }
+  50%  { opacity: .18; }
+  100% { transform: translateX(140vw); opacity: 0; }
 }
-.login-box{
-  animation:rdkCardIn 760ms .04s var(--rdk-motion) both;
-}
-.login-feature{
-  opacity:0;
-  animation:rdkItemIn 500ms var(--rdk-motion) forwards;
-}
-.login-feature:nth-child(1){animation-delay:.16s}
-.login-feature:nth-child(2){animation-delay:.23s}
-.login-feature:nth-child(3){animation-delay:.30s}
-.login-google{
-  transition:transform var(--rdk-fast), border-color var(--rdk-fast), background var(--rdk-fast);
-}
-.login-google:hover{transform:translateY(-2px)}
-.login-google:active{transform:translateY(0) scale(.985)}
 
-/* Main app */
-#app{
-  animation:rdkPageIn 600ms var(--rdk-motion) both;
-}
-.topbar{
-  animation:rdkTopbarIn 700ms var(--rdk-motion) both;
-}
-.brand-logo{
-  transition:transform 500ms var(--rdk-motion), border-color var(--rdk-fast);
-}
-.brand:hover .brand-logo{
-  transform:rotate(-3deg) scale(1.045);
-}
-.container > *{
-  opacity:0;
-  transform:translateY(16px);
-  animation:rdkItemIn 620ms var(--rdk-motion) forwards;
-}
-.container > *:nth-child(1){animation-delay:.10s}
-.container > *:nth-child(2){animation-delay:.17s}
-.container > *:nth-child(3){animation-delay:.24s}
-.container > *:nth-child(4){animation-delay:.31s}
-.container > *:nth-child(5){animation-delay:.38s}
-.container > *:nth-child(6){animation-delay:.45s}
+/* ---------- LOADING — CINEMATIC ---------- */
 
-/* Premium card treatment */
-.drive-card,.panel,.spotify-section,.modal-box{
-  transition:transform var(--rdk-med), border-color var(--rdk-fast), box-shadow var(--rdk-med);
-}
-.drive-card:hover,.panel:hover,.spotify-section:hover{
-  border-color:#353731;
-  box-shadow:0 18px 46px rgba(0,0,0,.22);
-}
-.drive-card{
-  position:relative;
-  overflow:hidden;
-}
-.drive-card::after{
-  content:"";
-  position:absolute;
-  left:0;
-  bottom:0;
-  width:34%;
-  height:1px;
-  background:var(--orange,#e45632);
-  transform:scaleX(0);
-  transform-origin:left;
-  transition:transform 600ms var(--rdk-motion);
-}
-.drive-card:hover::after{transform:scaleX(1)}
-
-/* Buttons: physical, not SaaS */
-button,.tab,.top-button,.profile-button,.drive-button,.create-button,.clear-button,.refresh-button,.open-drive-button{
+.loading-screen {
   transition:
-    transform var(--rdk-fast),
-    background var(--rdk-fast),
-    border-color var(--rdk-fast),
-    color var(--rdk-fast),
-    box-shadow var(--rdk-fast);
-}
-button:hover{
-  transform:translateY(-1px);
-}
-button:active{
-  transform:translateY(1px) scale(.985);
-}
-button:focus-visible,input:focus-visible,textarea:focus-visible{
-  outline:1px solid rgba(228,86,50,.8);
-  outline-offset:2px;
-}
-.create-button:hover,.drive-button:hover,.open-drive-button:hover{
-  box-shadow:0 8px 24px rgba(0,0,0,.28);
+    opacity 640ms var(--rdk-ease-in-out),
+    visibility 640ms;
 }
 
-/* Tabs */
-.tabs{
-  position:relative;
-}
-.tab{
-  position:relative;
-  overflow:hidden;
-}
-.tab::after{
-  content:"";
-  position:absolute;
-  left:14%;
-  right:14%;
-  bottom:0;
-  height:1px;
-  background:var(--orange,#e45632);
-  transform:scaleX(0);
-  transition:transform 350ms var(--rdk-motion);
-}
-.tab:hover::after,.tab.active::after{transform:scaleX(1)}
-
-/* Panels */
-.panel{
-  transition:opacity 240ms ease, transform 420ms var(--rdk-motion), border-color var(--rdk-fast), box-shadow var(--rdk-med);
-}
-.panel.active{
-  animation:rdkPanelIn 460ms var(--rdk-motion) both;
-}
-@keyframes rdkPanelIn{
-  from{opacity:0;transform:translateY(8px)}
-  to{opacity:1;transform:none}
+.loading-screen.rdk-loading-exit {
+  opacity: 0;
+  visibility: hidden;
 }
 
-/* Inputs */
-.input,.textarea{
-  transition:border-color var(--rdk-fast), box-shadow var(--rdk-fast), background var(--rdk-fast);
-}
-.input:hover,.textarea:hover{border-color:#34352f}
-.input:focus,.textarea:focus{
-  box-shadow:0 0 0 1px rgba(228,86,50,.12);
+.loading-logo {
+  animation: rdkLogoReveal 900ms var(--rdk-ease-out) both;
 }
 
-/* Recent file rows */
-.file-item,.file-row,.files > *{
-  transition:transform var(--rdk-fast),background var(--rdk-fast),border-color var(--rdk-fast);
-}
-.file-item:hover,.file-row:hover,.files > *:hover{
-  transform:translateX(3px);
+.loading-text {
+  animation: rdkTextReveal 700ms 200ms var(--rdk-ease-out) both;
 }
 
-/* Modal */
-.modal{
-  opacity:0;
-  visibility:hidden;
-  transition:opacity 300ms ease,visibility 300ms;
-}
-.modal.open{
-  opacity:1;
-  visibility:visible;
-}
-.modal-box{
-  transform:translateY(18px) scale(.975);
-  opacity:0;
-  transition:transform 420ms var(--rdk-motion),opacity 260ms ease;
-}
-.modal.open .modal-box{
-  transform:none;
-  opacity:1;
+/* Progress line di bawah loading */
+.loading-box::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 1px;
+  margin: 16px auto 0;
+  background: var(--orange, #e45632);
+  animation: rdkLoadLine 1000ms 100ms var(--rdk-ease-out) forwards;
 }
 
-/* Broadcast notification */
-.broadcast-notif{
-  animation:rdkNoticeIn 520ms var(--rdk-motion) both;
-}
-@keyframes rdkNoticeIn{
-  from{opacity:0;transform:translateX(22px)}
-  to{opacity:1;transform:none}
+@keyframes rdkLogoReveal {
+  0%   { opacity: 0; transform: scale(.86) rotate(-6deg); }
+  60%  { opacity: 1; transform: scale(1.02) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 
-/* Diagnostic console */
-.rdk-log-panel{
-  transition:transform 380ms var(--rdk-motion),opacity 220ms ease;
+@keyframes rdkTextReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Music / AI widgets */
-.rojak-ai-fab,.rdk-music-mini{
-  transition:transform var(--rdk-fast),box-shadow var(--rdk-fast),border-color var(--rdk-fast);
-}
-.rojak-ai-fab:hover,.rdk-music-mini:hover{
-  transform:translateY(-3px);
-  box-shadow:0 14px 32px rgba(0,0,0,.35);
-}
-.rojak-ai-panel{
-  animation:rdkPanelIn 420ms var(--rdk-motion);
+@keyframes rdkLoadLine {
+  0%   { width: 0; }
+  60%  { width: 72px; }
+  100% { width: 56px; }
 }
 
-/* Small live indicator */
-.drive-dot{
-  transition:background 300ms ease, box-shadow 300ms ease, transform 300ms ease;
-}
-.drive-card:has(.drive-dot.connected) .drive-dot{
-  animation:rdkPulse 2.2s ease-in-out infinite;
-}
-@keyframes rdkPulse{
-  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(105,184,121,.0)}
-  50%{transform:scale(1.16);box-shadow:0 0 0 5px rgba(105,184,121,.08)}
+/* ---------- PAGE REVEAL ---------- */
+
+.login-screen,
+#app {
+  animation: rdkPageIn 600ms var(--rdk-ease-out) both;
 }
 
-@keyframes rdkPageIn{
-  from{opacity:0}
-  to{opacity:1}
-}
-@keyframes rdkTopbarIn{
-  from{opacity:0;transform:translateY(-12px)}
-  to{opacity:1;transform:none}
-}
-@keyframes rdkCardIn{
-  from{opacity:0;transform:translateY(18px) scale(.985)}
-  to{opacity:1;transform:none}
-}
-@keyframes rdkItemIn{
-  to{opacity:1;transform:none}
+.topbar {
+  animation: rdkTopbarIn 700ms var(--rdk-ease-out) both;
 }
 
-/* Mobile: preserve performance */
-@media(max-width:640px){
-  body::before{background-size:34px 34px;opacity:.10}
-  body::after{display:none}
-  .container > *{animation-duration:500ms}
+.login-box {
+  animation: rdkCardIn 800ms 60ms var(--rdk-ease-out) both;
 }
 
-/* Accessibility / battery */
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{
-    animation-duration:.01ms !important;
-    animation-iteration-count:1 !important;
-    scroll-behavior:auto !important;
-    transition-duration:.01ms !important;
+/* Login feature staggered reveal */
+.login-feature {
+  opacity: 0;
+  animation: rdkItemIn 520ms var(--rdk-ease-out) forwards;
+}
+
+.login-feature:nth-child(1) { animation-delay: 160ms; }
+.login-feature:nth-child(2) { animation-delay: 240ms; }
+.login-feature:nth-child(3) { animation-delay: 320ms; }
+
+/* Container children staggered */
+.container > * {
+  opacity: 0;
+  transform: translateY(var(--rdk-dist-md));
+  animation: rdkItemIn 560ms var(--rdk-ease-out) forwards;
+}
+
+.container > *:nth-child(1) { animation-delay: 100ms; }
+.container > *:nth-child(2) { animation-delay: 180ms; }
+.container > *:nth-child(3) { animation-delay: 260ms; }
+.container > *:nth-child(4) { animation-delay: 340ms; }
+.container > *:nth-child(5) { animation-delay: 420ms; }
+
+@keyframes rdkPageIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes rdkTopbarIn {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rdkCardIn {
+  from { opacity: 0; transform: translateY(var(--rdk-dist-lg)) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes rdkItemIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- HOVER PHYSICS ---------- */
+
+/* Semua button — physical, bukan template AI */
+button,
+.tab,
+.top-button,
+.profile-button,
+.drive-button,
+.create-button,
+.clear-button,
+.refresh-button,
+.open-drive-button,
+.google-login {
+  transition:
+    transform var(--rdk-t-fast),
+    background var(--rdk-t-fast),
+    border-color var(--rdk-t-fast),
+    color var(--rdk-t-fast),
+    box-shadow var(--rdk-t-fast);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(1px) scale(.985);
+}
+
+/* Primary buttons — shadow physics saat hover */
+.create-button:hover,
+.open-drive-button:hover,
+.google-login:hover {
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, .28),
+    0 2px 6px rgba(228, 86, 50, .12);
+}
+
+/* Focus ring professional */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 1px solid rgba(228, 86, 50, .8);
+  outline-offset: 2px;
+}
+
+/* ---------- CARDS — PREMIUM TREATMENT ---------- */
+
+.drive-card,
+.panel,
+.spotify-section,
+.modal-box {
+  transition:
+    transform var(--rdk-t-base),
+    border-color var(--rdk-t-fast),
+    box-shadow var(--rdk-t-base);
+}
+
+.drive-card:hover,
+.panel:hover,
+.spotify-section:hover {
+  border-color: #353731;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .22);
+}
+
+/* Drive card — accent line saat hover */
+.drive-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.drive-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 34%;
+  height: 1px;
+  background: var(--orange, #e45632);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 620ms var(--rdk-ease-out);
+}
+
+.drive-card:hover::after {
+  transform: scaleX(1);
+}
+
+/* ---------- TABS — SLIDING INDICATOR ---------- */
+
+.tabs {
+  position: relative;
+}
+
+.tab {
+  position: relative;
+  overflow: hidden;
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 0;
+  height: 1px;
+  background: var(--orange, #e45632);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 380ms var(--rdk-ease-out);
+}
+
+.tab:hover::after,
+.tab.active::after {
+  transform: scaleX(1);
+}
+
+/* ---------- INPUTS — BORDER DRAW ---------- */
+
+.input,
+.textarea {
+  transition:
+    border-color var(--rdk-t-fast),
+    box-shadow var(--rdk-t-fast),
+    background var(--rdk-t-fast);
+}
+
+.input:hover,
+.textarea:hover {
+  border-color: #34352f;
+}
+
+.input:focus,
+.textarea:focus {
+  box-shadow: 0 0 0 1px rgba(228, 86, 50, .12);
+}
+
+/* ---------- FILE ROWS — SLIDE HOVER ---------- */
+
+.file-row {
+  transition:
+    transform var(--rdk-t-fast),
+    background var(--rdk-t-fast),
+    border-color var(--rdk-t-fast);
+}
+
+.file-row:hover {
+  transform: translateX(3px);
+}
+
+/* ---------- MODAL — SCALE + BLUR ---------- */
+
+.modal {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 300ms var(--rdk-ease-out),
+    visibility 300ms;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.modal.open {
+  opacity: 1;
+  visibility: visible;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-box {
+  transform: translateY(18px) scale(.975);
+  opacity: 0;
+  transition:
+    transform 420ms var(--rdk-ease-out),
+    opacity 280ms var(--rdk-ease-out);
+}
+
+.modal.open .modal-box {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* ---------- PANEL TRANSITION ---------- */
+
+.panel {
+  transition:
+    opacity 240ms var(--rdk-ease-out),
+    transform 420ms var(--rdk-ease-out),
+    border-color var(--rdk-t-fast),
+    box-shadow var(--rdk-t-base);
+}
+
+.panel.active {
+  animation: rdkPanelIn 460ms var(--rdk-ease-out) both;
+}
+
+@keyframes rdkPanelIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- STATUS DOT — PULSE ---------- */
+
+.drive-dot {
+  transition:
+    background 300ms var(--rdk-ease-out),
+    box-shadow 300ms var(--rdk-ease-out),
+    transform 300ms var(--rdk-ease-out);
+}
+
+.drive-card:has(.drive-dot.connected) .drive-dot {
+  animation: rdkPulse 2.4s var(--rdk-ease-in-out) infinite;
+}
+
+@keyframes rdkPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(105, 184, 121, 0);
+  }
+  50% {
+    transform: scale(1.16);
+    box-shadow: 0 0 0 5px rgba(105, 184, 121, .08);
+  }
+}
+
+/* ---------- FLOATING WIDGETS ---------- */
+
+.rojak-ai-fab,
+.rdk-music-mini {
+  transition:
+    transform var(--rdk-t-fast),
+    box-shadow var(--rdk-t-base),
+    border-color var(--rdk-t-fast);
+}
+
+.rojak-ai-fab:hover,
+.rdk-music-mini:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .35);
+}
+
+.rojak-ai-panel {
+  animation: rdkPanelIn 420ms var(--rdk-ease-out);
+}
+
+/* ---------- BROADCAST NOTIFICATION ---------- */
+
+.broadcast-notif.open {
+  animation: rdkNoticeIn 520ms var(--rdk-ease-out) both;
+}
+
+@keyframes rdkNoticeIn {
+  from { opacity: 0; transform: translateX(22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ---------- RESPONSIVE — PERFORMA ---------- */
+
+@media (max-width: 640px) {
+  /* Grid lebih rapat di HP */
+  body::before {
+    background-size: 36px 36px;
+    opacity: .14;
+  }
+
+  /* Rail disembunyikan di HP — hemat battery */
+  body::after {
+    display: none;
+  }
+
+  /* Animasi lebih cepat di HP */
+  .container > * {
+    animation-duration: 480ms;
+  }
+
+  .drive-card:hover,
+  .panel:hover {
+    box-shadow: none;
+    border-color: var(--border);
+  }
+
+  .file-row:hover {
+    transform: none;
+  }
+}
+
+/* ---------- ACCESSIBILITY ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  body::after {
+    display: none;
   }
 }
