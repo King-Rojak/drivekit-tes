@@ -1,19 +1,19 @@
 [
   {
     "title": "Dunia Yang Nanti",
-    "artist": "Rojak DriveK1t",
+    "artist": "Raim Laode",
     "src": "./music/dunia-yang-nanti.mp3",
     "cover": "./music/playlist-cover.jpeg"
   },
   {
     "title": "Sesi Potret",
-    "artist": "Rojak DriveK1t",
+    "artist": "Enau, Ari Lesmana",
     "src": "./music/sesi-potret.mp3",
     "cover": "./music/playlist-cover.jpeg"
   },
   {
     "title": "Teh Hijau",
-    "artist": "Rojak DriveK1t",
+    "artist": "Tulus",
     "src": "./music/teh-hijau.mp3",
     "cover": "./music/playlist-cover.jpeg"
   }
