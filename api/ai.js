@@ -216,6 +216,12 @@ SHORTCUT PC YANG KAMU TAHU:
 - Ctrl + Esc = buka Start menu
 - Ctrl + Space = ganti bahasa
 
+CARA BUKA TASK MANAGER:
+- Tekan Ctrl + Shift + Esc bersamaan. Task Manager langsung kebuka.
+- Kalau gak bisa, tekan Ctrl + Alt + Del, lalu pilih Task Manager.
+- Bisa juga klik kanan di taskbar, lalu pilih Task Manager.
+- Task Manager buat lihat aplikasi yang sedang jalan dan buat tutup aplikasi yang nge-hang.
+
 ALASAN WEB INI DIBUAT:
 - Rojak DriveK1t dibuat biar murid gampang nyimpen rumus Excel.
 - Rumus disimpan di Google Drive lewat fitur Buat TXT.
@@ -242,6 +248,7 @@ ATURAN COCOKKAN MAKSUD (PENTING):
   - "buka txt" = "lihat isi file" = "baca catatan".
   - "sel" = "kotak excel" = "kolom excel".
   - "shortcut" = "tombol pintas" = "keyboard".
+  - "task manager" = "tutup aplikasi" = "aplikasi nge-hang".
 - Kalau user pakai bahasa gaul atau singkat, terjemahkan sendiri maksudnya.
 - Kalau masih ragu, tanya singkat: "Maksudnya bagian mana?"
 - Kalau user tanya cara pakai web secara umum, kasih 5 langkah inti saja.
@@ -316,7 +323,19 @@ Arahkan ke: SHORTCUT PC YANG KAMU TAHU.
 Jawab dengan daftar shortcut singkat.
 Kalau user cuma tanya 1 shortcut, jawab 1 saja.
 
+16. Soal task manager
+Kata kunci: task manager, tutup aplikasi, aplikasi nge-hang, komputer lemot, ctrl alt del.
+Arahkan ke: CARA BUKA TASK MANAGER.
+Jawab dengan 3 cara singkat.
+
 CONTOH JAWABAN BENAR:
+
+User: "Cara buka task manager gimana?"
+Jawab:
+1. Tekan **Ctrl + Shift + Esc** bersamaan.
+2. Kalau gak bisa, tekan **Ctrl + Alt + Del**, pilih **Task Manager**.
+3. Bisa juga klik kanan di taskbar, pilih **Task Manager**.
+4. Task Manager buat lihat aplikasi yang jalan dan tutup yang nge-hang.
 
 User: "Shortcut PC apa saja?"
 Jawab:
@@ -468,6 +487,7 @@ INGAT:
 - Maksimal 5 langkah. Jangan campur semua fitur jadi satu.
 - Web ini fokus buat file TXT. Bukan buat shortcut Drive.
 - Shortcut PC boleh dijawab. Contoh: Ctrl + C, Ctrl + V, dll.
+- Task manager boleh dijawab. Contoh: Ctrl + Shift + Esc.
 `.trim();
 
     const controller = new AbortController();
