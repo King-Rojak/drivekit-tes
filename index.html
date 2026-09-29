@@ -528,6 +528,58 @@
 
     .open-drive-button { height: 35px; padding: 0 13px; border: 1px solid var(--orange); border-radius: 5px; background: var(--orange); color: white; font-size: 8px; font-weight: 700; }
     .open-drive-button:hover { background: var(--orange-hover); }
+
+
+    .footer { padding: 12px 0 0; text-align: center; color: #50514c; font-size: 7px; }
+
+    .modal { position: fixed; inset: 0; z-index: 5000; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .72); }
+    .modal.open { display: flex; }
+
+    .modal-box { width: min(360px, 100%); overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); box-shadow: 0 12px 35px rgba(0, 0, 0, .35); }
+
+    .modal-header { height: 45px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid var(--border); }
+    .modal-header h2 { margin: 0; font-size: 11px; font-weight: 700; }
+
+    .close-button { width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border: 1px solid var(--border); border-radius: 5px; background: transparent; color: var(--muted); font-size: 15px; line-height: 1; }
+    .close-button:hover { background: var(--panel-2); color: var(--text); }
+
+    .profile-content { padding: 14px; }
+    .profile-user { display: flex; align-items: center; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid var(--border); }
+
+    .profile-image { width: 43px; height: 43px; flex: 0 0 43px; display: block; border: 1px solid var(--border); border-radius: 50%; object-fit: cover; background: var(--panel-2); }
+
+    .profile-user-info { min-width: 0; }
+    .profile-user-name { overflow: hidden; color: var(--text); font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .profile-user-email { overflow: hidden; margin-top: 3px; color: var(--muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .role-label { display: inline-flex; align-items: center; height: 20px; margin-top: 7px; padding: 0 7px; border: 1px solid rgba(228, 86, 50, .25); border-radius: 4px; background: rgba(228, 86, 50, .06); color: var(--orange); font-size: 7px; font-weight: 700; }
+
+    .profile-form { padding-top: 13px; }
+    .profile-form .field { margin-bottom: 10px; }
+    .profile-form .field:last-child { margin-bottom: 0; }
+
+    .profile-actions { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 13px; }
+    .profile-actions .create-button { height: 34px; }
+    .profile-actions .clear-button { height: 34px; padding: 0 13px; }
+
+    #profileStatus { min-height: 13px; margin-top: 7px; }
+
+    @media (max-width: 600px) {
+      .topbar { height: 55px; padding: 0 10px; }
+      .brand-logo { width: 34px; height: 34px; flex-basis: 34px; }
+      .brand-text { font-size: 10px; }
+      .top-button { display: none; }
+      .profile-button { width: 29px; height: 29px; }
+      .container { width: calc(100% - 16px); padding-top: 9px; }
+      .drive-card { padding: 10px; }
+      .drive-title { font-size: 8px; }
+      .drive-state { font-size: 7px; }
+      .drive-button { font-size: 7px; padding: 0 8px; }
+      .tabs { height: 40px; }
+      .tab { font-size: 7px; }
+      .panel-title h2 { font-size: 12px; }
+      .panel-title p { font-size: 7px; }
+      .textarea { min-height: 170px; }
     }
 
     @media (max-width: 360px) {
@@ -687,6 +739,7 @@
   <link rel="stylesheet" href="./rojak-ai/rdk-premium.css">
 
   <link rel="stylesheet" href="./rojak-ai/rojak-ai.css">
+  <link rel="stylesheet" href="./rojak-ai/music-player.css">
 </head>
 
 <body>
@@ -1065,6 +1118,8 @@
           <button id="openDriveButton" class="open-drive-button" type="button">Open Google Drive</button>
         </div>
       </section>
+
+
 
       <div class="footer">Rojak DriveK1t</div>
     </main>
@@ -1888,6 +1943,7 @@
   </script>
 
   <script src="./rojak-ai/rojak-ai.js" defer></script>
+  <script src="./rojak-ai/music-player.js" defer></script>
 
   <!-- RDK PREMIUM MOTION -->
   <script src="./rojak-ai/rdk-motion.js" defer></script>
