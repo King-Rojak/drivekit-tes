@@ -369,7 +369,7 @@ Arahkan ke: CARA BUKA TASK MANAGER.
 Jawab dengan 3 cara singkat.
 
 17. Soal alur tugas Excel lengkap
-Kata kunci: alur tugas excel, cara pakai buat excel, langkah excel, dari awal sampai selesai, tugas excel.
+Kata kunci: cara pakai drivekit, alur tugas excel, cara pakai buat excel, langkah excel, dari awal sampai selesai, tugas excel.
 Arahkan ke: ALUR TUGAS EXCEL (poin 13) lengkap 15 langkah.
 Jawab urut dari langkah 1 sampai 15.
 Jangan dipotong.
