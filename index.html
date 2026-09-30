@@ -1973,6 +1973,10 @@
       showApp();
     }
 
+    /* ============================================================
+       LOGIN GOOGLE — POPUP FIRST, REDIRECT FALLBACK
+    ============================================================ */
+
     function loginGoogle() {
       const button = $("loginButton");
       loginError("");
@@ -1997,9 +2001,6 @@
       loginError("Menghubungi Google...");
       LLOG.add("Menghubungi Google...", "info");
 
-      const isMobile = /Android|iPhone|iPad|iPod|Mobile|Opera Mini/i.test(navigator.userAgent);
-      LLOG.add("Mobile device: " + isMobile, "info");
-
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
 
@@ -2008,40 +2009,38 @@
         if (label) label.textContent = "Continue with Google";
       }
 
-      function fallbackToRedirect(reason) {
-        LOG.add("Fallback ke signInWithRedirect: " + reason, "warn");
-        LLOG.add("Fallback ke signInWithRedirect: " + reason, "warn");
+      function handleError(error) {
+        const code = error.code || "";
+        LOG.add("Login ERROR: " + code + " — " + (error.message || ""), "error");
+        LLOG.add("Login ERROR: " + code + " — " + (error.message || ""), "error");
+
+        if (code === "auth/unauthorized-domain") {
+          loginError("Domain '" + location.hostname + "' belum diizinkan di Firebase Console → Authentication → Authorized domains.");
+        } else if (code === "auth/operation-not-allowed") {
+          loginError("Provider Google belum diaktifkan di Firebase Console.");
+        } else if (code === "auth/network-request-failed") {
+          loginError("Koneksi ke Google gagal. Periksa jaringan, lalu coba lagi.");
+        } else if (code === "auth/popup-closed-by-user") {
+          loginError("Login dibatalkan.");
+        } else if (code === "auth/cancelled-popup-request") {
+          loginError("Login sedang berjalan. Tunggu sebentar.");
+        } else {
+          loginError("Login gagal: " + (code || error.message || "Unknown error"));
+        }
+
+        resetButton();
+      }
+
+      function tryRedirect() {
+        LOG.add("Coba signInWithRedirect...", "info");
+        LLOG.add("Coba signInWithRedirect...", "info");
         loginError("Membuka halaman login Google...");
-        LLOG.add("Membuka halaman login Google...", "info");
 
-        signInWithRedirect(auth, provider).catch(function (err2) {
-          const errCode = err2.code || "";
-          LOG.add("signInWithRedirect ERROR: " + errCode + " — " + (err2.message || ""), "error");
-          LLOG.add("signInWithRedirect ERROR: " + errCode + " — " + (err2.message || ""), "error");
-
-          if (errCode === "auth/unauthorized-domain") {
-            loginError("Domain '" + location.hostname + "' belum diizinkan. Tambah di Firebase Console → Authentication → Settings → Authorized domains.");
-          } else if (errCode === "auth/network-request-failed") {
-            loginError("Koneksi ke Google gagal. Periksa jaringan, lalu coba lagi.");
-          } else if (errCode === "auth/operation-not-allowed") {
-            loginError("Provider Google belum diaktifkan di Firebase Console.");
-          } else {
-            loginError("Login gagal: " + (errCode || err2.message || "Unknown error"));
-          }
-
-          resetButton();
-        });
+        signInWithRedirect(auth, provider).catch(handleError);
       }
 
-      if (isMobile) {
-        LOG.add("Mobile device — pakai signInWithRedirect", "info");
-        LLOG.add("Mobile device — pakai signInWithRedirect", "info");
-        fallbackToRedirect("mobile device");
-        return;
-      }
-
-      LOG.add("Desktop — coba signInWithPopup...", "info");
-      LLOG.add("Desktop — coba signInWithPopup...", "info");
+      LOG.add("Coba signInWithPopup...", "info");
+      LLOG.add("Coba signInWithPopup...", "info");
 
       signInWithPopup(auth, provider).then(function (result) {
         LOG.add("signInWithPopup OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
@@ -2050,29 +2049,28 @@
         resetButton();
       }).catch(function (error) {
         const code = error.code || "";
-        LOG.add("signInWithPopup ERROR: " + code + " — " + (error.message || ""), "error");
-        LLOG.add("signInWithPopup ERROR: " + code + " — " + (error.message || ""), "error");
+        LOG.add("signInWithPopup ERROR: " + code, "error");
+        LLOG.add("signInWithPopup ERROR: " + code, "error");
 
+        // Kalau popup diblokir / tidak support → fallback ke redirect
         if (
           code === "auth/popup-blocked" ||
-          code === "auth/popup-closed-by-user" ||
-          code === "auth/cancelled-popup-request" ||
           code === "auth/operation-not-supported-in-this-environment" ||
-          code === "auth/network-request-failed"
+          code === "auth/cancelled-popup-request"
         ) {
-          fallbackToRedirect(code);
+          tryRedirect();
           return;
         }
 
-        if (code === "auth/unauthorized-domain") {
-          loginError("Domain '" + location.hostname + "' belum diizinkan di Firebase Console → Authentication → Authorized domains.");
-        } else if (code === "auth/operation-not-allowed") {
-          loginError("Provider Google belum diaktifkan di Firebase Console.");
-        } else {
-          loginError("Login gagal: " + (code || error.message || "Unknown error"));
+        // Kalau user tutup popup sendiri → stop, kasih pesan
+        if (code === "auth/popup-closed-by-user") {
+          loginError("Login dibatalkan.");
+          resetButton();
+          return;
         }
 
-        resetButton();
+        // Error lain → tampilkan
+        handleError(error);
       });
     }
 
