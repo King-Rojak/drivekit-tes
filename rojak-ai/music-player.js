@@ -2,11 +2,14 @@
    ROJAK DRIVEK1T — Music Player (FINAL)
    Vanilla DOM. Fallback playlist kalau JSON gagal load.
 
-   FIX:
+   FIX terbaru:
    - currentIndex TIDAK di-restore dari localStorage
      → tidak ada lagu yang otomatis ke-select saat app dibuka
    - EQ hanya animasi kalau audio benar-benar playing
    - Mini player hanya muncul kalau ada track & sedang playing
+   - Music section jadi CARD TERPISAH di bawah #createPanel
+     → tidak lagi nempel ke form "New text file"
+   - Music section auto-hide saat pindah ke tab Recent/Open Drive
 ============================================================ */
 
 (function () {
@@ -556,11 +559,20 @@
     document.addEventListener("pointercancel", onUp);
   }
 
-  /* ---------- MINI PLAYER VISIBILITY ---------- */
+  /* ---------- VISIBILITY ---------- */
 
   function isCreatePageActive() {
     const createPanel = $("createPanel");
     return !!(createPanel && createPanel.classList.contains("active"));
+  }
+
+  function updateMusicSectionVisibility() {
+    if (!refs.section) return;
+    if (isCreatePageActive()) {
+      refs.section.style.display = "";
+    } else {
+      refs.section.style.display = "none";
+    }
   }
 
   function updateMiniPlayerVisibility() {
@@ -738,9 +750,13 @@
       }
     });
 
+    // Saat tab berubah, update visibility music section + mini player
     document.querySelectorAll(".tab").forEach(tab => {
       tab.addEventListener("click", () => {
-        requestAnimationFrame(updateMiniPlayerVisibility);
+        requestAnimationFrame(() => {
+          updateMusicSectionVisibility();
+          updateMiniPlayerVisibility();
+        });
       });
     });
   }
@@ -772,14 +788,25 @@
   }
 
   function injectSection() {
+    // Music section jadi CARD TERPISAH, bukan di dalam #createPanel.
+    // Di-inject tepat setelah #createPanel di dalam .container.
     const createPanel = $("createPanel");
     if (!createPanel) return;
+
+    const container = createPanel.parentElement;
+    if (!container) return;
 
     const existing = $("rdkMusicSection");
     if (existing) existing.remove();
 
     const section = buildSection();
-    createPanel.appendChild(section);
+
+    // Sisipkan tepat setelah #createPanel
+    if (createPanel.nextSibling) {
+      container.insertBefore(section, createPanel.nextSibling);
+    } else {
+      container.appendChild(section);
+    }
   }
 
   function injectMiniPlayer() {
@@ -810,7 +837,6 @@
     cacheRefs();
 
     // RESET total — tidak ada track yang ke-select otomatis.
-    // User harus klik lagu dulu.
     state.currentIndex = -1;
     state.isPlaying = false;
 
@@ -828,6 +854,7 @@
     bindEvents();
     setupProgressDrag();
     setupMediaSession();
+    updateMusicSectionVisibility();
     updateMiniPlayerVisibility();
 
     console.log("[RDK Music] Ready. Playlist:", state.playlist.length, "track.");
