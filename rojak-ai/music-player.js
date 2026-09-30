@@ -1,6 +1,12 @@
 /* ============================================================
    ROJAK DRIVEK1T — Music Player (FINAL)
    Vanilla DOM. Fallback playlist kalau JSON gagal load.
+
+   FIX:
+   - currentIndex TIDAK di-restore dari localStorage
+     → tidak ada lagu yang otomatis ke-select saat app dibuka
+   - EQ hanya animasi kalau audio benar-benar playing
+   - Mini player hanya muncul kalau ada track & sedang playing
 ============================================================ */
 
 (function () {
@@ -115,8 +121,8 @@
 
   function saveState() {
     try {
+      // currentIndex TIDAK disimpan — biar tiap buka app user pilih manual.
       localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({
-        currentIndex: state.currentIndex,
         volume: state.volume,
         muted: state.muted,
         isShuffle: state.isShuffle,
@@ -130,16 +136,30 @@
       const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
+
       if (typeof parsed.volume === "number") state.volume = parsed.volume;
       if (typeof parsed.muted === "boolean") state.muted = parsed.muted;
       if (typeof parsed.isShuffle === "boolean") state.isShuffle = parsed.isShuffle;
       if (parsed.repeatMode === "off" || parsed.repeatMode === "all" || parsed.repeatMode === "one") {
         state.repeatMode = parsed.repeatMode;
       }
-      // PENTING: currentIndex dari storage TIDAK dipakai untuk auto-play.
-      // Kita simpan index-nya supaya UI tahu track terakhir, tapi
-      // isPlaying selalu false di awal.
-      if (typeof parsed.currentIndex === "number") state.currentIndex = parsed.currentIndex;
+
+      // PENTING: currentIndex TIDAK di-restore dari storage.
+      // Setiap app dibuka, user harus pilih lagu manual dulu.
+      // (volume, muted, shuffle, repeat tetap di-restore)
+    } catch (_) {}
+  }
+
+  function purgeLegacyState() {
+    // Bersihkan field currentIndex yang mungkin masih tersisa dari versi lama.
+    try {
+      const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && "currentIndex" in parsed) {
+        delete parsed.currentIndex;
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(parsed));
+      }
     } catch (_) {}
   }
 
@@ -302,7 +322,7 @@
 
     refs.list.innerHTML = state.playlist.map((track, i) => {
       const isCurrent = i === state.currentIndex;
-      // PENTING: class "playing" cuma kalau audio benar-benar play
+      // Class "playing" cuma kalau audio benar-benar play
       const isPlaying = isCurrent && state.isPlaying;
 
       let cls = "rdk-music-track";
@@ -399,6 +419,7 @@
         audio.pause();
         updatePlayButtons();
         renderPlaylist();
+        updateMiniPlayerVisibility();
         return;
       }
     }
@@ -425,6 +446,14 @@
       refs.nowTitle.innerHTML = escapeHTML(track.title) +
         ' <span>— ' + escapeHTML(track.artist) + '</span>';
     }
+  }
+
+  function resetNowPlaying() {
+    if (refs.nowTitle) {
+      refs.nowTitle.innerHTML = '<span>Pilih lagu untuk mulai</span>';
+    }
+    if (refs.miniTitle) refs.miniTitle.textContent = "Belum ada lagu";
+    if (refs.miniArtist) refs.miniArtist.textContent = "—";
   }
 
   function updateMiniPlayer(track) {
@@ -552,8 +581,7 @@
       return;
     }
 
-    // PENTING: mini player cuma muncul kalau ada track DAN sedang playing.
-    // Jadi sebelum user klik play, mini player tidak nongol.
+    // Mini player hanya muncul kalau ada track DAN sedang playing.
     const shouldShow =
       state.currentIndex !== -1 &&
       state.isPlaying &&
@@ -658,7 +686,7 @@
       state.isPlaying = true;
       updatePlayButtons();
       updateMediaSessionState();
-      renderPlaylist();              // update class playing
+      renderPlaylist();              // update class "playing"
       updateMiniPlayerVisibility();  // mini player boleh muncul
     });
 
@@ -666,7 +694,7 @@
       state.isPlaying = false;
       updatePlayButtons();
       updateMediaSessionState();
-      renderPlaylist();              // hapus class playing
+      renderPlaylist();              // hapus class "playing"
       updateMiniPlayerVisibility();  // mini player sembunyi
     });
 
@@ -675,7 +703,7 @@
     audio.addEventListener("loadedmetadata", () => {
       state.duration = audio.duration;
       updateProgress();
-      if (state.currentIndex >= 0) {
+      if (state.currentIndex >= 0 && state.currentIndex < state.playlist.length) {
         updateMediaSessionMetadata(state.playlist[state.currentIndex]);
       }
     });
@@ -766,6 +794,9 @@
     if (window.__RDK_MUSIC_LOADED__) return;
     window.__RDK_MUSIC_LOADED__ = true;
 
+    // Bersihkan field currentIndex dari localStorage versi lama
+    purgeLegacyState();
+
     loadState();
 
     const ok = await loadPlaylist();
@@ -778,12 +809,12 @@
     injectMiniPlayer();
     cacheRefs();
 
-    // Set currentIndex ke -1 kalau belum ada track yang pernah dipilih,
-    // supaya EQ track tidak nyala sendiri saat app pertama dibuka.
-    if (state.currentIndex >= state.playlist.length) {
-      state.currentIndex = -1;
-    }
+    // RESET total — tidak ada track yang ke-select otomatis.
+    // User harus klik lagu dulu.
+    state.currentIndex = -1;
+    state.isPlaying = false;
 
+    resetNowPlaying();
     renderPlaylist();
 
     audio.volume = state.volume;
@@ -793,20 +824,6 @@
     updateShuffleUI();
     updateRepeatUI();
     updatePlayButtons();
-
-    // PENTING: jangan restore track terakhir ke audio.src tanpa play.
-    // Kalau kita isi audio.src, browser bisa autoplay? Tidak.
-    // Tapi kalau currentIndex ada, kita tetap tampilkan "now playing" info
-    // TANPA memicu EQ.
-    if (state.currentIndex >= 0 && state.currentIndex < state.playlist.length) {
-      const track = state.playlist[state.currentIndex];
-      updateNowPlaying(track);
-      updateMiniPlayer(track);
-      renderPlaylist();
-      // audio.src sengaja TIDAK diisi supaya tidak ada metadata load
-      // yang bisa memicu state "playing" palsu.
-      // Kalau user klik play, playTrack() akan isi audio.src.
-    }
 
     bindEvents();
     setupProgressDrag();
