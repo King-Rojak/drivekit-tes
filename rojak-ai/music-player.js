@@ -512,8 +512,20 @@
 
   /* ---------- MINI PLAYER VISIBILITY ---------- */
 
+  function isCreatePageActive() {
+    const createPanel = $("createPanel");
+    return !!(createPanel && createPanel.classList.contains("active"));
+  }
+
   function updateMiniPlayerVisibility() {
     if (!refs.mini || !refs.section) return;
+
+    // Music UI hanya boleh terlihat saat tab Create sedang aktif.
+    if (!isCreatePageActive()) {
+      refs.mini.classList.remove("rdk-music-mini-open");
+      state.miniPlayerOpen = false;
+      return;
+    }
 
     const sectionRect = refs.section.getBoundingClientRect();
     const isHiddenByUser = refs.mini.dataset.hiddenByUser === "1";
@@ -666,10 +678,17 @@
       const tag = (e.target.tagName || "").toLowerCase();
       if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
 
-      if (e.code === "Space" && !e.ctrlKey && !e.metaKey) {
+      if (e.code === "Space" && !e.ctrlKey && !e.metaKey && isCreatePageActive()) {
         e.preventDefault();
         togglePlay();
       }
+    });
+
+    // Saat berpindah tab, music player/mini-player hanya aktif di Create.
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        requestAnimationFrame(updateMiniPlayerVisibility);
+      });
     });
   }
 
@@ -700,24 +719,15 @@
   }
 
   function injectSection() {
-    const container = document.querySelector(".container");
-    if (!container) return;
+    const createPanel = $("createPanel");
+    if (!createPanel) return;
 
     // Hapus kalau sudah ada (biar tidak dobel)
     const existing = $("rdkMusicSection");
     if (existing) existing.remove();
 
     const section = buildSection();
-    const footer = container.querySelector(".footer");
-    const spotify = container.querySelector(".spotify-section");
-
-    if (footer) {
-      container.insertBefore(section, footer);
-    } else if (spotify) {
-      container.insertBefore(section, spotify);
-    } else {
-      container.appendChild(section);
-    }
+    createPanel.appendChild(section);
   }
 
   function injectMiniPlayer() {
