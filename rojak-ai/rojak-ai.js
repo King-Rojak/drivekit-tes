@@ -1,5 +1,6 @@
 /* ============================================================
    ROJAK AI — CS & Tutor (Text-only)
+   Fitur: typewriter effect + markdown live render
 ============================================================ */
 
 (function () {
@@ -23,7 +24,9 @@
     open: false,
     sending: false,
     history: [],
-    scrollY: 0
+    scrollY: 0,
+    typingTimer: null,
+    typingActive: false
   };
 
   /* ---------- ICONS ---------- */
@@ -123,11 +126,84 @@
     } catch (_) { /* ignore */ }
   }
 
+  /* ---------- TYPEWRITER EFFECT ---------- */
+
+  function stopTyping() {
+    if (state.typingTimer) {
+      clearTimeout(state.typingTimer);
+      state.typingTimer = null;
+    }
+    state.typingActive = false;
+  }
+
+  function typewriterEffect(bubbleEl, fullText, onDone) {
+    // Batalkan animasi sebelumnya
+    stopTyping();
+    state.typingActive = true;
+
+    const rawText = String(fullText || "");
+    const totalChars = rawText.length;
+
+    // Kalau teks panjang, percepat animasi biar tidak kelamaan
+    let charsPerTick = 1;
+    let tickDelay = 18;
+
+    if (totalChars > 400) {
+      charsPerTick = 3;
+      tickDelay = 14;
+    } else if (totalChars > 200) {
+      charsPerTick = 2;
+      tickDelay = 16;
+    }
+
+    let i = 0;
+
+    function step() {
+      if (!state.typingActive) return;
+      if (!bubbleEl.parentNode) return;   // elemen sudah dihapus
+
+      i += charsPerTick;
+      if (i > totalChars) i = totalChars;
+
+      const partial = rawText.slice(0, i);
+
+      // Render markdown live + cursor blink
+      bubbleEl.innerHTML = renderRichText(partial) +
+        (i < totalChars ? '<span class="rojak-ai-cursor"></span>' : '');
+
+      // Auto scroll
+      const bodyEl = document.getElementById("rojakAiBody");
+      if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight;
+
+      if (i < totalChars) {
+        // Delay dinamis: jeda lebih lama setelah tanda baca
+        const lastChar = rawText.charAt(i - 1);
+        let delay = tickDelay;
+        if (lastChar === "." || lastChar === "!" || lastChar === "?") delay = tickDelay * 6;
+        else if (lastChar === "," || lastChar === ";" || lastChar === ":") delay = tickDelay * 3;
+        else if (lastChar === "\n") delay = tickDelay * 4;
+
+        state.typingTimer = setTimeout(step, delay);
+      } else {
+        // Selesai — render final tanpa cursor
+        bubbleEl.innerHTML = renderRichText(rawText);
+        state.typingActive = false;
+        state.typingTimer = null;
+        if (typeof onDone === "function") onDone();
+      }
+    }
+
+    // Mulai dari kosong
+    bubbleEl.innerHTML = '<span class="rojak-ai-cursor"></span>';
+    state.typingTimer = setTimeout(step, 120);
+  }
+
   /* ---------- RENDER ---------- */
 
-  function appendMessageEl(role, content, ts) {
+  function appendMessageEl(role, content, ts, options) {
+    options = options || {};
     const bodyEl = document.getElementById("rojakAiBody");
-    if (!bodyEl) return;
+    if (!bodyEl) return null;
 
     const msg = el("div", {
       class: "rojak-ai-msg rojak-ai-msg-" + (role === "user" ? "user" : "bot")
@@ -135,6 +211,21 @@
 
     const bubble = el("div", { class: "rojak-ai-bubble" });
 
+    if (options.typewriter && role === "assistant") {
+      // Mode animasi ketik — konten diisi bertahap oleh typewriterEffect
+      const inner = el("div", { class: "rojak-ai-bubble-inner" });
+      bubble.appendChild(inner);
+
+      msg.appendChild(bubble);
+      msg.appendChild(el("div", { class: "rojak-ai-time", text: formatTime(ts) }));
+      bodyEl.appendChild(msg);
+      scrollToBottom();
+
+      typewriterEffect(inner, content, options.onDone);
+      return msg;
+    }
+
+    // Mode normal — konten langsung tampil
     if (content) {
       bubble.appendChild(el("div", { html: renderRichText(content) }));
     }
@@ -143,6 +234,7 @@
     msg.appendChild(el("div", { class: "rojak-ai-time", text: formatTime(ts) }));
     bodyEl.appendChild(msg);
     scrollToBottom();
+    return msg;
   }
 
   function appendTypingEl() {
@@ -255,6 +347,10 @@
 
     document.body.classList.remove("rojak-ai-no-scroll");
 
+    // Biarkan typing selesai di background biar history tetap ke-save
+    // (kalau mau stop total, uncomment baris di bawah)
+    // stopTyping();
+
     if (state.scrollY) {
       window.scrollTo(0, state.scrollY);
     }
@@ -279,6 +375,9 @@
       alert("Pesan terlalu panjang.");
       return;
     }
+
+    // Batalkan typing yang sedang jalan (kalau user kirim pesan baru)
+    stopTyping();
 
     const sugg = document.querySelector(".rojak-ai-suggest");
     if (sugg) sugg.remove();
@@ -334,16 +433,20 @@
             errMsg = j.message;
           }
         } catch (_) { /* ignore */ }
-        appendMessageEl("assistant", errMsg, Date.now());
+        appendMessageEl("assistant", errMsg, Date.now(), { typewriter: true });
         return;
       }
 
       const data = await res.json();
       const reply = (data && data.reply) ? String(data.reply) : "Maaf, tidak ada balasan.";
 
-      appendMessageEl("assistant", reply, Date.now());
-      state.history.push({ role: "assistant", content: reply, ts: Date.now() });
-      saveHistory();
+      appendMessageEl("assistant", reply, Date.now(), {
+        typewriter: true,
+        onDone: function () {
+          state.history.push({ role: "assistant", content: reply, ts: Date.now() });
+          saveHistory();
+        }
+      });
 
     } catch (err) {
       removeTypingEl();
@@ -353,11 +456,9 @@
           ? "Rojak AI terlalu lama merespons. Coba kirim lagi."
           : "Tidak dapat terhubung ke Rojak AI. Periksa koneksi internet kamu.";
 
-      appendMessageEl(
-        "assistant",
-        errorMessage,
-        Date.now()
-      );
+      appendMessageEl("assistant", errorMessage, Date.now(), {
+        typewriter: true
+      });
     } finally {
       state.sending = false;
       if (sendBtn) sendBtn.disabled = false;
@@ -368,6 +469,7 @@
 
   function resetConversation() {
     if (!confirm("Reset percakapan Rojak AI?")) return;
+    stopTyping();
     state.history = [];
     try { localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (_) {}
     renderHistory();
