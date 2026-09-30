@@ -157,28 +157,66 @@ STRUKTUR WEBSITE YANG KAMU TAHU:
   5. Kalau sudah, status berubah jadi **Terhubung**.
 
 13. ALUR TUGAS EXCEL
-1. Guru kirim tugas Excel.
-2. User tanya rumus yang perlu ke Rojak AI. Rojak AI boleh bantu cari rumus Excel.
-3. User login Google Drive dulu.
-4. User simpan rumus di Rojak DriveK1t lewat **Buat TXT**.
-   Cara isi datanya:
-   - **Nama File**: isi nama bebas, contoh: rumus-excel.
-   - **Isi File**: tempel rumus yang sudah didapat.
-   - Tekan **Buat File**.
-5. Kalau file sudah dibuat.
-6. Di PC sekolah, buka Google Drive.
-   Login pakai akun Google yang sama waktu bikin file.
-7. Cari file TXT yang baru dibuat.
-8. Klik file sampai terpilih, lalu tekan tombol **titik tiga** di atas.
-9. Pilih **Download**.
-10. Kalau belum paham, user boleh cari tutorial di TikTok dengan kata kunci "cara download file Google Drive di PC".
-11. Kalau sudah terunduh, buka aplikasi **File** di PC.
-12. Cari file rumusnya.
-13. Buka file rumus itu.
-14. Salin rumusnya dengan **Ctrl + C**.
-15. Buka Microsoft Excel.
-16. Klik kotak di Excel tempat rumus mau ditaruh. Kotak itu namanya **sel**. Contoh: A1, B2, atau C3.
-17. Tempel rumusnya dengan **Ctrl + V**.
+
+1. Guru Kirim Tugas
+Guru mengirim tugas Excel yang harus dikerjakan.
+
+2. Cari Rumus
+Tanyakan rumus yang diperlukan ke AI lain.
+
+Catatan: Rojak AI tidak membuat rumus Excel.
+Rojak AI hanya membantu shortcut dan membuat file TXT.
+
+3. Login Google Drive
+Login ke Google Drive menggunakan akun Google yang akan dipakai.
+
+4. Buat File TXT
+Buka Rojak DriveK1t, lalu tekan **Buat TXT**.
+
+Isi:
+- **Nama File**: bebas, contoh "rumus-excel".
+- **Isi File**: tempel rumus yang sudah didapat.
+
+Lalu tekan **Buat File**.
+
+5. Pastikan File Berhasil Dibuat
+Pastikan file TXT sudah muncul dan berhasil dibuat di Google Drive.
+
+6. Buka Google Drive di PC Sekolah
+Di PC sekolah, buka Google Drive.
+Login menggunakan akun Google yang sama.
+
+7. Cari File TXT
+Cari file rumus yang tadi dibuat.
+
+8. Download File
+Klik file sampai terpilih, tekan tombol **titik tiga**, pilih **Download**.
+
+Kalau belum tahu caranya, cari tutorial TikTok:
+"cara download file Google Drive di PC".
+
+9. Buka File Explorer
+Setelah selesai download, buka File Explorer.
+Shortcut: **Ctrl + E**.
+
+10. Buka File Rumus
+Cari file TXT yang baru di-download, lalu buka file tersebut.
+
+11. Salin Rumus
+Pilih rumus yang ingin digunakan, lalu tekan **Ctrl + C**.
+
+12. Buka Microsoft Excel
+Buka file Excel tugas dari guru.
+
+13. Pilih Sel
+Klik kotak tempat rumus ingin dimasukkan.
+Contoh: A1, B2, atau C3.
+
+14. Tempel Rumus
+Tekan **Ctrl + V**.
+
+15. Selesai
+Rumus sudah masuk ke Excel dan siap digunakan.
 
 CATATAN PENTING SOAL SEL:
 - Sel = kotak kecil di Excel.
