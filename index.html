@@ -606,7 +606,7 @@
     .rdk-log-fab {
       position: fixed;
       right: 14px;
-      bottom: 14px;
+      bottom: 76px;            /* digeser ke atas, di atas FAB Rojak AI */
       z-index: 99998;
       width: 42px;
       height: 42px;
@@ -620,9 +620,26 @@
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 8px 22px rgba(0, 0, 0, .55);
+      transition: transform .15s ease, background .15s ease;
     }
 
-    .rdk-log-fab.visible { display: grid; }
+    .rdk-log-fab:hover {
+      transform: translateY(-2px);
+      background: #221814;
+    }
+
+    /* FAB cuma muncul kalau admin & sudah login */
+    .rdk-log-fab.rdk-log-fab-admin { display: grid; }
+
+    @media (max-width: 600px) {
+      .rdk-log-fab {
+        right: 12px;
+        bottom: 68px;
+        width: 38px;
+        height: 38px;
+        font-size: 14px;
+      }
+    }
 
     .rdk-log-panel {
       position: fixed;
@@ -779,6 +796,7 @@
       let logCount = 0;
       let errorCount = 0;
       let items = [];
+      let isAdmin = false;
 
       function timeStr() {
         const d = new Date();
@@ -817,10 +835,21 @@
         if (countEl) countEl.textContent = String(logCount);
         if (fabCount) fabCount.textContent = errorCount > 0 ? String(errorCount) : String(logCount);
 
+        // FAB cuma tampil kalau user sudah login sebagai admin
         if (fab) {
-          fab.classList.add("visible");
-          fab.style.color = errorCount > 0 ? "#ff8888" : "#8fd09a";
+          if (isAdmin) {
+            fab.classList.add("rdk-log-fab-admin");
+            fab.style.color = errorCount > 0 ? "#ff8888" : "#8fd09a";
+          } else {
+            fab.classList.remove("rdk-log-fab-admin");
+          }
         }
+      }
+
+      function setAdmin(value) {
+        isAdmin = !!value;
+        if (!isAdmin && panel) panel.classList.remove("open");
+        render();
       }
 
       function escapeHtml(s) {
@@ -830,7 +859,10 @@
           .replaceAll(">", "&gt;");
       }
 
-      function open() { if (panel) panel.classList.add("open"); }
+      function open() {
+        if (!isAdmin) return;
+        if (panel) panel.classList.add("open");
+      }
       function close() { if (panel) panel.classList.remove("open"); }
 
       function clear() {
@@ -895,7 +927,15 @@
       add("UA: " + navigator.userAgent.slice(0, 80), "info");
       add("URL: " + location.href, "info");
 
-      return { add: add, open: open, close: close, clear: clear, copy: copy };
+      return {
+        add: add,
+        open: open,
+        close: close,
+        clear: clear,
+        copy: copy,
+        setAdmin: setAdmin,
+        isAdmin: function () { return isAdmin; }
+      };
     })();
   </script>
 
@@ -1467,6 +1507,12 @@
         saveRoleCache(role);
         saveProfileCache(user, role);
         fillProfileUI(user, role);
+
+        // Console log cuma untuk admin
+        if (window.RDK_LOG && window.RDK_LOG.setAdmin) {
+          window.RDK_LOG.setAdmin(role === "admin");
+        }
+
         LOG.add("loadProfile selesai → showApp", "ok");
         showApp();
       });
@@ -1481,6 +1527,12 @@
       LOG.add("Pakai role dari cache: " + cachedRole, "warn");
 
       fillProfileUI(user, cachedRole);
+
+      // Console log cuma untuk admin (fallback pakai cache role)
+      if (window.RDK_LOG && window.RDK_LOG.setAdmin) {
+        window.RDK_LOG.setAdmin(cachedRole === "admin");
+      }
+
       showApp();
     }
 
@@ -1541,6 +1593,10 @@
 
     onAuthStateChanged(auth, function (user) {
       if (!user) {
+        // Sembunyikan console log untuk user yang belum login
+        if (window.RDK_LOG && window.RDK_LOG.setAdmin) {
+          window.RDK_LOG.setAdmin(false);
+        }
         LOG.add("onAuthStateChanged: user NULL → showLogin", "warn");
         showLogin();
         return;
@@ -1887,6 +1943,11 @@
     };
 
     $("logoutButton").onclick = function () {
+      // Sembunyikan console log sebelum logout
+      if (window.RDK_LOG && window.RDK_LOG.setAdmin) {
+        window.RDK_LOG.setAdmin(false);
+      }
+
       if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
         try { window.google.accounts.oauth2.revoke(accessToken, function () {}); } catch (e) {}
       }
