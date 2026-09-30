@@ -3,880 +3,642 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0d0e0b">
+  <meta name="theme-color" content="#08090a">
   <link rel="icon" type="image/png" href="https://files.catbox.moe/jsc22m.jpg">
   <title>Rojak DriveK1t · Admin</title>
 
-  <!-- FONTS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg:#0d0e0b;
-      --panel:#151614;
-      --panel-2:#191a18;
-      --input:#0b0c0a;
-      --border:#292a27;
-      --border-soft:#222320;
-      --text:#eeeeea;
-      --muted:#8b8c86;
-      --muted-2:#676861;
-      --orange:#e45632;
-      --orange-hover:#f0643f;
-      --green:#69b879;
-      --red:#d9655c;
+      --bg: #08090a;
+      --bg-soft: #0d0e0f;
+      --panel: #111213;
+      --panel-2: #161718;
+      --panel-3: #1c1d1e;
+      --input: #0a0b0c;
+      --line: #1f2021;
+      --line-soft: #18191a;
+      --line-bright: #2a2b2c;
+      --text: #f0f0ee;
+      --text-soft: #a8a9a5;
+      --text-muted: #6e6f6b;
+      --text-ghost: #4a4b48;
+      --accent: #e45632;
+      --accent-hover: #f0643f;
+      --accent-soft: rgba(228, 86, 50, .08);
+      --accent-line: rgba(228, 86, 50, .35);
+      --green: #6bb87c;
+      --red: #d9655c;
+      --ease: cubic-bezier(.16, 1, .3, 1);
+      --dur-fast: 140ms;
+      --dur-base: 220ms;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     html, body {
-      touch-action: pan-x pan-y;
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-      background: var(--bg);
-      color: var(--text);
+      margin: 0; padding: 0; min-height: 100%;
+      background: var(--bg); color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    body {
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    body { letter-spacing: -.01em; }
+    button, select, input, textarea { font: inherit; letter-spacing: inherit; }
+    button { cursor: pointer; outline: none; }
 
-    button, select, input, textarea { font: inherit; }
-    button { cursor: pointer; }
-
-    /* LOADING */
-
+    /* ---------- LOADING ---------- */
     .loading-screen {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
       background: var(--bg);
     }
 
     .loading-box { text-align: center; }
 
     .loading-logo {
-      width: 46px;
-      height: 46px;
-      margin: 0 auto 10px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: var(--panel);
+      width: 52px; height: 52px; margin: 0 auto 20px;
+      overflow: hidden; border: 1px solid var(--line);
+      border-radius: 10px; background: var(--panel-2);
+      position: relative;
+    }
+    .loading-logo img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: 9px; }
+
+    .loading-logo::before {
+      content: ""; position: absolute; inset: -7px;
+      border-radius: 14px; border: 1px solid transparent;
+      border-top-color: var(--accent);
+      animation: rdkSpin 1.2s linear infinite;
     }
 
-    .loading-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .loading-text {
+      color: var(--text-muted); font-size: 10px; font-weight: 500;
+      letter-spacing: .04em; text-transform: uppercase;
+    }
 
-    .loading-text { color: var(--muted); font-size: 9px; }
+    @keyframes rdkSpin { to { transform: rotate(360deg); } }
 
-    /* LOGIN */
-
+    /* ---------- LOGIN ---------- */
     .login-screen {
-      min-height: 100vh;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 22px;
-      background:
-        radial-gradient(900px 360px at 50% -18%, rgba(228, 86, 50, .08), transparent 65%),
-        var(--bg);
+      min-height: 100vh; display: none;
+      align-items: center; justify-content: center;
+      padding: 24px 20px; background: var(--bg);
     }
 
     .login-box {
-      width: min(420px, 100%);
-      padding: 28px;
-      border: 1px solid #30312e;
-      border-radius: 12px;
-      background: #121310;
-      box-shadow: 0 24px 70px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255,255,255,.025);
+      width: min(400px, 100%);
+      padding: 28px 26px 24px;
+      border: 1px solid var(--line); border-radius: 8px;
+      background: var(--panel);
     }
 
     .login-topline {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 26px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin-bottom: 26px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--line-soft);
     }
 
     .login-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      height: 24px;
-      padding: 0 9px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: #0d0e0b;
-      color: var(--muted);
-      font-size: 7px;
-      font-weight: 700;
-      letter-spacing: .55px;
-      text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-muted); font-size: 9px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
     }
 
     .login-badge-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--orange);
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent);
       box-shadow: 0 0 0 3px rgba(228, 86, 50, .12);
     }
 
-    .login-version { color: var(--muted-2); font-size: 8px; }
+    .login-version {
+      color: var(--text-ghost); font-size: 9px; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    }
 
     .login-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      display: flex; align-items: center; gap: 14px;
       margin-bottom: 22px;
     }
 
     .login-logo {
-      width: 58px;
-      height: 58px;
-      flex: 0 0 58px;
-      overflow: hidden;
-      border: 1px solid #30312e;
-      border-radius: 10px;
-      background: var(--panel-2);
-      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+      width: 44px; height: 44px; flex: 0 0 44px;
+      overflow: hidden; border: 1px solid var(--line);
+      border-radius: 8px; background: var(--panel-2);
     }
-
     .login-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
-    .login-heading { min-width: 0; }
-
-    .login-box h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -.7px;
+    .login-heading h1 {
+      margin: 0; font-size: 20px; font-weight: 700;
+      letter-spacing: -.03em; line-height: 1.15;
     }
-
-    .login-box p {
-      margin: 5px 0 0;
-      color: var(--muted);
-      font-size: 9px;
-      line-height: 1.55;
+    .login-heading p {
+      margin: 6px 0 0; color: var(--text-muted);
+      font-size: 11.5px; line-height: 1.5;
     }
 
     .google-login {
-      width: 100%;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      border: 1px solid #363733;
-      border-radius: 8px;
-      background: #f5f5f4;
-      color: #1a1a1a;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: -.1px;
-      box-shadow: 0 4px 14px rgba(0,0,0,.3);
-      transition: background .15s ease, transform .1s ease;
+      width: 100%; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; border: 1px solid var(--line-bright);
+      border-radius: 6px; background: var(--panel-2); color: var(--text);
+      font-size: 12px; font-weight: 600;
+      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
-
-    .google-login:hover { background: #ffffff; }
-    .google-login:active { transform: translateY(1px); }
-    .google-login:disabled { opacity: .6; cursor: wait; }
-
-    .google-icon { width: 16px; height: 16px; flex: 0 0 16px; }
+    .google-login:hover { background: var(--panel-3); border-color: #3a3b3c; }
+    .google-login:disabled { opacity: .55; cursor: wait; }
+    .google-icon { width: 15px; height: 15px; flex: 0 0 15px; }
 
     .login-error {
-      min-height: 15px;
-      margin-top: 9px;
-      color: var(--red);
-      font-size: 8.5px;
-      line-height: 1.4;
-      text-align: center;
+      min-height: 16px; margin-top: 10px;
+      color: var(--red); font-size: 11px; line-height: 1.4; text-align: left;
     }
 
-    /* APP */
-
+    /* ---------- APP ---------- */
     .app { display: none; min-height: 100vh; }
 
     .topbar {
-      height: 58px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      border-bottom: 1px solid var(--border);
-      background: #10110f;
+      height: 54px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px; border-bottom: 1px solid var(--line);
+      background: var(--bg); position: sticky; top: 0; z-index: 100;
     }
 
-    .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
     .brand-logo {
-      width: 35px;
-      height: 35px;
-      flex: 0 0 35px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel);
+      width: 30px; height: 30px; flex: 0 0 30px;
+      overflow: hidden; border: 1px solid var(--line);
+      border-radius: 6px; background: var(--panel-2);
     }
-
     .brand-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
-    .brand-text { font-size: 11px; font-weight: 700; letter-spacing: -.2px; }
-    .brand-text .accent { color: var(--orange); }
+    .brand-text {
+      font-size: 12px; font-weight: 600; letter-spacing: -.01em;
+    }
+    .brand-text .accent { color: var(--accent); }
 
     .brand-badge {
-      display: inline-flex;
-      align-items: center;
-      height: 18px;
-      margin-left: 6px;
-      padding: 0 7px;
-      border: 1px solid rgba(228, 86, 50, .35);
-      border-radius: 4px;
-      background: rgba(228, 86, 50, .1);
-      color: var(--orange);
-      font-size: 7px;
-      font-weight: 700;
-      letter-spacing: .3px;
-      text-transform: uppercase;
+      display: inline-flex; align-items: center;
+      height: 18px; margin-left: 6px; padding: 0 7px;
+      border: 1px solid var(--accent-line); border-radius: 4px;
+      background: var(--accent-soft); color: var(--accent);
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
     }
 
-    .top-actions { display: flex; align-items: center; gap: 5px; }
+    .top-actions { display: flex; align-items: center; gap: 6px; }
 
     .top-button {
-      height: 30px;
-      padding: 0 11px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 600;
-      transition: background .12s ease, color .12s ease;
+      height: 30px; padding: 0 11px;
+      border: 1px solid var(--line); border-radius: 5px;
+      background: transparent; color: var(--text-soft);
+      font-size: 11px; font-weight: 500;
+      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
     }
-
-    .top-button:hover { background: var(--panel-2); color: var(--text); }
-
-    .top-button.active {
-      background: rgba(228, 86, 50, .12);
-      border-color: rgba(228, 86, 50, .4);
-      color: var(--orange);
-    }
+    .top-button:hover { background: var(--panel-2); border-color: var(--line-bright); color: var(--text); }
 
     .container {
-      width: min(880px, calc(100% - 20px));
-      margin: 0 auto;
-      padding: 24px 0 45px;
+      width: min(820px, calc(100% - 24px));
+      margin: 0 auto; padding: 22px 0 40px;
     }
 
-    /* TABS */
-
+    /* ---------- ADMIN TABS ---------- */
     .admin-tabs {
+      position: relative;
+      height: 42px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      margin-bottom: 22px;
-      padding: 4px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      margin-bottom: 24px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
       background: var(--panel);
+      padding: 0;
+      overflow: hidden;
     }
+
+    .admin-tabs::before {
+      content: "";
+      position: absolute;
+      top: 3px; bottom: 3px; left: 3px;
+      width: calc((100% - 6px) / 2);
+      border-radius: 4px;
+      background: var(--panel-3);
+      z-index: 0;
+      transition: transform 320ms cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .admin-tabs[data-active="0"]::before { transform: translateX(0); }
+    .admin-tabs[data-active="1"]::before { transform: translateX(100%); }
 
     .admin-tab {
-      height: 38px;
-      border: 0;
-      border-radius: 7px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .15s ease, color .15s ease;
+      position: relative;
+      z-index: 1;
+      height: 100%; border: 0; border-radius: 0;
+      background: transparent; color: var(--text-muted);
+      font-size: 12px; font-weight: 500;
+      transition: color 220ms cubic-bezier(.16, 1, .3, 1);
     }
-
-    .admin-tab:hover { color: var(--text); }
-
-    .admin-tab.active {
-      background: #242521;
-      color: var(--text);
-    }
+    .admin-tab:hover { color: var(--text-soft); }
+    .admin-tab.active { color: var(--text); font-weight: 600; }
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .page-head { margin-bottom: 18px; }
-
+    .page-head { margin-bottom: 22px; }
     .page-head h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -.7px;
+      margin: 0; font-size: 22px; font-weight: 700;
+      letter-spacing: -.025em;
     }
-
     .page-head p {
-      margin: 5px 0 0;
-      color: var(--muted);
-      font-size: 10px;
-      line-height: 1.5;
+      margin: 6px 0 0; color: var(--text-muted);
+      font-size: 12px; line-height: 1.5;
     }
 
-    /* SUMMARY */
-
+    /* ---------- SUMMARY ---------- */
     .summary {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 24px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 24px;
     }
 
     .summary-card {
-      padding: 14px 16px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--panel);
       position: relative;
-      overflow: hidden;
+      padding: 16px;
+      border: 1px solid var(--line); border-radius: 6px;
+      background: var(--panel);
     }
 
     .summary-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--accent, var(--muted-2));
-      opacity: .65;
+      content: ""; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; background: var(--accent, var(--text-ghost)); opacity: .55;
     }
 
-    .summary-card.total::before { --accent: #8ab8d0; }
-    .summary-card.admin::before { --accent: var(--orange); }
+    .summary-card.total::before  { --accent: #6a8fa8; }
+    .summary-card.admin::before  { --accent: var(--accent); }
     .summary-card.member::before { --accent: var(--green); }
 
     .summary-label {
-      display: block;
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: .3px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
+      display: block; color: var(--text-muted);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      margin-bottom: 10px;
     }
 
     .summary-value {
-      display: block;
-      color: var(--text);
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: -.8px;
-      line-height: 1;
+      display: block; color: var(--text);
+      font-size: 28px; font-weight: 700;
+      letter-spacing: -.03em; line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* TOOLBAR */
-
+    /* ---------- TOOLBAR — FIX SEARCH BAR ---------- */
     .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px; flex-wrap: wrap;
     }
 
     .search-wrap {
-      flex: 1 1 200px;
       position: relative;
+      flex: 1 1 200px;
+      min-width: 0;
     }
 
     .search-icon {
-      position: absolute;
-      left: 11px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 14px;
-      height: 14px;
-      color: var(--muted-2);
-      pointer-events: none;
+      position: absolute !important;
+      left: 12px !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      width: 14px !important;
+      height: 14px !important;
+      max-width: 14px !important;
+      max-height: 14px !important;
+      color: var(--text-ghost) !important;
+      pointer-events: none !important;
+      z-index: 2;
     }
 
     .search-input {
       width: 100%;
-      height: 38px;
-      padding: 0 12px 0 34px;
+      height: 40px;
+      padding: 0 14px 0 36px;
       outline: none;
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
       background: var(--input);
       color: var(--text);
-      font-size: 11px;
+      font-size: 12.5px;
+      transition: border-color var(--dur-fast) ease, box-shadow var(--dur-base) var(--ease);
     }
 
-    .search-input::placeholder { color: #595a55; }
-    .search-input:focus { border-color: #3b3c38; }
+    .search-input::placeholder { color: var(--text-ghost); }
+    .search-input:hover { border-color: var(--line-bright); }
+    .search-input:focus {
+      border-color: var(--accent-line);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
 
     .filter-select {
-      height: 38px;
-      padding: 0 12px;
+      height: 40px; padding: 0 14px;
       outline: none;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--input);
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 600;
+      border: 1px solid var(--line); border-radius: 5px;
+      background: var(--input); color: var(--text);
+      font-size: 12.5px; font-weight: 500;
       cursor: pointer;
+      transition: border-color var(--dur-fast) ease;
     }
+    .filter-select:hover { border-color: var(--line-bright); }
+    .filter-select:focus { border-color: var(--accent-line); }
 
-    .filter-select:focus { border-color: #3b3c38; }
-
-    /* SECTION */
-
+    /* ---------- SECTION ---------- */
     .section { margin-top: 4px; }
 
     .section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin-bottom: 14px;
     }
 
     .section-title {
-      margin: 0;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: -.2px;
+      margin: 0; font-size: 14px; font-weight: 600;
+      letter-spacing: -.015em;
     }
+    .section-info { color: var(--text-muted); font-size: 11px; }
 
-    .section-info { color: var(--muted); font-size: 9px; }
-
-    /* USER LIST */
-
+    /* ---------- USER LIST ---------- */
     .user-list { display: flex; flex-direction: column; gap: 8px; }
 
     .user-card {
-      padding: 14px 16px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid var(--line); border-radius: 6px;
       background: var(--panel);
-      transition: border-color .15s ease, background .15s ease;
+      transition: border-color var(--dur-base) ease, background var(--dur-base) ease;
     }
 
-    .user-card:hover {
-      border-color: #33342f;
-      background: #161714;
-    }
+    .user-card:hover { border-color: var(--line-bright); }
 
     .user-card.self {
-      border-color: rgba(228, 86, 50, .35);
-      background: linear-gradient(135deg, rgba(228, 86, 50, .05), transparent 60%), var(--panel);
+      border-color: var(--accent-line);
+      background: linear-gradient(135deg, var(--accent-soft), transparent 60%), var(--panel);
     }
 
-    .user-row-top {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .user-row-top { display: flex; align-items: center; gap: 12px; }
 
     .avatar {
-      width: 44px;
-      height: 44px;
-      flex: 0 0 44px;
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--panel-2);
+      width: 44px; height: 44px; flex: 0 0 44px;
+      border: 1px solid var(--line); border-radius: 50%;
+      object-fit: cover; background: var(--panel-2);
     }
 
     .user-info { min-width: 0; flex: 1 1 auto; }
 
     .user-name {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      overflow: hidden;
+      display: flex; align-items: center; gap: 8px; overflow: hidden;
     }
 
     .user-name-text {
-      overflow: hidden;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: -.2px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow: hidden; color: var(--text);
+      font-size: 13px; font-weight: 600;
+      letter-spacing: -.01em;
+      text-overflow: ellipsis; white-space: nowrap;
     }
 
     .user-you-badge {
       flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      height: 18px;
-      padding: 0 7px;
-      border: 1px solid rgba(228, 86, 50, .35);
-      border-radius: 4px;
-      background: rgba(228, 86, 50, .1);
-      color: var(--orange);
-      font-size: 7px;
-      font-weight: 700;
-      letter-spacing: .3px;
-      text-transform: uppercase;
+      display: inline-flex; align-items: center;
+      height: 18px; padding: 0 7px;
+      border: 1px solid var(--accent-line); border-radius: 4px;
+      background: var(--accent-soft); color: var(--accent);
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
     }
 
     .user-email {
-      overflow: hidden;
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: 10px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow: hidden; margin-top: 3px;
+      color: var(--text-muted); font-size: 11px;
+      text-overflow: ellipsis; white-space: nowrap;
     }
 
     .role-badge {
       flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      height: 26px;
-      padding: 0 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel-2);
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: .3px;
-      text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 26px; padding: 0 10px;
+      border: 1px solid var(--line); border-radius: 5px;
+      background: var(--panel-2); color: var(--text-soft);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
     }
 
     .role-badge.admin {
-      border-color: rgba(228, 86, 50, .35);
-      background: rgba(228, 86, 50, .08);
-      color: var(--orange);
+      border-color: var(--accent-line);
+      background: var(--accent-soft);
+      color: var(--accent);
     }
 
     .role-badge.member {
-      border-color: rgba(105, 184, 121, .3);
-      background: rgba(105, 184, 121, .08);
+      border-color: rgba(107, 184, 124, .25);
+      background: rgba(107, 184, 124, .05);
       color: var(--green);
     }
 
     .role-select {
-      width: 120px;
-      height: 30px;
-      padding: 0 8px;
+      width: 130px; height: 32px; padding: 0 10px;
       outline: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 10px;
-      font-weight: 600;
+      border: 1px solid var(--line); border-radius: 5px;
+      background: var(--panel-2); color: var(--text);
+      font-size: 12px; font-weight: 500;
       cursor: pointer;
+      transition: border-color var(--dur-fast) ease;
     }
-
-    .role-select:hover { border-color: #454640; }
-    .role-select:focus { border-color: var(--orange); }
+    .role-select:hover { border-color: var(--line-bright); }
+    .role-select:focus { border-color: var(--accent); }
     .role-select:disabled { opacity: .5; cursor: not-allowed; }
 
     .user-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px 20px;
-      margin-top: 11px;
-      padding-top: 11px;
-      border-top: 1px solid var(--border-soft);
+      display: flex; flex-wrap: wrap; gap: 14px 24px;
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--line-soft);
     }
 
     .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--muted);
-      font-size: 9px;
+      display: flex; align-items: center; gap: 7px;
+      color: var(--text-muted); font-size: 11px;
     }
-
-    .meta-item svg {
-      width: 12px;
-      height: 12px;
-      flex: 0 0 12px;
-      opacity: .7;
-    }
-
-    .meta-value {
-      color: var(--text);
-      font-weight: 600;
-    }
+    .meta-item svg { width: 13px; height: 13px; flex: 0 0 13px; opacity: .7; }
+    .meta-value { color: var(--text); font-weight: 500; }
 
     .uid-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin-top: 10px;
     }
 
     .uid-label {
-      flex: 0 0 auto;
-      color: var(--muted-2);
-      font-size: 8px;
-      font-weight: 600;
-      letter-spacing: .5px;
-      text-transform: uppercase;
+      flex: 0 0 auto; color: var(--text-ghost);
+      font-size: 9px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
     }
 
     .uid-value {
-      overflow: hidden;
-      flex: 1 1 auto;
-      color: #6a6b64;
+      overflow: hidden; flex: 1 1 auto;
+      color: var(--text-ghost);
       font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
-      font-size: 9px;
-      text-align: right;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size: 10px; text-align: right;
+      text-overflow: ellipsis; white-space: nowrap;
     }
 
-    /* BROADCAST PANEL */
-
+    /* ---------- BROADCAST ---------- */
     .broadcast-form {
       padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      border: 1px solid var(--line); border-radius: 6px;
       background: var(--panel);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
 
     .broadcast-form label {
-      display: block;
-      margin-bottom: 8px;
-      color: #b4b5af;
-      font-size: 10px;
-      font-weight: 600;
+      display: block; margin-bottom: 8px;
+      color: var(--text-soft); font-size: 11px; font-weight: 500;
     }
 
     .broadcast-textarea {
-      width: 100%;
-      min-height: 100px;
-      padding: 12px;
+      width: 100%; min-height: 100px; padding: 12px;
       outline: none;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--input);
-      color: var(--text);
-      font-size: 12px;
-      font-family: inherit;
-      line-height: 1.5;
+      border: 1px solid var(--line); border-radius: 5px;
+      background: var(--input); color: var(--text);
+      font-size: 12.5px; font-family: inherit; line-height: 1.55;
       resize: vertical;
+      transition: border-color var(--dur-fast) ease, box-shadow var(--dur-base) var(--ease);
     }
-
-    .broadcast-textarea::placeholder { color: #595a55; }
-    .broadcast-textarea:focus { border-color: #3b3c38; }
+    .broadcast-textarea::placeholder { color: var(--text-ghost); }
+    .broadcast-textarea:focus {
+      border-color: var(--accent-line);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
 
     .broadcast-info {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 9px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 8px; color: var(--text-muted); font-size: 11px;
     }
 
-    .broadcast-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
-    }
+    .broadcast-actions { display: flex; gap: 8px; margin-top: 14px; }
 
     .broadcast-send {
-      flex: 1;
-      height: 42px;
-      border: 1px solid var(--orange);
-      border-radius: 8px;
-      background: var(--orange);
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .15s ease;
+      flex: 1; height: 40px;
+      border: 1px solid var(--accent); border-radius: 5px;
+      background: var(--accent); color: white;
+      font-size: 12.5px; font-weight: 600;
+      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
-
-    .broadcast-send:hover { background: var(--orange-hover); }
-    .broadcast-send:disabled { opacity: .5; cursor: wait; }
+    .broadcast-send:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .broadcast-send:disabled { opacity: .55; cursor: wait; }
 
     .broadcast-clear {
-      height: 42px;
-      padding: 0 18px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
+      height: 40px; padding: 0 16px;
+      border: 1px solid var(--line); border-radius: 5px;
+      background: transparent; color: var(--text-soft);
+      font-size: 12.5px; font-weight: 500;
     }
+    .broadcast-clear:hover { background: var(--panel-2); border-color: var(--line-bright); color: var(--text); }
 
-    .broadcast-clear:hover { background: var(--panel-2); color: var(--text); }
-
-    /* BROADCAST LIST */
-
-    .broadcast-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    /* ---------- BROADCAST LIST ---------- */
+    .broadcast-list { display: flex; flex-direction: column; gap: 8px; }
 
     .broadcast-item {
-      padding: 14px 16px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid var(--line); border-radius: 6px;
       background: var(--panel);
-      transition: border-color .15s ease;
+      transition: border-color var(--dur-fast) ease;
     }
 
     .broadcast-item.active-broadcast {
-      border-color: rgba(105, 184, 121, .35);
-      background: linear-gradient(135deg, rgba(105, 184, 121, .04), transparent 60%), var(--panel);
+      border-color: rgba(107, 184, 124, .3);
+      background: linear-gradient(135deg, rgba(107, 184, 124, .04), transparent 60%), var(--panel);
     }
 
     .broadcast-item-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin-bottom: 12px;
     }
 
     .broadcast-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      height: 22px;
-      padding: 0 9px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--panel-2);
-      color: var(--muted);
-      font-size: 8px;
-      font-weight: 700;
-      letter-spacing: .4px;
-      text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 22px; padding: 0 9px;
+      border: 1px solid var(--line); border-radius: 4px;
+      background: var(--panel-2); color: var(--text-soft);
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
     }
 
     .broadcast-status.active {
-      border-color: rgba(105, 184, 121, .35);
-      background: rgba(105, 184, 121, .1);
+      border-color: rgba(107, 184, 124, .35);
+      background: rgba(107, 184, 124, .08);
       color: var(--green);
     }
 
     .broadcast-status-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: currentColor;
+      width: 5px; height: 5px; border-radius: 50%; background: currentColor;
     }
 
-    .broadcast-time-item {
-      color: var(--muted-2);
-      font-size: 9px;
-    }
+    .broadcast-time-item { color: var(--text-muted); font-size: 11px; }
 
     .broadcast-item-text {
-      color: var(--text);
-      font-size: 12px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      overflow-wrap: anywhere;
+      color: var(--text); font-size: 12.5px; line-height: 1.6;
+      white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere;
     }
 
     .broadcast-item-actions {
-      display: flex;
-      gap: 6px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-soft);
+      display: flex; gap: 8px;
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid var(--line-soft);
     }
 
     .broadcast-action-btn {
-      height: 30px;
-      padding: 0 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .12s ease, color .12s ease, border-color .12s ease;
+      height: 32px; padding: 0 12px;
+      border: 1px solid var(--line); border-radius: 5px;
+      background: transparent; color: var(--text-soft);
+      font-size: 11px; font-weight: 500;
+      transition: background var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
-
-    .broadcast-action-btn:hover {
-      background: var(--panel-2);
-      color: var(--text);
-    }
+    .broadcast-action-btn:hover { background: var(--panel-2); color: var(--text); }
 
     .broadcast-action-btn.danger:hover {
-      border-color: rgba(217, 101, 92, .5);
+      border-color: rgba(217, 101, 92, .4);
       color: var(--red);
-      background: rgba(217, 101, 92, .08);
+      background: rgba(217, 101, 92, .06);
     }
-
     .broadcast-action-btn.primary:hover {
-      border-color: rgba(228, 86, 50, .5);
-      color: var(--orange);
-      background: rgba(228, 86, 50, .08);
+      border-color: var(--accent-line);
+      color: var(--accent);
+      background: var(--accent-soft);
     }
 
-    /* MESSAGE */
-
+    /* ---------- MESSAGE / STATUS ---------- */
     .message {
-      padding: 40px 15px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 10px;
+      padding: 40px 15px; text-align: center;
+      color: var(--text-muted); font-size: 12px;
     }
-
     .message.error { color: var(--red); }
 
-    /* STATUS */
-
-    .status {
-      min-height: 16px;
-      margin-top: 14px;
-      font-size: 10px;
-      text-align: center;
-    }
-
+    .status { min-height: 16px; margin-top: 14px; font-size: 11px; text-align: center; }
     .status.success { color: var(--green); }
-    .status.error { color: var(--red); }
+    .status.error   { color: var(--red); }
 
-    /* MOBILE */
-
+    /* ---------- RESPONSIVE ---------- */
     @media (max-width: 700px) {
-      .topbar { height: 54px; padding: 0 12px; }
-      .brand-logo { width: 33px; height: 33px; flex-basis: 33px; }
-      .brand-text { font-size: 10.5px; }
-      .top-button { height: 28px; padding: 0 9px; font-size: 8.5px; }
-      .container { width: calc(100% - 20px); padding: 20px 0 40px; }
+      .topbar { height: 52px; padding: 0 12px; }
+      .brand-logo { width: 28px; height: 28px; flex-basis: 28px; }
+      .brand-text { font-size: 11.5px; }
+      .top-button { height: 28px; padding: 0 9px; font-size: 10.5px; }
+      .container { width: calc(100% - 20px); padding: 18px 0 36px; }
       .page-head h1 { font-size: 20px; }
-      .page-head p { font-size: 9.5px; }
-      .summary { gap: 6px; margin-bottom: 20px; }
-      .summary-card { padding: 11px 10px; }
-      .summary-label { font-size: 8px; margin-bottom: 6px; }
+      .summary { gap: 8px; }
+      .summary-card { padding: 12px; }
       .summary-value { font-size: 22px; }
-      .user-card { padding: 12px 13px; }
+      .user-card { padding: 14px; }
       .avatar { width: 40px; height: 40px; flex-basis: 40px; }
-      .user-name-text { font-size: 12.5px; }
-      .user-email { font-size: 9.5px; }
       .role-select { width: 100%; margin-top: 12px; }
       .toolbar { flex-direction: column; align-items: stretch; }
       .filter-select { width: 100%; }
-      .broadcast-form { padding: 14px; }
     }
 
     @media (max-width: 380px) {
@@ -884,7 +646,6 @@
     }
   </style>
 
-  <!-- RDK PREMIUM SYSTEM -->
   <link rel="stylesheet" href="./rojak-ai/rdk-tokens.css">
   <link rel="stylesheet" href="./rojak-ai/rdk-motion.css">
   <link rel="stylesheet" href="./rojak-ai/rdk-premium.css">
@@ -955,12 +716,10 @@
 
     <main class="container">
 
-      <div class="admin-tabs">
+      <div class="admin-tabs" data-active="0">
         <button class="admin-tab active" data-tab="users" type="button">Users</button>
         <button class="admin-tab" data-tab="broadcast" type="button">Broadcast</button>
       </div>
-
-      <!-- TAB: USERS -->
 
       <div id="tabUsers" class="tab-panel active">
         <div class="page-head">
@@ -1019,8 +778,6 @@
         </section>
       </div>
 
-      <!-- TAB: BROADCAST -->
-
       <div id="tabBroadcast" class="tab-panel">
         <div class="page-head">
           <h1>Broadcast</h1>
@@ -1067,26 +824,12 @@
   <script type="module">
     import { auth, db } from "./firebase-config.js";
     import {
-      GoogleAuthProvider,
-      signInWithPopup,
-      signInWithRedirect,
-      getRedirectResult,
-      signOut,
-      onAuthStateChanged,
-      setPersistence,
-      browserLocalPersistence
+      GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+      signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
     import {
-      collection,
-      getDoc,
-      getDocs,
-      doc,
-      updateDoc,
-      addDoc,
-      deleteDoc,
-      query,
-      orderBy,
-      serverTimestamp
+      collection, getDoc, getDocs, doc, updateDoc, addDoc, deleteDoc,
+      query, orderBy, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     const $ = id => document.getElementById(id);
@@ -1119,37 +862,26 @@
 
     function escapeHTML(value) {
       return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
     }
 
     function timeAgo(date) {
       if (!date) return "Belum pernah";
-
       const now = Date.now();
       const past = date.getTime();
       const diffSec = Math.floor((now - past) / 1000);
-
       if (diffSec < 60) return "Baru saja";
-
       const diffMin = Math.floor(diffSec / 60);
       if (diffMin < 60) return diffMin + " menit lalu";
-
       const diffHour = Math.floor(diffMin / 60);
       if (diffHour < 24) return diffHour + " jam lalu";
-
       const diffDay = Math.floor(diffHour / 24);
       if (diffDay < 7) return diffDay + " hari lalu";
-
       const diffWeek = Math.floor(diffDay / 7);
       if (diffWeek < 4) return diffWeek + " minggu lalu";
-
       const diffMonth = Math.floor(diffDay / 30);
       if (diffMonth < 12) return diffMonth + " bulan lalu";
-
       return Math.floor(diffDay / 365) + " tahun lalu";
     }
 
@@ -1185,7 +917,6 @@
         await signInWithPopup(auth, provider);
       } catch (error) {
         console.error(error);
-
         if (
           error.code === "auth/popup-blocked" ||
           error.code === "auth/popup-closed-by-user" ||
@@ -1195,19 +926,14 @@
           try {
             await signInWithRedirect(auth, new GoogleAuthProvider());
             return;
-          } catch (redirectError) {
-            console.error(redirectError);
-          }
+          } catch (redirectError) { console.error(redirectError); }
         }
-
         $("loginError").textContent = "Login gagal: " + (error.code || error.message);
       } finally {
         $("loginButton").disabled = false;
         if (label) label.textContent = "Continue with Google";
       }
     }
-
-    /* ================= USERS ================= */
 
     function applyFiltersAndRender() {
       const keyword = ($("searchInput").value || "").trim().toLowerCase();
@@ -1217,13 +943,11 @@
       let filtered = allUsers.filter(function (u) {
         const role = u.role === "admin" ? "admin" : "member";
         if (roleFilter !== "all" && role !== roleFilter) return false;
-
         if (keyword) {
           const name = (u.name || "").toLowerCase();
           const email = (u.email || "").toLowerCase();
           if (name.indexOf(keyword) === -1 && email.indexOf(keyword) === -1) return false;
         }
-
         return true;
       });
 
@@ -1257,7 +981,6 @@
 
         const lastLoginDate = toDate(user.lastLoginAt);
         const createdDate = toDate(user.createdAt);
-
         const lastLoginText = lastLoginDate ? timeAgo(lastLoginDate) : "Belum pernah";
         const joinedText = createdDate ? formatDate(createdDate) : "-";
 
@@ -1350,11 +1073,9 @@
 
     async function loadUsers() {
       $("usersList").innerHTML = '<div class="message">Memuat pengguna...</div>';
-
       try {
         const snapshot = await getDocs(collection(db, "users"));
         allUsers = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-
         updateSummary();
         applyFiltersAndRender();
       } catch (error) {
@@ -1363,8 +1084,6 @@
         setStatus("Tidak bisa membaca user. Pastikan akun ini memiliki role admin.", "error");
       }
     }
-
-    /* ================= BROADCAST ================= */
 
     async function sendBroadcast() {
       const textarea = $("broadcastMessage");
@@ -1390,19 +1109,13 @@
         const deactivatePromises = [];
         existingSnap.forEach(function (docSnap) {
           if (docSnap.data().active === true) {
-            deactivatePromises.push(
-              updateDoc(doc(db, "broadcasts", docSnap.id), { active: false })
-            );
+            deactivatePromises.push(updateDoc(doc(db, "broadcasts", docSnap.id), { active: false }));
           }
         });
-
-        if (deactivatePromises.length) {
-          await Promise.all(deactivatePromises);
-        }
+        if (deactivatePromises.length) await Promise.all(deactivatePromises);
 
         await addDoc(collection(db, "broadcasts"), {
-          message: message,
-          active: true,
+          message: message, active: true,
           createdAt: serverTimestamp(),
           createdBy: currentUser.uid,
           createdByName: currentUser.displayName || currentUser.email || "Admin"
@@ -1412,7 +1125,6 @@
         textarea.value = "";
         updateBroadcastCount();
         await loadBroadcasts();
-
       } catch (error) {
         console.error(error);
         setBroadcastStatus("Gagal mengirim broadcast: " + (error.code || error.message), "error");
@@ -1423,7 +1135,6 @@
 
     async function deleteBroadcast(id) {
       if (!confirm("Hapus broadcast ini? User tidak akan lihat lagi.")) return;
-
       try {
         await deleteDoc(doc(db, "broadcasts", id));
         setBroadcastStatus("Broadcast dihapus.", "success");
@@ -1441,14 +1152,11 @@
           const deactivatePromises = [];
           existingSnap.forEach(function (docSnap) {
             if (docSnap.id !== id && docSnap.data().active === true) {
-              deactivatePromises.push(
-                updateDoc(doc(db, "broadcasts", docSnap.id), { active: false })
-              );
+              deactivatePromises.push(updateDoc(doc(db, "broadcasts", docSnap.id), { active: false }));
             }
           });
           if (deactivatePromises.length) await Promise.all(deactivatePromises);
         }
-
         await updateDoc(doc(db, "broadcasts", id), { active: !currentActive });
         setBroadcastStatus(currentActive ? "Broadcast dinonaktifkan." : "Broadcast diaktifkan.", "success");
         await loadBroadcasts();
@@ -1460,7 +1168,6 @@
 
     async function loadBroadcasts() {
       $("broadcastList").innerHTML = '<div class="message">Memuat broadcast...</div>';
-
       try {
         const q = query(collection(db, "broadcasts"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
@@ -1489,19 +1196,11 @@
               </div>
               <div class="broadcast-item-text">${escapeHTML(b.message || "")}</div>
               <div class="broadcast-item-actions">
-                <button
-                  class="broadcast-action-btn ${isActive ? "" : "primary"}"
-                  type="button"
-                  data-toggle-id="${escapeHTML(b.id)}"
-                  data-active="${isActive}"
-                >
+                <button class="broadcast-action-btn ${isActive ? "" : "primary"}" type="button"
+                  data-toggle-id="${escapeHTML(b.id)}" data-active="${isActive}">
                   ${isActive ? "Nonaktifkan" : "Aktifkan"}
                 </button>
-                <button
-                  class="broadcast-action-btn danger"
-                  type="button"
-                  data-delete-id="${escapeHTML(b.id)}"
-                >
+                <button class="broadcast-action-btn danger" type="button" data-delete-id="${escapeHTML(b.id)}">
                   Hapus
                 </button>
               </div>
@@ -1511,9 +1210,7 @@
 
         document.querySelectorAll("[data-toggle-id]").forEach(function (btn) {
           btn.addEventListener("click", function () {
-            const id = btn.dataset.toggleId;
-            const isActive = btn.dataset.active === "true";
-            toggleBroadcastActive(id, isActive);
+            toggleBroadcastActive(btn.dataset.toggleId, btn.dataset.active === "true");
           });
         });
 
@@ -1534,8 +1231,6 @@
       $("broadcastCount").textContent = len + " / 500";
     }
 
-    /* ================= INIT ================= */
-
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
     $("loginButton").onclick = loginGoogle;
@@ -1545,17 +1240,19 @@
       window.location.href = "./index.html";
     };
 
-    document.querySelectorAll(".admin-tab").forEach(function (tab) {
+    document.querySelectorAll(".admin-tab").forEach(function (tab, idx) {
       tab.addEventListener("click", function () {
         const tabName = tab.dataset.tab;
         document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
         document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
         tab.classList.add("active");
+
+        const tabsContainer = tab.closest(".admin-tabs");
+        if (tabsContainer) tabsContainer.dataset.active = String(idx);
+
         $("tab" + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add("active");
 
-        if (tabName === "broadcast") {
-          loadBroadcasts();
-        }
+        if (tabName === "broadcast") loadBroadcasts();
       });
     });
 
@@ -1572,10 +1269,7 @@
     $("broadcastMessage").addEventListener("input", updateBroadcastCount);
 
     onAuthStateChanged(auth, async user => {
-      if (!user) {
-        showLogin();
-        return;
-      }
+      if (!user) { showLogin(); return; }
 
       currentUser = user;
       $("loadingText").textContent = "Memeriksa akses...";
@@ -1598,7 +1292,6 @@
     getRedirectResult(auth).catch(error => console.error(error));
   </script>
 
-  <!-- RDK PREMIUM MOTION -->
   <script src="./rojak-ai/rdk-motion.js" defer></script>
   <script src="./rojak-ai/rdk-premium.js" defer></script>
 </body>
