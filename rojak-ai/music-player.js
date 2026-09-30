@@ -770,10 +770,22 @@
     console.log("[RDK Music] Ready. Playlist:", state.playlist.length, "track.");
   }
 
+  // Music hanya diinisialisasi setelah Dashboard (app) dibuka.
+  // Jadi player/mini-player tidak muncul di halaman login.
+  function initWhenDashboardReady() {
+    const app = document.getElementById("app");
+    if (app && app.style.display === "block") {
+      init();
+      return;
+    }
+
+    window.addEventListener("rdk:app-ready", init, { once: true });
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", initWhenDashboardReady, { once: true });
   } else {
-    setTimeout(init, 50);
+    setTimeout(initWhenDashboardReady, 50);
   }
 
   window.RDK_MUSIC = {
