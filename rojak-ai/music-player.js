@@ -17,8 +17,6 @@
     MINI_PLAYER_THRESHOLD: 320
   };
 
-  /* ---------- FALLBACK PLAYLIST (kalau JSON gagal) ---------- */
-
   const FALLBACK_PLAYLIST = [
     {
       title: "Dunia Yang Nanti",
@@ -138,14 +136,16 @@
       if (parsed.repeatMode === "off" || parsed.repeatMode === "all" || parsed.repeatMode === "one") {
         state.repeatMode = parsed.repeatMode;
       }
+      // PENTING: currentIndex dari storage TIDAK dipakai untuk auto-play.
+      // Kita simpan index-nya supaya UI tahu track terakhir, tapi
+      // isPlaying selalu false di awal.
       if (typeof parsed.currentIndex === "number") state.currentIndex = parsed.currentIndex;
     } catch (_) {}
   }
 
-  /* ---------- PLAYLIST LOAD (dengan fallback) ---------- */
+  /* ---------- PLAYLIST LOAD ---------- */
 
   async function loadPlaylist() {
-    // Coba fetch JSON
     try {
       const res = await fetch(CONFIG.PLAYLIST_URL, { cache: "no-cache" });
 
@@ -174,7 +174,6 @@
       console.warn("[RDK Music] Fetch playlist.json gagal:", err.message);
     }
 
-    // Fallback
     console.warn("[RDK Music] Pakai FALLBACK playlist");
     state.playlist = FALLBACK_PLAYLIST.map(t => ({ ...t }));
     return state.playlist.length > 0;
@@ -302,9 +301,16 @@
     }
 
     refs.list.innerHTML = state.playlist.map((track, i) => {
-      const active = i === state.currentIndex;
+      const isCurrent = i === state.currentIndex;
+      // PENTING: class "playing" cuma kalau audio benar-benar play
+      const isPlaying = isCurrent && state.isPlaying;
+
+      let cls = "rdk-music-track";
+      if (isCurrent) cls += " rdk-music-track-active";
+      if (isPlaying) cls += " rdk-music-track-playing";
+
       return `
-        <div class="rdk-music-track${active ? " rdk-music-track-active" : ""}" data-index="${i}">
+        <div class="${cls}" data-index="${i}">
           <div class="rdk-music-track-num">${i + 1}</div>
           <div class="rdk-music-eq"><span></span><span></span><span></span><span></span></div>
           <div class="rdk-music-track-info">
@@ -349,6 +355,7 @@
         console.warn("[RDK Music] Play gagal:", err);
         state.isPlaying = false;
         updatePlayButtons();
+        renderPlaylist();
       });
     }
   }
@@ -362,7 +369,12 @@
     if (state.isPlaying) {
       audio.pause();
     } else {
-      audio.play().catch(err => console.warn("[RDK Music] Play gagal:", err));
+      audio.play().catch(err => {
+        console.warn("[RDK Music] Play gagal:", err);
+        state.isPlaying = false;
+        updatePlayButtons();
+        renderPlaylist();
+      });
     }
   }
 
@@ -386,6 +398,7 @@
         state.isPlaying = false;
         audio.pause();
         updatePlayButtons();
+        renderPlaylist();
         return;
       }
     }
@@ -427,6 +440,10 @@
     const icon = state.isPlaying ? ICON.pause : ICON.play;
     if (refs.play) refs.play.innerHTML = icon;
     if (refs.miniPlay) refs.miniPlay.innerHTML = icon;
+
+    if (refs.play) {
+      refs.play.setAttribute("aria-label", state.isPlaying ? "Pause" : "Play");
+    }
   }
 
   function updateProgress() {
@@ -520,7 +537,6 @@
   function updateMiniPlayerVisibility() {
     if (!refs.mini || !refs.section) return;
 
-    // Music UI hanya boleh terlihat saat tab Create sedang aktif.
     if (!isCreatePageActive()) {
       refs.mini.classList.remove("rdk-music-mini-open");
       state.miniPlayerOpen = false;
@@ -536,7 +552,11 @@
       return;
     }
 
-    const shouldShow = state.currentIndex !== -1 &&
+    // PENTING: mini player cuma muncul kalau ada track DAN sedang playing.
+    // Jadi sebelum user klik play, mini player tidak nongol.
+    const shouldShow =
+      state.currentIndex !== -1 &&
+      state.isPlaying &&
       (sectionRect.bottom < CONFIG.MINI_PLAYER_THRESHOLD);
 
     if (shouldShow && !state.miniPlayerOpen) {
@@ -638,14 +658,16 @@
       state.isPlaying = true;
       updatePlayButtons();
       updateMediaSessionState();
-      renderPlaylist();
+      renderPlaylist();              // update class playing
+      updateMiniPlayerVisibility();  // mini player boleh muncul
     });
 
     audio.addEventListener("pause", () => {
       state.isPlaying = false;
       updatePlayButtons();
       updateMediaSessionState();
-      renderPlaylist();
+      renderPlaylist();              // hapus class playing
+      updateMiniPlayerVisibility();  // mini player sembunyi
     });
 
     audio.addEventListener("timeupdate", updateProgress);
@@ -669,6 +691,10 @@
 
     audio.addEventListener("error", () => {
       console.warn("[RDK Music] Error pada track:", state.playlist[state.currentIndex]?.src);
+      state.isPlaying = false;
+      updatePlayButtons();
+      renderPlaylist();
+      updateMiniPlayerVisibility();
       if (state.playlist.length > 1) {
         setTimeout(() => playNext(true), 300);
       }
@@ -684,7 +710,6 @@
       }
     });
 
-    // Saat berpindah tab, music player/mini-player hanya aktif di Create.
     document.querySelectorAll(".tab").forEach(tab => {
       tab.addEventListener("click", () => {
         requestAnimationFrame(updateMiniPlayerVisibility);
@@ -722,7 +747,6 @@
     const createPanel = $("createPanel");
     if (!createPanel) return;
 
-    // Hapus kalau sudah ada (biar tidak dobel)
     const existing = $("rdkMusicSection");
     if (existing) existing.remove();
 
@@ -754,6 +778,12 @@
     injectMiniPlayer();
     cacheRefs();
 
+    // Set currentIndex ke -1 kalau belum ada track yang pernah dipilih,
+    // supaya EQ track tidak nyala sendiri saat app pertama dibuka.
+    if (state.currentIndex >= state.playlist.length) {
+      state.currentIndex = -1;
+    }
+
     renderPlaylist();
 
     audio.volume = state.volume;
@@ -764,12 +794,18 @@
     updateRepeatUI();
     updatePlayButtons();
 
+    // PENTING: jangan restore track terakhir ke audio.src tanpa play.
+    // Kalau kita isi audio.src, browser bisa autoplay? Tidak.
+    // Tapi kalau currentIndex ada, kita tetap tampilkan "now playing" info
+    // TANPA memicu EQ.
     if (state.currentIndex >= 0 && state.currentIndex < state.playlist.length) {
       const track = state.playlist[state.currentIndex];
-      audio.src = track.src;
       updateNowPlaying(track);
       updateMiniPlayer(track);
       renderPlaylist();
+      // audio.src sengaja TIDAK diisi supaya tidak ada metadata load
+      // yang bisa memicu state "playing" palsu.
+      // Kalau user klik play, playTrack() akan isi audio.src.
     }
 
     bindEvents();
@@ -780,8 +816,6 @@
     console.log("[RDK Music] Ready. Playlist:", state.playlist.length, "track.");
   }
 
-  // Music hanya diinisialisasi setelah Dashboard (app) dibuka.
-  // Jadi player/mini-player tidak muncul di halaman login.
   function initWhenDashboardReady() {
     const app = document.getElementById("app");
     if (app && app.style.display === "block") {

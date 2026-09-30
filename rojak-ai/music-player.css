@@ -1,19 +1,19 @@
 /* ============================================================
    ROJAK DRIVEK1T — MUSIC PLAYER UI
    Fokus: tampilan rapi, compact, mobile-friendly.
-   Tidak mengubah logic music-player.js.
 ============================================================ */
 
 /* ---------- MAIN MUSIC SECTION ---------- */
 .rdk-music-section {
   width: 100%;
-  margin: 18px 0;
+  margin: 16px 0;
   padding: 0;
   overflow: hidden;
   border: 1px solid #292a27;
   border-radius: 12px;
   background: #121310;
   color: #eeeeea;
+  box-shadow: 0 1px 0 rgba(255,255,255,.02) inset;
 }
 
 .rdk-music-playlist-header {
@@ -98,6 +98,7 @@
 .rdk-music-track:hover { background: #191a18; }
 .rdk-music-track:active { background: #1d1e1b; }
 
+/* Track yang sedang jadi current (walau belum di-play) */
 .rdk-music-track.rdk-music-track-active {
   background: #1a1714;
 }
@@ -125,6 +126,8 @@
 
 .rdk-music-track-active .rdk-music-track-num { color: #e45632; }
 
+/* ---------- EQ ---------- */
+/* Default: TIDAK ada animasi. Hanya animasi kalau .rdk-music-track-playing */
 .rdk-music-eq {
   width: 15px;
   height: 15px;
@@ -134,24 +137,39 @@
   justify-content: center;
   gap: 2px;
   opacity: 0;
+  transition: opacity .2s ease;
 }
 
 .rdk-music-eq span {
   width: 2px;
-  height: 5px;
+  height: 4px;
   border-radius: 2px;
   background: #e45632;
+  transform-origin: bottom center;
 }
 
-.rdk-music-track-active .rdk-music-eq { opacity: 1; }
-.rdk-music-track-active .rdk-music-eq span:nth-child(1) { animation: rdkMusicEq 700ms ease-in-out infinite alternate; }
-.rdk-music-track-active .rdk-music-eq span:nth-child(2) { animation: rdkMusicEq 520ms ease-in-out infinite alternate .1s; }
-.rdk-music-track-active .rdk-music-eq span:nth-child(3) { animation: rdkMusicEq 640ms ease-in-out infinite alternate .2s; }
-.rdk-music-track-active .rdk-music-eq span:nth-child(4) { animation: rdkMusicEq 480ms ease-in-out infinite alternate .05s; }
+/* Track active tapi BELUM playing: EQ cuma tampil statis, tidak gerak */
+.rdk-music-track-active .rdk-music-eq { opacity: .5; }
+
+/* HANYA saat playing, EQ baru animasi */
+.rdk-music-track-playing .rdk-music-eq { opacity: 1; }
+
+.rdk-music-track-playing .rdk-music-eq span:nth-child(1) {
+  animation: rdkMusicEq 700ms ease-in-out infinite alternate;
+}
+.rdk-music-track-playing .rdk-music-eq span:nth-child(2) {
+  animation: rdkMusicEq 520ms ease-in-out infinite alternate .1s;
+}
+.rdk-music-track-playing .rdk-music-eq span:nth-child(3) {
+  animation: rdkMusicEq 640ms ease-in-out infinite alternate .2s;
+}
+.rdk-music-track-playing .rdk-music-eq span:nth-child(4) {
+  animation: rdkMusicEq 480ms ease-in-out infinite alternate .05s;
+}
 
 @keyframes rdkMusicEq {
   from { height: 4px; }
-  to { height: 13px; }
+  to   { height: 13px; }
 }
 
 .rdk-music-track-info {
@@ -462,16 +480,13 @@
   .rdk-music-extras .rdk-music-iconbtn:nth-child(2),
   .rdk-music-extras .rdk-music-iconbtn:nth-child(3) { display: none; }
 
-  .rdk-music-mini {
-    right: 76px;
-  }
-
+  .rdk-music-mini { right: 76px; }
   .rdk-music-mini-meta { max-width: 92px; }
   .rdk-music-mini-btn:first-child { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rdk-music-track-active .rdk-music-eq span,
+  .rdk-music-track-playing .rdk-music-eq span,
   .rdk-music-mini,
   .rdk-music-track { animation: none !important; transition: none !important; }
 }
