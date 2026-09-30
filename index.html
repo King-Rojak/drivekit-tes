@@ -760,7 +760,7 @@
     #profileStatus { min-height: 14px; margin-top: 10px; }
 
     /* ============================================================
-       LOG CONSOLE FAB
+       LOG CONSOLE FAB (admin only)
     ============================================================ */
 
     .rdk-log-fab {
@@ -861,6 +861,187 @@
     }
 
     .rdk-log-empty { padding: 30px 15px; text-align: center; color: var(--text-ghost); font-size: 11px; }
+
+    /* ============================================================
+       LOGIN DEBUG CONSOLE
+    ============================================================ */
+
+    .rdk-login-console {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 999998;
+      max-height: 55vh;
+      display: none;
+      flex-direction: column;
+      border: 1px solid #2a2b2c;
+      border-radius: 8px;
+      background: #0d0e0f;
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      box-shadow: 0 20px 60px rgba(0,0,0,.8);
+      overflow: hidden;
+    }
+
+    .rdk-login-console.rdk-login-console-open { display: flex; }
+
+    .rdk-login-console-fab {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      z-index: 999999;
+      height: 32px;
+      padding: 0 12px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #2a2b2c;
+      border-radius: 6px;
+      background: #161718;
+      color: #a8a9a5;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease;
+    }
+
+    .rdk-login-console-fab:hover {
+      background: #1c1d1e;
+      border-color: #3a3b3c;
+      color: #f0f0ee;
+    }
+
+    .rdk-login-console-fab.rdk-login-console-fab-visible { display: inline-flex; }
+
+    .rdk-login-console-fab-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #6bb87c;
+      box-shadow: 0 0 0 3px rgba(107,184,124,.12);
+    }
+
+    .rdk-login-console-fab-dot.error {
+      background: #d9655c;
+      box-shadow: 0 0 0 3px rgba(217,101,92,.15);
+    }
+
+    .rdk-login-console-fab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 16px;
+      padding: 0 5px;
+      border-radius: 4px;
+      background: #1f2021;
+      color: #6e6f6b;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .rdk-login-console-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 11px;
+      border-bottom: 1px solid #18191a;
+      background: #161718;
+    }
+
+    .rdk-login-console-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #a8a9a5;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .rdk-login-console-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rdk-login-console-btn {
+      height: 24px;
+      padding: 0 9px;
+      border: 1px solid #1f2021;
+      border-radius: 4px;
+      background: transparent;
+      color: #a8a9a5;
+      font: inherit;
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 140ms ease, color 140ms ease;
+    }
+
+    .rdk-login-console-btn:hover {
+      background: #1c1d1e;
+      color: #f0f0ee;
+    }
+
+    .rdk-login-console-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: calc(55vh - 45px);
+      overflow-y: auto;
+      padding: 8px 10px;
+      background: #08090a;
+      font-size: 10.5px;
+      line-height: 1.5;
+      color: #a8a9a5;
+    }
+
+    .rdk-login-console-entry {
+      padding: 5px 8px;
+      margin-bottom: 4px;
+      border-left: 2px solid #2a2b2c;
+      border-radius: 3px;
+      background: #111213;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .rdk-login-console-entry.info  { border-color: #6a8fa8; color: #b8d0e0; }
+    .rdk-login-console-entry.ok    { border-color: #6bb87c; color: #b8dfba; }
+    .rdk-login-console-entry.warn  { border-color: #e8b04a; color: #f0dcb0; }
+    .rdk-login-console-entry.error { border-color: #d9655c; color: #ffb0b0; }
+
+    .rdk-login-console-entry .rdk-login-console-time {
+      display: block;
+      margin-bottom: 2px;
+      color: #4a4b48;
+      font-size: 9.5px;
+    }
+
+    .rdk-login-console-empty {
+      padding: 24px 12px;
+      text-align: center;
+      color: #4a4b48;
+      font-size: 10.5px;
+    }
+
+    .rdk-login-console-fab.rdk-login-console-hidden,
+    .rdk-login-console.rdk-login-console-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      .rdk-login-console { left: 8px; right: 8px; bottom: 8px; max-height: 50vh; }
+      .rdk-login-console-body { max-height: calc(50vh - 45px); }
+      .rdk-login-console-fab { left: 8px; bottom: 8px; height: 30px; font-size: 10.5px; }
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
 
     @media (max-width: 600px) {
       .topbar { height: 52px; padding: 0 12px; }
@@ -1196,6 +1377,192 @@
     </div>
   </section>
 
+  <!-- LOGIN DEBUG CONSOLE -->
+  <button id="rdkLoginConsoleFab" class="rdk-login-console-fab" type="button">
+    <span class="rdk-login-console-fab-dot" id="rdkLoginConsoleFabDot"></span>
+    <span>Console</span>
+    <span class="rdk-login-console-fab-count" id="rdkLoginConsoleFabCount">0</span>
+  </button>
+
+  <div id="rdkLoginConsole" class="rdk-login-console">
+    <div class="rdk-login-console-head">
+      <div class="rdk-login-console-title">
+        <span>Login Console</span>
+        <span id="rdkLoginConsoleCount" class="rdk-login-console-fab-count">0</span>
+      </div>
+      <div class="rdk-login-console-actions">
+        <button id="rdkLoginConsoleCopy" class="rdk-login-console-btn" type="button">Copy</button>
+        <button id="rdkLoginConsoleClear" class="rdk-login-console-btn" type="button">Clear</button>
+        <button id="rdkLoginConsoleClose" class="rdk-login-console-btn" type="button">Tutup</button>
+      </div>
+    </div>
+    <div id="rdkLoginConsoleBody" class="rdk-login-console-body">
+      <div class="rdk-login-console-empty">Belum ada log. Klik "Continue with Google" untuk mulai.</div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       LOGIN DEBUG CONSOLE — standalone
+    ============================================================ */
+
+    window.RDK_LOGIN_LOG = (function () {
+      const fab = document.getElementById("rdkLoginConsoleFab");
+      const fabDot = document.getElementById("rdkLoginConsoleFabDot");
+      const fabCount = document.getElementById("rdkLoginConsoleFabCount");
+      const panel = document.getElementById("rdkLoginConsole");
+      const body = document.getElementById("rdkLoginConsoleBody");
+      const countEl = document.getElementById("rdkLoginConsoleCount");
+      const btnClose = document.getElementById("rdkLoginConsoleClose");
+      const btnClear = document.getElementById("rdkLoginConsoleClear");
+      const btnCopy = document.getElementById("rdkLoginConsoleCopy");
+
+      let items = [];
+      let errorCount = 0;
+      let totalCount = 0;
+
+      function timeStr() {
+        const d = new Date();
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return hh + ":" + mm + ":" + ss;
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      function add(msg, type) {
+        type = type || "info";
+        totalCount++;
+        if (type === "error") errorCount++;
+        items.push({ time: timeStr(), msg: String(msg), type: type });
+        if (items.length > 120) items.shift();
+        render();
+      }
+
+      function render() {
+        if (!body) return;
+
+        if (!items.length) {
+          body.innerHTML = '<div class="rdk-login-console-empty">Belum ada log. Klik "Continue with Google" untuk mulai.</div>';
+        } else {
+          body.innerHTML = items.map(function (it) {
+            return '<div class="rdk-login-console-entry ' + it.type + '">' +
+              '<span class="rdk-login-console-time">' + it.time + '</span>' +
+              escapeHtml(it.msg) +
+            '</div>';
+          }).join("");
+          body.scrollTop = body.scrollHeight;
+        }
+
+        if (countEl) countEl.textContent = String(totalCount);
+        if (fabCount) fabCount.textContent = String(totalCount);
+
+        if (fabDot) {
+          if (errorCount > 0) fabDot.classList.add("error");
+          else fabDot.classList.remove("error");
+        }
+      }
+
+      function open() { if (panel) panel.classList.add("rdk-login-console-open"); }
+      function close() { if (panel) panel.classList.remove("rdk-login-console-open"); }
+
+      function clear() {
+        items = [];
+        errorCount = 0;
+        totalCount = 0;
+        render();
+      }
+
+      function copy() {
+        const text = items.map(function (it) {
+          return "[" + it.time + "] [" + it.type + "] " + it.msg;
+        }).join("\n");
+
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(function () {
+            add("Log di-copy ke clipboard", "ok");
+          }).catch(function () {
+            alert("Gagal copy. Screenshot manual aja.");
+          });
+        } else {
+          alert("Clipboard tidak tersedia.");
+        }
+      }
+
+      function show() {
+        if (fab) fab.classList.add("rdk-login-console-fab-visible");
+      }
+
+      function hide() {
+        if (fab) fab.classList.add("rdk-login-console-hidden");
+        if (panel) panel.classList.add("rdk-login-console-hidden");
+      }
+
+      function unhide() {
+        if (fab) fab.classList.remove("rdk-login-console-hidden");
+        if (panel) panel.classList.remove("rdk-login-console-hidden");
+      }
+
+      if (fab) fab.addEventListener("click", open);
+      if (btnClose) btnClose.addEventListener("click", close);
+      if (btnClear) btnClear.addEventListener("click", clear);
+      if (btnCopy) btnCopy.addEventListener("click", copy);
+
+      window.addEventListener("error", function (e) {
+        add("GLOBAL ERROR: " + (e.message || "unknown"), "error");
+      });
+
+      window.addEventListener("unhandledrejection", function (e) {
+        var reason = e.reason;
+        var msg = "?";
+        if (reason) {
+          if (typeof reason === "string") msg = reason;
+          else if (reason.message) msg = (reason.code || "") + " " + reason.message;
+          else msg = String(reason);
+        }
+        add("UNHANDLED REJECTION: " + msg, "error");
+      });
+
+      const origLog = console.log;
+      const origWarn = console.warn;
+      const origError = console.error;
+
+      console.log = function () {
+        origLog.apply(console, arguments);
+        add(Array.from(arguments).map(String).join(" "), "info");
+      };
+      console.warn = function () {
+        origWarn.apply(console, arguments);
+        add(Array.from(arguments).map(String).join(" "), "warn");
+      };
+      console.error = function () {
+        origError.apply(console, arguments);
+        add(Array.from(arguments).map(String).join(" "), "error");
+      };
+
+      add("=== Login console ready ===", "info");
+      add("UA: " + navigator.userAgent.slice(0, 70), "info");
+      add("Host: " + location.hostname, "info");
+
+      return {
+        add: add,
+        open: open,
+        close: close,
+        clear: clear,
+        copy: copy,
+        show: show,
+        hide: hide,
+        unhide: unhide
+      };
+    })();
+  </script>
+
   <div id="app" class="app">
     <header class="topbar">
       <div class="brand">
@@ -1322,6 +1689,7 @@
 
     window.gapiLoaded = function () {
       if (window.RDK_LOG) window.RDK_LOG.add("gapi.js loaded", "ok");
+      if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("gapi.js loaded", "ok");
       if (typeof window.gapi === "undefined") return;
       window.gapi.load("client", function () {
         window.gapi.client.init({
@@ -1329,8 +1697,10 @@
         }).then(function () {
           window.RDK_GOOGLE.gapiInited = true;
           if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap", "ok");
+          if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("Google Drive API siap", "ok");
         }).catch(function (error) {
           if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
+          if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("GAPI init error: " + (error.message || error), "error");
         });
       });
     };
@@ -1362,6 +1732,7 @@
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     const LOG = window.RDK_LOG || { add: function(){} };
+    const LLOG = window.RDK_LOGIN_LOG || { add: function(){} };
     const $ = id => document.getElementById(id);
 
     let accessToken = null;
@@ -1376,14 +1747,20 @@
     const PROFILE_CACHE_KEY = "rdk_profile_cache";
 
     LOG.add("Module utama loaded", "ok");
+    LLOG.add("Firebase module loaded", "ok");
 
     function isOnline() { return navigator.onLine !== false; }
-    if (!isOnline()) LOG.add("Device OFFLINE — cek koneksi internet", "error");
+    if (!isOnline()) {
+      LOG.add("Device OFFLINE", "error");
+      LLOG.add("Device OFFLINE — cek koneksi internet", "error");
+    }
 
     setPersistence(auth, browserLocalPersistence).then(function () {
       LOG.add("Persistence: LOCAL", "ok");
+      LLOG.add("Firebase persistence: LOCAL", "ok");
     }).catch(function (e) {
       LOG.add("Persistence error: " + e.message, "warn");
+      LLOG.add("Persistence error: " + e.message, "warn");
     });
 
     function hideLoading() {
@@ -1397,6 +1774,11 @@
       hideLoading();
       $("app").style.display = "none";
       $("loginScreen").style.display = "flex";
+
+      if (window.RDK_LOGIN_LOG) {
+        window.RDK_LOGIN_LOG.unhide();
+        window.RDK_LOGIN_LOG.show();
+      }
     }
 
     function showApp() {
@@ -1404,12 +1786,20 @@
       hideLoading();
       $("loginScreen").style.display = "none";
       $("app").style.display = "block";
+
+      if (window.RDK_LOGIN_LOG) {
+        window.RDK_LOGIN_LOG.hide();
+      }
+
       window.dispatchEvent(new Event("rdk:app-ready"));
     }
 
     function loginError(message) {
       $("loginError").textContent = message;
-      if (message) LOG.add("Login error UI: " + message, "error");
+      if (message) {
+        LOG.add("Login error UI: " + message, "error");
+        LLOG.add("Login error UI: " + message, "error");
+      }
     }
 
     function setStatus(message, type = "") {
@@ -1551,6 +1941,7 @@
     function loadProfile(user) {
       currentUser = user;
       LOG.add("loadProfile: " + (user.email || user.uid.slice(0, 8)), "info");
+      LLOG.add("Login sukses: " + (user.email || user.uid.slice(0, 8)), "ok");
 
       return ensureProfile(user).then(function (role) {
         currentRole = role;
@@ -1582,21 +1973,21 @@
       showApp();
     }
 
-    /* ============================================================
-       LOGIN GOOGLE — ROBUST HANDLER
-    ============================================================ */
-
     function loginGoogle() {
       const button = $("loginButton");
       loginError("");
       LOG.add("=== KLIK LOGIN GOOGLE ===", "info");
+      LLOG.add("=== KLIK LOGIN GOOGLE ===", "info");
       LOG.add("UA: " + navigator.userAgent.slice(0, 60), "info");
       LOG.add("Online: " + navigator.onLine, "info");
       LOG.add("URL: " + location.href, "info");
+      LLOG.add("Online: " + navigator.onLine, "info");
+      LLOG.add("Host: " + location.hostname, "info");
 
       if (!isOnline()) {
         loginError("Tidak ada koneksi internet. Periksa WiFi/data seluler kamu.");
         LOG.add("Login gagal: OFFLINE", "error");
+        LLOG.add("Login gagal: OFFLINE", "error");
         return;
       }
 
@@ -1604,8 +1995,10 @@
       const label = button.querySelector("span");
       if (label) label.textContent = "Membuka Google...";
       loginError("Menghubungi Google...");
+      LLOG.add("Menghubungi Google...", "info");
 
       const isMobile = /Android|iPhone|iPad|iPod|Mobile|Opera Mini/i.test(navigator.userAgent);
+      LLOG.add("Mobile device: " + isMobile, "info");
 
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
@@ -1617,11 +2010,14 @@
 
       function fallbackToRedirect(reason) {
         LOG.add("Fallback ke signInWithRedirect: " + reason, "warn");
+        LLOG.add("Fallback ke signInWithRedirect: " + reason, "warn");
         loginError("Membuka halaman login Google...");
+        LLOG.add("Membuka halaman login Google...", "info");
 
         signInWithRedirect(auth, provider).catch(function (err2) {
           const errCode = err2.code || "";
           LOG.add("signInWithRedirect ERROR: " + errCode + " — " + (err2.message || ""), "error");
+          LLOG.add("signInWithRedirect ERROR: " + errCode + " — " + (err2.message || ""), "error");
 
           if (errCode === "auth/unauthorized-domain") {
             loginError("Domain '" + location.hostname + "' belum diizinkan. Tambah di Firebase Console → Authentication → Settings → Authorized domains.");
@@ -1639,19 +2035,23 @@
 
       if (isMobile) {
         LOG.add("Mobile device — pakai signInWithRedirect", "info");
+        LLOG.add("Mobile device — pakai signInWithRedirect", "info");
         fallbackToRedirect("mobile device");
         return;
       }
 
       LOG.add("Desktop — coba signInWithPopup...", "info");
+      LLOG.add("Desktop — coba signInWithPopup...", "info");
 
       signInWithPopup(auth, provider).then(function (result) {
         LOG.add("signInWithPopup OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
+        LLOG.add("signInWithPopup OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
         loginError("");
         resetButton();
       }).catch(function (error) {
         const code = error.code || "";
         LOG.add("signInWithPopup ERROR: " + code + " — " + (error.message || ""), "error");
+        LLOG.add("signInWithPopup ERROR: " + code + " — " + (error.message || ""), "error");
 
         if (
           code === "auth/popup-blocked" ||
@@ -1687,6 +2087,7 @@
       }
 
       LOG.add("onAuthStateChanged: USER MASUK", "ok");
+      LLOG.add("Auth state: user masuk", "ok");
       LOG.add("  uid: " + user.uid.slice(0, 10) + "...", "ok");
       LOG.add("  email: " + (user.email || "-"), "ok");
 
@@ -1696,6 +2097,7 @@
         restoreDriveToken();
       }).catch(function (error) {
         LOG.add("loadProfile GAGAL", "error");
+        LLOG.add("loadProfile GAGAL: " + (error.code || "") + " " + (error.message || ""), "error");
         LOG.add("  code: " + (error.code || "(no code)"), "error");
         LOG.add("  message: " + (error.message || "(no message)"), "error");
 
@@ -1718,6 +2120,7 @@
     getRedirectResult(auth).then(function (result) {
       if (result && result.user) {
         LOG.add("getRedirectResult OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
+        LLOG.add("getRedirectResult OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
         LOG.add("  Login via redirect berhasil", "ok");
       } else {
         LOG.add("getRedirectResult: tidak ada hasil (normal kalau bukan dari redirect)", "info");
@@ -1725,6 +2128,7 @@
     }).catch(function (error) {
       const code = error.code || "";
       LOG.add("getRedirectResult ERROR: " + code + " — " + (error.message || ""), "error");
+      LLOG.add("getRedirectResult ERROR: " + code + " — " + (error.message || ""), "error");
 
       if (code === "auth/unauthorized-domain") {
         loginError("Domain '" + location.hostname + "' belum diizinkan di Firebase.");
