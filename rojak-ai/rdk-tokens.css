@@ -1,0 +1,112 @@
+/* ============================================================
+   RDK TOKENS — compatibility entrypoint
+   The app references this plural filename from both HTML pages.
+   Keep the design system here so the premium layer always has
+   the variables it needs.
+============================================================ */
+
+:root {
+  --rdk-c-void: #080906;
+  --rdk-c-bg: #0d0e0b;
+  --rdk-c-surface-1: #121310;
+  --rdk-c-surface-2: #151614;
+  --rdk-c-surface-3: #1a1b18;
+  --rdk-c-elevated: #1e1f1c;
+  --rdk-c-border-dim: #1a1b18;
+  --rdk-c-border-soft: #222320;
+  --rdk-c-border: #292a27;
+  --rdk-c-border-bright: #363733;
+  --rdk-c-border-focus: #e45632;
+  --rdk-c-text: #eeeeea;
+  --rdk-c-text-soft: #b4b5af;
+  --rdk-c-text-muted: #8b8c86;
+  --rdk-c-text-dim: #676861;
+  --rdk-c-text-ghost: #50514c;
+  --rdk-c-accent: #e45632;
+  --rdk-c-accent-hover: #f0643f;
+  --rdk-c-accent-soft: rgba(228, 86, 50, .12);
+  --rdk-c-accent-glow: rgba(228, 86, 50, .28);
+  --rdk-c-accent-line: rgba(228, 86, 50, .45);
+  --rdk-c-success: #69b879;
+  --rdk-c-danger: #d9655c;
+  --rdk-font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --rdk-font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --rdk-fs-2xs: 8px;
+  --rdk-fs-xs: 9px;
+  --rdk-fs-sm: 10px;
+  --rdk-fs-md: 11px;
+  --rdk-fs-lg: 13px;
+  --rdk-fs-xl: 16px;
+  --rdk-fs-2xl: 20px;
+  --rdk-fs-3xl: 26px;
+  --rdk-fw-regular: 400;
+  --rdk-fw-medium: 500;
+  --rdk-fw-semi: 600;
+  --rdk-fw-bold: 700;
+  --rdk-fw-black: 800;
+  --rdk-lh-tight: 1.1;
+  --rdk-lh-snug: 1.3;
+  --rdk-lh-normal: 1.5;
+  --rdk-lh-relaxed: 1.65;
+  --rdk-r-sm: 8px;
+  --rdk-r-md: 10px;
+  --rdk-r-lg: 14px;
+  --rdk-r-xl: 18px;
+  --rdk-r-pill: 999px;
+  --rdk-shadow-2: 0 4px 12px rgba(0, 0, 0, .35);
+  --rdk-shadow-3: 0 12px 32px rgba(0, 0, 0, .45);
+  --rdk-shadow-4: 0 24px 60px rgba(0, 0, 0, .55);
+  --rdk-shadow-accent-md: 0 8px 24px rgba(228, 86, 50, .25);
+  --rdk-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, .04);
+  --rdk-ease-out: cubic-bezier(.16, 1, .3, 1);
+  --rdk-ease-in-out: cubic-bezier(.83, 0, .17, 1);
+  --rdk-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --rdk-ease-overshoot: cubic-bezier(.5, 1.6, .4, 1);
+  --rdk-d-fast: 160ms;
+  --rdk-d-base: 280ms;
+  --rdk-d-slow: 480ms;
+  --rdk-t-fast: var(--rdk-d-fast) var(--rdk-ease-out);
+  --rdk-t-base: var(--rdk-d-base) var(--rdk-ease-out);
+  --rdk-t-slow: var(--rdk-d-slow) var(--rdk-ease-out);
+  --rdk-z-cursor: 9999;
+  --rdk-rail-color: rgba(228, 86, 50, .35);
+  --rdk-rail-glow: rgba(228, 86, 50, .15);
+  --rdk-rail-duration: 12s;
+  --rdk-grid-size: 44px;
+  --rdk-grid-color: rgba(255, 255, 255, .028);
+  --rdk-grid-color-2: rgba(255, 255, 255, .02);
+  --rdk-grid-opacity: .22;
+}
+
+/* Small readability and consistency pass shared by the public and admin views. */
+body {
+  font-family: var(--rdk-font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button, input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--rdk-c-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .container { width: min(100% - 24px, 850px); }
+  .login-screen { padding: 16px; }
+  .login-box { border-radius: var(--rdk-r-lg); }
+  .panel-header, .form { padding-left: 16px; padding-right: 16px; }
+  .files { padding: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
