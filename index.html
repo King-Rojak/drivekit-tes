@@ -240,7 +240,17 @@
       font-size: 12px; font-weight: 600; letter-spacing: -.005em;
       transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease);
     }
-    .google-login:hover { background: var(--panel-3); border-color: #3a3b3c; }
+
+    /* FIX: Hapus glow oranye (kelihatan AI-banget) */
+    .google-login:hover,
+    .google-login:focus,
+    .google-login:focus-visible,
+    .google-login:active {
+      background: var(--panel-3);
+      border-color: #3a3b3c;
+      box-shadow: none;
+      outline: none;
+    }
     .google-login:active { transform: scale(.985); }
     .google-login:disabled { opacity: .55; cursor: wait; }
 
@@ -707,8 +717,6 @@
     }
 
     .rdk-log-fab.rdk-log-fab-admin { display: grid; }
-
-    /* Auto-hide saat panel AI terbuka */
     .rdk-log-fab.rdk-log-fab-hidden { display: none !important; }
 
     @media (max-width: 600px) {
@@ -818,6 +826,29 @@
     }
 
     .rdk-music-section svg { display: block !important; }
+
+    /* ============================================================
+       FIX: Hapus glow accent di tombol login (kelihatan AI-banget)
+    ============================================================ */
+
+    .google-login,
+    .google-login:hover,
+    .google-login:focus,
+    .google-login:focus-visible,
+    .google-login:active {
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    .login-box {
+      box-shadow: none !important;
+    }
+
+    /* Hilangkan decorative sheen dari rdk-premium pada tombol login */
+    .google-login::after,
+    .google-login::before {
+      display: none !important;
+    }
   </style>
 
   <link rel="stylesheet" href="./rojak-ai/rdk-tokens.css">
@@ -1485,6 +1516,13 @@
       showApp();
     }
 
+    /* ============================================================
+       LOGIN GOOGLE — FIX STUCK "Membuka Google..."
+       - Mobile langsung pakai signInWithRedirect
+       - Semua error popup → fallback ke redirect
+       - Button selalu reset
+    ============================================================ */
+
     function loginGoogle() {
       const button = $("loginButton");
       loginError("");
@@ -1500,37 +1538,63 @@
       const label = button.querySelector("span");
       if (label) label.textContent = "Membuka Google...";
 
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile|Opera Mini/i.test(navigator.userAgent);
+
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
 
-      LOG.add("Coba signInWithPopup...", "info");
+      function resetButton() {
+        button.disabled = false;
+        if (label) label.textContent = "Continue with Google";
+      }
+
+      function fallbackToRedirect(reason) {
+        LOG.add("Fallback ke signInWithRedirect: " + reason, "warn");
+        resetButton();
+
+        signInWithRedirect(auth, provider).catch(function (err2) {
+          LOG.add("signInWithRedirect ERROR: " + (err2.code || "") + " — " + (err2.message || ""), "error");
+          loginError("Login gagal: " + (err2.code || err2.message || "Unknown error"));
+        });
+      }
+
+      // Kalau mobile, langsung pakai redirect (lebih reliable)
+      if (isMobile) {
+        LOG.add("Mobile device — langsung pakai signInWithRedirect", "info");
+        fallbackToRedirect("mobile device");
+        return;
+      }
+
+      LOG.add("Desktop — coba signInWithPopup...", "info");
 
       signInWithPopup(auth, provider).then(function (result) {
         LOG.add("signInWithPopup OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
-        button.disabled = false;
-        if (label) label.textContent = "Continue with Google";
+        resetButton();
       }).catch(function (error) {
         LOG.add("signInWithPopup ERROR: " + (error.code || "") + " — " + (error.message || ""), "error");
 
-        if (error.code === "auth/network-request-failed") {
-          loginError("Koneksi ke Google gagal. Periksa sinyal HP kamu, lalu coba lagi.");
-        } else if (error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user") {
-          LOG.add("Popup blocked — fallback signInWithRedirect...", "warn");
-          signInWithRedirect(auth, provider).catch(function (err2) {
-            LOG.add("signInWithRedirect ERROR: " + (err2.code || "") + " — " + (err2.message || ""), "error");
-            loginError("Login gagal: " + (err2.code || err2.message));
-            button.disabled = false;
-            if (label) label.textContent = "Continue with Google";
-          });
+        const code = error.code || "";
+
+        if (
+          code === "auth/popup-blocked" ||
+          code === "auth/popup-closed-by-user" ||
+          code === "auth/cancelled-popup-request" ||
+          code === "auth/operation-not-supported-in-this-environment" ||
+          code === "auth/network-request-failed"
+        ) {
+          fallbackToRedirect(code);
           return;
-        } else if (error.code === "auth/unauthorized-domain") {
-          loginError("Domain website belum diizinkan di Firebase Authorized domains.");
-        } else {
-          loginError("Login gagal: " + (error.code || error.message));
         }
 
-        button.disabled = false;
-        if (label) label.textContent = "Continue with Google";
+        if (code === "auth/unauthorized-domain") {
+          loginError("Domain website belum diizinkan di Firebase Authorized domains.");
+        } else if (code === "auth/operation-not-allowed") {
+          loginError("Provider Google belum diaktifkan di Firebase Console.");
+        } else {
+          loginError("Login gagal: " + (code || error.message || "Unknown error"));
+        }
+
+        resetButton();
       });
     }
 
