@@ -1274,6 +1274,10 @@
       hideLoading();
       $("loginScreen").style.display = "none";
       $("app").style.display = "block";
+
+      // Beri tahu music player bahwa Dashboard sudah siap.
+      // Player tidak akan dibuat saat halaman login masih tampil.
+      window.dispatchEvent(new Event("rdk:app-ready"));
     }
 
     function loginError(message) {
