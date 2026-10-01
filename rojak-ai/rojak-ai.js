@@ -1,6 +1,11 @@
 /* ============================================================
    ROJAK AI — CS & Tutor (Text-only)
    Fitur: typewriter effect + markdown live render
+
+   FIX terbaru:
+   - SVG icon diganti custom (bukan template AI/SaaS)
+   - Send icon jadi arrow up (clean)
+   - Reset icon jadi refresh arrow custom
 ============================================================ */
 
 (function () {
@@ -29,11 +34,26 @@
     typingActive: false
   };
 
-  /* ---------- ICONS ---------- */
+  /* ---------- ICONS (CUSTOM) ---------- */
 
-  const ICON_CHAT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
-  const ICON_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
-  const ICON_RESET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+  const ICON_CHAT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 6.5C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5v8c0 1.4-1.1 2.5-2.5 2.5H9l-3.6 3.2c-.5.5-1.4.1-1.4-.6V6.5z"/>
+    <path d="M8.5 9.5h7"/>
+    <path d="M8.5 12.5h4"/>
+    <circle cx="18" cy="6" r="2.2" fill="currentColor" stroke="none"/>
+  </svg>`;
+
+  const ICON_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/>
+    <polyline points="5 12 12 5 19 12"/>
+  </svg>`;
+
+  const ICON_RESET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L3 8"/>
+    <path d="M3 3v5h5"/>
+    <path d="M3.51 15a9 9 0 0 0 14.85 3.36L21 16"/>
+    <path d="M21 21v-5h-5"/>
+  </svg>`;
 
   /* ---------- HELPERS ---------- */
 
@@ -137,14 +157,12 @@
   }
 
   function typewriterEffect(bubbleEl, fullText, onDone) {
-    // Batalkan animasi sebelumnya
     stopTyping();
     state.typingActive = true;
 
     const rawText = String(fullText || "");
     const totalChars = rawText.length;
 
-    // Kalau teks panjang, percepat animasi biar tidak kelamaan
     let charsPerTick = 1;
     let tickDelay = 18;
 
@@ -160,23 +178,20 @@
 
     function step() {
       if (!state.typingActive) return;
-      if (!bubbleEl.parentNode) return;   // elemen sudah dihapus
+      if (!bubbleEl.parentNode) return;
 
       i += charsPerTick;
       if (i > totalChars) i = totalChars;
 
       const partial = rawText.slice(0, i);
 
-      // Render markdown live + cursor blink
       bubbleEl.innerHTML = renderRichText(partial) +
         (i < totalChars ? '<span class="rojak-ai-cursor"></span>' : '');
 
-      // Auto scroll
       const bodyEl = document.getElementById("rojakAiBody");
       if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight;
 
       if (i < totalChars) {
-        // Delay dinamis: jeda lebih lama setelah tanda baca
         const lastChar = rawText.charAt(i - 1);
         let delay = tickDelay;
         if (lastChar === "." || lastChar === "!" || lastChar === "?") delay = tickDelay * 6;
@@ -185,7 +200,6 @@
 
         state.typingTimer = setTimeout(step, delay);
       } else {
-        // Selesai — render final tanpa cursor
         bubbleEl.innerHTML = renderRichText(rawText);
         state.typingActive = false;
         state.typingTimer = null;
@@ -193,7 +207,6 @@
       }
     }
 
-    // Mulai dari kosong
     bubbleEl.innerHTML = '<span class="rojak-ai-cursor"></span>';
     state.typingTimer = setTimeout(step, 120);
   }
@@ -212,7 +225,6 @@
     const bubble = el("div", { class: "rojak-ai-bubble" });
 
     if (options.typewriter && role === "assistant") {
-      // Mode animasi ketik — konten diisi bertahap oleh typewriterEffect
       const inner = el("div", { class: "rojak-ai-bubble-inner" });
       bubble.appendChild(inner);
 
@@ -225,7 +237,6 @@
       return msg;
     }
 
-    // Mode normal — konten langsung tampil
     if (content) {
       bubble.appendChild(el("div", { html: renderRichText(content) }));
     }
@@ -347,10 +358,6 @@
 
     document.body.classList.remove("rojak-ai-no-scroll");
 
-    // Biarkan typing selesai di background biar history tetap ke-save
-    // (kalau mau stop total, uncomment baris di bawah)
-    // stopTyping();
-
     if (state.scrollY) {
       window.scrollTo(0, state.scrollY);
     }
@@ -376,7 +383,6 @@
       return;
     }
 
-    // Batalkan typing yang sedang jalan (kalau user kirim pesan baru)
     stopTyping();
 
     const sugg = document.querySelector(".rojak-ai-suggest");
@@ -485,8 +491,8 @@
       title: "Chat dengan Rojak AI",
       "aria-label": "Buka Rojak AI"
     }, [
-      el("span", { class: "rojak-ai-fab-dot" }),
       el("span", { class: "rojak-ai-fab-icon", html: ICON_CHAT }),
+      el("span", { class: "rojak-ai-fab-dot" }),
       el("span", { text: "Rojak AI" })
     ]);
 

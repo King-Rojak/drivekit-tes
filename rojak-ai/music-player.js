@@ -4,12 +4,11 @@
 
    FIX terbaru:
    - currentIndex TIDAK di-restore dari localStorage
-     → tidak ada lagu yang otomatis ke-select saat app dibuka
    - EQ hanya animasi kalau audio benar-benar playing
    - Mini player hanya muncul kalau ada track & sedang playing
    - Music section jadi CARD TERPISAH di bawah #createPanel
-     → tidak lagi nempel ke form "New text file"
    - Music section auto-hide saat pindah ke tab Recent/Open Drive
+   - SVG icons diganti custom (bukan template AI/SaaS)
 ============================================================ */
 
 (function () {
@@ -66,17 +65,71 @@
 
   let refs = {};
 
+  /* ============================================================
+     SVG ICONS — custom, bukan template AI/SaaS
+     ============================================================ */
+
   const ICON = {
-    music: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
-    play: `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>`,
-    pause: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,
-    prev: `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><rect x="4" y="5" width="2" height="14"/></svg>`,
-    next: `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><rect x="18" y="5" width="2" height="14"/></svg>`,
-    shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>`,
-    repeat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
-    repeatOne: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><text x="12" y="15" font-size="7" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle">1</text></svg>`,
-    volume: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
-    volumeMute: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`
+    music: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 17.5V6l10-2v11.5"/>
+      <circle cx="7" cy="18" r="2.2"/>
+      <circle cx="17" cy="16" r="2.2"/>
+      <line x1="9" y1="9.5" x2="19" y2="7.5"/>
+    </svg>`,
+
+    play: `<svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M7.5 5.2v13.6c0 .9 1 1.4 1.7.9l10.8-6.8c.7-.4.7-1.4 0-1.8L9.2 4.3c-.7-.5-1.7 0-1.7.9z"/>
+    </svg>`,
+
+    pause: `<svg viewBox="0 0 24 24" fill="currentColor">
+      <rect x="6.5" y="4.5" width="3.5" height="15" rx="1.5"/>
+      <rect x="14" y="4.5" width="3.5" height="15" rx="1.5"/>
+    </svg>`,
+
+    prev: `<svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.5 6.2v11.6c0 .8-.9 1.2-1.5.7L9 12.5c-.5-.3-.5-1 0-1.3l8-5.7c.6-.5 1.5 0 1.5.7z"/>
+      <rect x="4.5" y="5" width="2.2" height="14" rx="1.1"/>
+    </svg>`,
+
+    next: `<svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M5.5 6.2v11.6c0 .8.9 1.2 1.5.7l8-5.7c.5-.3.5-1 0-1.3l-8-5.7c-.6-.5-1.5 0-1.5.7z"/>
+      <rect x="17.3" y="5" width="2.2" height="14" rx="1.1"/>
+    </svg>`,
+
+    shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 3h5v5"/>
+      <path d="M4 20L21 3"/>
+      <path d="M21 16v5h-5"/>
+      <path d="M15 15l6 6"/>
+      <path d="M4 4l5 5"/>
+    </svg>`,
+
+    repeat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 2l4 4-4 4"/>
+      <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+      <path d="M7 22l-4-4 4-4"/>
+      <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+    </svg>`,
+
+    repeatOne: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 2l4 4-4 4"/>
+      <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+      <path d="M7 22l-4-4 4-4"/>
+      <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+      <text x="12" y="15" font-size="7" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle">1</text>
+    </svg>`,
+
+    volume: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+    </svg>`,
+
+    volumeMute: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+      <line x1="23" y1="9" x2="17" y2="15"/>
+      <line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>`
   };
 
   function $(id) { return document.getElementById(id); }
@@ -124,7 +177,6 @@
 
   function saveState() {
     try {
-      // currentIndex TIDAK disimpan — biar tiap buka app user pilih manual.
       localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({
         volume: state.volume,
         muted: state.muted,
@@ -146,15 +198,10 @@
       if (parsed.repeatMode === "off" || parsed.repeatMode === "all" || parsed.repeatMode === "one") {
         state.repeatMode = parsed.repeatMode;
       }
-
-      // PENTING: currentIndex TIDAK di-restore dari storage.
-      // Setiap app dibuka, user harus pilih lagu manual dulu.
-      // (volume, muted, shuffle, repeat tetap di-restore)
     } catch (_) {}
   }
 
   function purgeLegacyState() {
-    // Bersihkan field currentIndex yang mungkin masih tersisa dari versi lama.
     try {
       const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
       if (!raw) return;
@@ -325,7 +372,6 @@
 
     refs.list.innerHTML = state.playlist.map((track, i) => {
       const isCurrent = i === state.currentIndex;
-      // Class "playing" cuma kalau audio benar-benar play
       const isPlaying = isCurrent && state.isPlaying;
 
       let cls = "rdk-music-track";
@@ -593,7 +639,6 @@
       return;
     }
 
-    // Mini player hanya muncul kalau ada track DAN sedang playing.
     const shouldShow =
       state.currentIndex !== -1 &&
       state.isPlaying &&
@@ -698,16 +743,16 @@
       state.isPlaying = true;
       updatePlayButtons();
       updateMediaSessionState();
-      renderPlaylist();              // update class "playing"
-      updateMiniPlayerVisibility();  // mini player boleh muncul
+      renderPlaylist();
+      updateMiniPlayerVisibility();
     });
 
     audio.addEventListener("pause", () => {
       state.isPlaying = false;
       updatePlayButtons();
       updateMediaSessionState();
-      renderPlaylist();              // hapus class "playing"
-      updateMiniPlayerVisibility();  // mini player sembunyi
+      renderPlaylist();
+      updateMiniPlayerVisibility();
     });
 
     audio.addEventListener("timeupdate", updateProgress);
@@ -750,7 +795,6 @@
       }
     });
 
-    // Saat tab berubah, update visibility music section + mini player
     document.querySelectorAll(".tab").forEach(tab => {
       tab.addEventListener("click", () => {
         requestAnimationFrame(() => {
@@ -788,8 +832,6 @@
   }
 
   function injectSection() {
-    // Music section jadi CARD TERPISAH, bukan di dalam #createPanel.
-    // Di-inject tepat setelah #createPanel di dalam .container.
     const createPanel = $("createPanel");
     if (!createPanel) return;
 
@@ -801,7 +843,6 @@
 
     const section = buildSection();
 
-    // Sisipkan tepat setelah #createPanel
     if (createPanel.nextSibling) {
       container.insertBefore(section, createPanel.nextSibling);
     } else {
@@ -821,9 +862,7 @@
     if (window.__RDK_MUSIC_LOADED__) return;
     window.__RDK_MUSIC_LOADED__ = true;
 
-    // Bersihkan field currentIndex dari localStorage versi lama
     purgeLegacyState();
-
     loadState();
 
     const ok = await loadPlaylist();
@@ -836,7 +875,6 @@
     injectMiniPlayer();
     cacheRefs();
 
-    // RESET total — tidak ada track yang ke-select otomatis.
     state.currentIndex = -1;
     state.isPlaying = false;
 
