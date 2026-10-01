@@ -1,6 +1,12 @@
 /* ============================================================
    ROJAK DRIVEK1T — MUSIC PLAYER UI
    Fokus: tampilan rapi, compact, mobile-friendly.
+
+   FIX terbaru:
+   - Analyzer (EQ bar) di-hide total saat belum ada track dipilih
+   - Analyzer muncul hanya saat track aktif (di-klik)
+   - Nomor track lebih rapat ke title (18px)
+   - Gap track lebih rapat (6px)
 ============================================================ */
 
 /* ---------- MAIN MUSIC SECTION ---------- */
@@ -83,7 +89,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-height: 52px;
   padding: 9px 14px;
   border-bottom: 1px solid #18191a;
@@ -116,9 +122,10 @@
   box-shadow: 0 0 10px rgba(228, 86, 50, .25);
 }
 
+/* ---------- NOMOR TRACK (rapat) ---------- */
 .rdk-music-track-num {
-  width: 22px;
-  flex: 0 0 22px;
+  width: 18px;
+  flex: 0 0 18px;
   color: #4a4b48;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
@@ -128,18 +135,23 @@
 
 .rdk-music-track-active .rdk-music-track-num { color: #e45632; }
 
-/* ---------- EQ ---------- */
-/* Default: TIDAK ada animasi. Hanya animasi kalau .rdk-music-track-playing */
+/* ---------- EQ / ANALYZER ---------- */
+/* Default: lebar 0, hilang total. Cuma muncul saat track aktif. */
 .rdk-music-eq {
-  width: 16px;
+  width: 0;
   height: 16px;
-  flex: 0 0 16px;
+  flex: 0 0 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 2px;
   opacity: 0;
-  transition: opacity .2s ease;
+  overflow: hidden;
+  transition:
+    width .28s ease,
+    flex-basis .28s ease,
+    opacity .2s ease,
+    margin-right .28s ease;
 }
 
 .rdk-music-eq span {
@@ -150,8 +162,13 @@
   transform-origin: bottom center;
 }
 
-/* Track active tapi BELUM playing: EQ cuma tampil statis, tidak gerak */
-.rdk-music-track-active .rdk-music-eq { opacity: .5; }
+/* Track active: EQ muncul dengan lebar penuh (statis dulu) */
+.rdk-music-track-active .rdk-music-eq {
+  width: 16px;
+  flex: 0 0 16px;
+  margin-right: 4px;
+  opacity: 1;
+}
 
 /* HANYA saat playing, EQ baru animasi */
 .rdk-music-track-playing .rdk-music-eq { opacity: 1; }
@@ -174,6 +191,7 @@
   to   { height: 14px; }
 }
 
+/* ---------- TRACK INFO ---------- */
 .rdk-music-track-info {
   min-width: 0;
   flex: 1 1 auto;
