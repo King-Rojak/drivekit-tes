@@ -2,14 +2,18 @@
    ROJAK AI — CS & Tutor (Text-only)
    Fitur: typewriter effect + markdown live render
 
+   Backend: /api/ai (Vercel serverless)
+   - API key OpenRouter ada di server, BUKAN di sini
+   - Frontend hanya kirim { messages: [...] }
+   - Response: { reply: "..." }
+
    FIX terbaru:
-   - SVG icon custom (bukan template AI/SaaS)
-   - Send icon jadi arrow up (clean)
-   - Reset icon jadi refresh arrow custom
-   - Dot hijau FAB DIPINDAH ke dalam .rojak-ai-fab-icon
-   - Auto-focus HANYA di desktop (pointer: fine)
-     → HP tidak auto-buka keyboard saat panel dibuka
-   - Reset conversation pakai RDKConfirm modal (fallback ke confirm())
+   - SVG icon custom
+   - Send icon arrow up
+   - Reset icon refresh arrow
+   - Dot hijau di dalam .rojak-ai-fab-icon
+   - Auto-focus HANYA di desktop
+   - Reset pakai RDKConfirm
 ============================================================ */
 
 (function () {
@@ -350,8 +354,6 @@
     state.scrollY = window.scrollY || window.pageYOffset || 0;
     document.body.classList.add("rojak-ai-no-scroll");
 
-    // Auto-focus HANYA di desktop (mouse/trackpad).
-    // Di HP, keyboard TIDAK muncul otomatis — user tap sendiri kalau mau ngetik.
     const isDesktop = isDesktopPointer();
 
     setTimeout(() => {
@@ -369,7 +371,6 @@
 
     document.body.classList.remove("rojak-ai-no-scroll");
 
-    // Blur input biar keyboard turun (kalau ada) saat panel ditutup
     const input = document.getElementById("rojakAiInput");
     if (input && document.activeElement === input) {
       input.blur();
@@ -450,9 +451,7 @@
         let errMsg = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
         try {
           const j = await res.json();
-          if (j && j.error === "NO_API_KEY") {
-            errMsg = "Rojak AI belum dikonfigurasi. Silakan periksa Environment Variables.";
-          } else if (j && j.message) {
+          if (j && j.message) {
             errMsg = j.message;
           }
         } catch (_) { /* ignore */ }
@@ -474,6 +473,7 @@
     } catch (err) {
       removeTypingEl();
       console.error("[Rojak AI] fetch error:", err);
+
       const errorMessage =
         err?.message === "TIMEOUT"
           ? "Rojak AI terlalu lama merespons. Coba kirim lagi."
@@ -498,7 +498,6 @@
   }
 
   function resetConversation() {
-    // Pakai RDKConfirm kalau tersedia, fallback ke confirm() bawaan
     if (window.RDKConfirm && typeof window.RDKConfirm.show === "function") {
       window.RDKConfirm.show({
         title: "Reset Percakapan?",
@@ -513,7 +512,6 @@
       return;
     }
 
-    // Fallback
     if (confirm("Reset percakapan Rojak AI?")) {
       performReset();
     }
@@ -522,7 +520,6 @@
   /* ---------- BUILD ---------- */
 
   function buildWidget() {
-    /* FAB icon — dot hijau dipindah KE DALAM icon */
     const fabIcon = el("span", { class: "rojak-ai-fab-icon" });
     fabIcon.innerHTML = ICON_CHAT;
     fabIcon.appendChild(el("span", { class: "rojak-ai-fab-dot" }));
