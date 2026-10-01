@@ -1,186 +1,74 @@
 rules_version = '2';
 
-// ============================================================
-// ROJAK DRIVEK1T — Firestore Security Rules
-// Prinsip: DENY BY DEFAULT, LEAST PRIVILEGE
-// ============================================================
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---------- HELPER FUNCTIONS ----------
-
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    function isOwner(uid) {
-      return isSignedIn() && request.auth.uid == uid;
-    }
-
-    // Cek apakah user yang login adalah admin
-    // Membaca dari /users/{uid}.role == "admin"
-    // Firestore rules bisa baca dokumen lain (get) — ini trusted
     function isAdmin() {
-      return isSignedIn()
+      return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
     }
 
-    // Cek apakah user baru (belum ada dokumen)
-    function isNewUser(uid) {
-      return isOwner(uid)
-        && !exists(/databases/$(database)/documents/users/$(uid));
-    }
+    match /users/{userId} {
 
-    // Validasi field allowlist untuk users
-    function validUserFields() {
-      return request.resource.data.keys().hasOnly([
-        "uid",
-        "name",
-        "email",
-        "photoURL",
-        "role",
-        "createdAt",
-        "updatedAt",
-        "lastLoginAt"
-      ]);
-    }
+      // User baru hanya boleh membuat profil miliknya sendiri.
+      // Role awal wajib member.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "member";
 
-    // Validasi field allowlist untuk update profile (user hanya bisa ubah name)
-    function validUserUpdateFields() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        "name",
-        "updatedAt",
-        "lastLoginAt"
-      ]);
-    }
+      // User boleh membaca profil sendiri; admin boleh membaca semua user.
+      allow read: if signedIn()
+        && (request.auth.uid == userId || isAdmin());
 
-    // Validasi panjang string
-    function validString(str, maxLen) {
-      return str is string
-        && str.size() > 0
-        && str.size() <= maxLen;
-    }
+      // User hanya boleh mengubah profil sendiri tanpa mengubah role/identitas utama.
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "name",
+          "photoURL",
+          "lastLoginAt",
+          "updatedAt"
+        ]);
 
-    // Validasi email format (simple)
-    function validEmail(email) {
-      return email is string
-        && email.size() > 0
-        && email.size() <= 254
-        && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-    }
+      // Admin hanya boleh mengubah role user lain.
+      allow update: if isAdmin()
+        && request.auth.uid != userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "role"
+        ])
+        && request.resource.data.role in ["member", "admin"];
 
-    // Validasi role enum
-    function validRole(role) {
-      return role == "admin" || role == "member";
-    }
-
-    // Validasi broadcast fields
-    function validBroadcastFields() {
-      return request.resource.data.keys().hasOnly([
-        "message",
-        "active",
-        "createdAt",
-        "createdBy",
-        "createdByName"
-      ]);
-    }
-
-    function validBroadcastUpdateFields() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        "active"
-      ]);
+      // Admin tidak dapat menghapus dirinya sendiri.
+      allow delete: if isAdmin()
+        && request.auth.uid != userId;
     }
 
     // ============================================================
-    // USERS COLLECTION
-    // ============================================================
-
-    match /users/{uid} {
-
-      // --- READ ---
-      // User boleh baca dokumennya sendiri
-      // Admin boleh baca semua dokumen user
-      allow read: if isOwner(uid) || isAdmin();
-
-      // --- CREATE ---
-      // User baru boleh create dokumennya sendiri saat pertama login
-      // Field harus lengkap & valid, role HARUS "member" (tidak boleh "admin")
-      allow create: if isNewUser(uid)
-        && validUserFields()
-        && request.resource.data.uid == uid
-        && request.resource.data.role == "member"
-        && validString(request.resource.data.name, 100)
-        && validEmail(request.resource.data.email)
-        && request.resource.data.photoURL is string
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time;
-
-      // --- UPDATE ---
-      // 1. User boleh update profile sendiri TAPI hanya field: name, updatedAt, lastLoginAt
-      //    Role TIDAK BOLEH diubah oleh user sendiri
-      // 2. Admin boleh update field "role" user lain
-      allow update: if (
-        // User update profile sendiri (tanpa ubah role/uid/email/photoURL)
-        (
-          isOwner(uid)
-          && validUserUpdateFields()
-          && request.resource.data.uid == resource.data.uid
-          && request.resource.data.role == resource.data.role
-          && request.resource.data.email == resource.data.email
-          && request.resource.data.createdAt == resource.data.createdAt
-        )
-        ||
-        // Admin ubah role user lain (field allowlist: role, updatedAt)
-        (
-          isAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["role", "updatedAt"])
-          && validRole(request.resource.data.role)
-        )
-      );
-
-      // --- DELETE ---
-      // Hanya admin yang boleh delete user
-      // User TIDAK boleh delete dokumennya sendiri (biar audit trail tetap ada)
-      allow delete: if isAdmin();
-    }
-
-    // ============================================================
-    // BROADCASTS COLLECTION
+    // BROADCASTS — untuk fitur pengumuman
     // ============================================================
 
     match /broadcasts/{broadcastId} {
+      // Semua user login bisa BACA
+      allow read: if signedIn();
 
-      // --- READ ---
-      // Semua user yang login boleh baca broadcast (untuk notifikasi)
-      allow read: if isSignedIn();
+      // Cuma admin bisa BUAT broadcast
+      allow create: if isAdmin();
 
-      // --- CREATE ---
-      // Hanya admin yang boleh create broadcast
-      allow create: if isAdmin()
-        && validBroadcastFields()
-        && validString(request.resource.data.message, 500)
-        && request.resource.data.active is bool
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.createdBy == request.auth.uid
-        && validString(request.resource.data.createdByName, 100);
+      // Cuma admin bisa UPDATE (untuk aktifkan/nonaktifkan)
+      allow update: if isAdmin();
 
-      // --- UPDATE ---
-      // Hanya admin yang boleh update broadcast (biasanya untuk set active = false)
-      allow update: if isAdmin() && validBroadcastUpdateFields();
-
-      // --- DELETE ---
-      // Hanya admin yang boleh delete broadcast
+      // Cuma admin bisa HAPUS
       allow delete: if isAdmin();
-    }
-
-    // ============================================================
-    // DEFAULT: DENY ALL
-    // ============================================================
-
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
