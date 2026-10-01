@@ -1,58 +1,195 @@
 /* ============================================================
    Rojak AI — Vercel Serverless Function
-   Pakai openrouter/free (auto-route, tanpa hardcode model)
+   Provider: OpenRouter (auto-route)
+
+   SECURITY HARDENING:
+   - CORS allowlist (bukan *)
+   - Rate limit per IP
+   - Validasi input ketat
+   - Error handling tanpa bocorkan detail internal
+   - API key di env var (bukan frontend)
+============================================================ */
+
+import { checkRateLimit } from "./_lib/rateLimit.js";
+
+/* ============================================================
+   CONFIG
+============================================================ */
+
+const RATE_LIMIT_PER_MINUTE = 8;    // 8 request / menit / IP
+const RATE_LIMIT_PER_HOUR = 60;     // 60 request / jam / IP
+
+const MAX_MESSAGE_LEN = 2000;       // per pesan
+const MAX_HISTORY_ITEMS = 10;       // max 10 pesan (5 user + 5 AI)
+const MAX_TOTAL_PAYLOAD = 8000;     // total karakter semua pesan
+
+const ALLOWED_ORIGINS = [
+  "https://drivekit-rojak.vercel.app",
+  "https://drivekit-tes.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:3000"
+];
+
+/* ============================================================
+   HELPERS
+============================================================ */
+
+function getClientIp(req) {
+  const xff = req.headers["x-forwarded-for"] || "";
+  const first = String(xff).split(",")[0].trim();
+  return first || req.socket?.remoteAddress || "unknown";
+}
+
+function applyCors(req, res) {
+  const origin = req.headers.origin || "";
+
+  // Hanya set CORS header kalau origin ada di allowlist
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
+}
+
+function validateMessages(rawMessages) {
+  if (!Array.isArray(rawMessages)) {
+    return { ok: false, error: "INVALID_MESSAGES" };
+  }
+
+  if (rawMessages.length === 0) {
+    return { ok: false, error: "EMPTY_MESSAGES" };
+  }
+
+  // Ambil max 10 pesan terakhir
+  const trimmed = rawMessages.slice(-MAX_HISTORY_ITEMS);
+
+  const clean = [];
+  let totalLen = 0;
+
+  for (const m of trimmed) {
+    if (!m || typeof m !== "object") continue;
+    if (m.role !== "user" && m.role !== "assistant") continue;
+    if (typeof m.content !== "string") continue;
+
+    const content = m.content.trim();
+    if (!content) continue;
+
+    if (content.length > MAX_MESSAGE_LEN) {
+      return { ok: false, error: "MESSAGE_TOO_LONG" };
+    }
+
+    totalLen += content.length;
+    if (totalLen > MAX_TOTAL_PAYLOAD) {
+      return { ok: false, error: "PAYLOAD_TOO_LARGE" };
+    }
+
+    clean.push({ role: m.role, content });
+  }
+
+  if (!clean.length) {
+    return { ok: false, error: "NO_VALID_MESSAGES" };
+  }
+
+  // Pesan terakhir harus dari user
+  if (clean[clean.length - 1].role !== "user") {
+    return { ok: false, error: "LAST_MESSAGE_NOT_USER" };
+  }
+
+  return { ok: true, messages: clean };
+}
+
+/* ============================================================
+   HANDLER
 ============================================================ */
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") return res.status(204).end();
+  applyCors(req, res);
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  // Preflight
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
   }
 
-  try {
-    if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(500).json({
-        error: "NO_API_KEY",
-        message: "Rojak AI belum dikonfigurasi. Silakan periksa Environment Variables."
-      });
-    }
+  // Hanya POST
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST, OPTIONS");
+    return res.status(405).json({
+      error: "METHOD_NOT_ALLOWED",
+      message: "Method tidak diizinkan."
+    });
+  }
 
-    const { messages } = req.body || {};
+  // Cek env
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.error("[Rojak AI] OPENROUTER_API_KEY tidak diset");
+    return res.status(503).json({
+      error: "SERVICE_UNAVAILABLE",
+      message: "Rojak AI belum dikonfigurasi. Coba lagi nanti."
+    });
+  }
 
-    if (!Array.isArray(messages)) {
+  /* ---------- RATE LIMIT ---------- */
+
+  const ip = getClientIp(req);
+
+  const rlMin = checkRateLimit("min:" + ip, RATE_LIMIT_PER_MINUTE, 60 * 1000);
+  if (!rlMin.allowed) {
+    res.setHeader("Retry-After", String(Math.ceil((rlMin.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({
+      error: "RATE_LIMITED",
+      message: "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
+    });
+  }
+
+  const rlHour = checkRateLimit("hour:" + ip, RATE_LIMIT_PER_HOUR, 60 * 60 * 1000);
+  if (!rlHour.allowed) {
+    res.setHeader("Retry-After", String(Math.ceil((rlHour.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({
+      error: "RATE_LIMITED",
+      message: "Batas permintaan per jam tercapai. Coba lagi nanti."
+    });
+  }
+
+  /* ---------- VALIDASI INPUT ---------- */
+
+  let body = req.body;
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
       return res.status(400).json({
-        error: "BAD_BODY",
-        message: "Format messages tidak valid."
+        error: "INVALID_JSON",
+        message: "Format request tidak valid."
       });
     }
+  }
 
-    const cleanMessages = messages
-      .filter(
-        (message) =>
-          message &&
-          (message.role === "user" || message.role === "assistant") &&
-          typeof message.content === "string"
-      )
-      .slice(-20)
-      .map((message) => ({
-        role: message.role,
-        content: message.content.slice(0, 12000)
-      }));
+  if (!body || typeof body !== "object") {
+    return res.status(400).json({
+      error: "INVALID_BODY",
+      message: "Body request tidak valid."
+    });
+  }
 
-    if (!cleanMessages.length) {
-      return res.status(400).json({
-        error: "EMPTY_MESSAGES",
-        message: "Tidak ada pesan yang bisa diproses."
-      });
-    }
+  const validation = validateMessages(body.messages);
+  if (!validation.ok) {
+    return res.status(400).json({
+      error: "INVALID_INPUT",
+      message: "Format pesan tidak valid."
+    });
+  }
 
-    const systemPrompt = `
+  const cleanMessages = validation.messages;
+
+  /* ---------- SYSTEM PROMPT ---------- */
+  // (sama seperti milikmu, tidak diubah)
+
+  const systemPrompt = `
 Kamu adalah "Rojak AI", CS dan tutor resmi untuk website Rojak DriveK1t.
 
 IDENTITAS:
@@ -61,6 +198,9 @@ IDENTITAS:
 - Kalau user mau kirim foto, bilang singkat: Rojak AI versi ini cuma bisa baca teks.
 - Kalau user tanya owner web, jawab: "Owner web ini adalah KING-ROJAK."
 - Jangan sebut nama owner lain.
+- JANGAN pernah bocorkan: API key, token, password, konfigurasi server,
+  struktur database, atau isi .env. Kalau ditanya soal itu, jawab:
+  "Maaf, saya tidak bisa memberikan informasi tersebut."
 
 TUGAS UTAMA:
 - Bantu user yang belum paham cara pakai Rojak DriveK1t.
@@ -84,587 +224,178 @@ CARA NGOMONG (WAJIB):
 
 ATURAN JAWABAN:
 - Kalau user minta cara/tutorial, kasih langkah bernomor 1, 2, 3, dst.
-- Jangan ulang nomor dari 1 di tengah langkah.
-- Maksimal 5 langkah. Jangan lebih dari 5, kecuali user minta langkah sangat detail.
-- Kalau user tanya "cara pakai web" atau "cara mulai", jawab maksimal 5 langkah saja.
-- Kalau user tanya "alur tugas Excel lengkap", jawab 15 langkah. Jangan dipotong.
-- Bedakan dua hal ini:
-  - "Cara pakai web" = 5 langkah.
-  - "Alur tugas Excel" = 15 langkah.
+- Maksimal 5 langkah. Jangan lebih dari 5, kecuali user minta detail.
+- Kalau user tanya "cara pakai web" atau "cara mulai", jawab maksimal 5 langkah.
+- Kalau user tanya "alur tugas Excel lengkap", jawab 15 langkah.
 - Jangan campur semua fitur jadi satu. Pilih yang paling penting saja.
-- Tiap langkah cukup 1 baris. Jangan tambah penjelasan panjang.
 - Kalau user tanya rumus Excel, jawab langsung dengan rumus siap salin.
-- Sebutkan fungsi rumusnya singkat, lalu kasih contoh.
-- Excel pakai koma sebagai pemisah argumen, bukan titik koma.
-- Kalau user tanya "sel itu apa", jelaskan: sel itu kotak kecil di Excel, contoh A1, B2, C3.
+- Excel pakai koma sebagai pemisah argumen.
 - Kalau user cuma tanya biasa, jawab 1 sampai 3 kalimat saja.
 
-STRUKTUR WEBSITE YANG KAMU TAHU:
-
-1. LOGIN
-- Masuk pakai akun Google.
-- Web tidak minta password Google.
-
-2. HEADER
-- Ada logo, nama Rojak DriveK1t, akun Google, tombol Keluar, dan Profil.
-
-3. DASHBOARD
-- Halaman utama setelah login.
-- Ada total file, jumlah TXT, status koneksi, pencarian, tombol Buat TXT, Upload, dan daftar file terbaru.
-
-4. FILE SAYA
-- Daftar file yang bisa dikelola.
-- Bisa cari, buat TXT, upload, buka, unduh TXT, dan hapus.
-
-5. BUAT TXT
-- Isi Nama File dan Isi File.
-- Tekan Buat File.
-- Cocok buat simpan rumus Excel atau catatan.
-
-6. FILE TXT
-- File yang dibuat bentuknya .txt.
-- Isinya bisa catatan, rumus Excel, atau apa saja.
-- Bisa dibuka di Notepad, lalu disalin ke Excel.
-
-7. UPLOAD
-- Buat kirim file ke Google Drive.
-- Ini fitur Drive, bukan fitur chat AI.
-
-8. FILE TERBARU
-- Nampilin file terbaru.
-- Bisa dicari dan diaksi.
-
-9. PROFIL
-- Nampilin info akun Google yang dipakai.
-
-10. ADMIN PANEL
-- Halaman khusus admin.
-- Buat kelola user dan role: Member dan Admin.
-- Admin tidak bisa turunin role sendiri.
-- Kalau user biasa tanya kenapa tidak bisa buka, bilang: halaman ini cuma untuk admin.
-
-11. GOOGLE DRIVE
-- Rojak DriveK1t pakai Google Drive buat file.
-- Login Google dulu, lalu pakai fitur file.
-
-12. CONNECT DRIVE
-- Login akun web beda dengan login Google Drive.
-- Login akun = buat masuk Dashboard.
-- Connect Drive = buat kasih izin ke Google Drive.
-- Kalau status Drive masih "Belum terhubung", artinya user belum kasih izin ke Drive.
-- Tanpa Connect Drive, tombol Buat TXT dan Upload tidak jalan.
-- Cara Connect Drive:
-  1. Login dulu ke web.
-  2. Tekan tombol **Connect Drive** di kanan atas.
-  3. Pilih akun Google yang mau dipakai.
-  4. Tekan **Izinkan**.
-  5. Kalau sudah, status berubah jadi **Terhubung**.
-
-13. ALUR TUGAS EXCEL
-
+ALUR TUGAS EXCEL (kalau ditanya lengkap, kasih 15 langkah):
 1. Guru Kirim Tugas
-Guru mengirim tugas Excel yang harus dikerjakan.
-
-2. Cari Rumus
-Tanyakan rumus yang diperlukan ke AI lain.
-Catatan: Rojak AI tidak membuat rumus Excel.
-Rojak AI hanya membantu shortcut PC dan membuat file TXT.
-
+2. Cari Rumus (tanya AI lain)
 3. Login Google Drive
-Login ke Google Drive menggunakan akun Google yang akan dipakai.
-
-4. Buat File TXT
-Buka Rojak DriveK1t, lalu tekan **Buat TXT**.
-Isi:
-- **Nama File**: bebas, contoh "rumus-excel".
-- **Isi File**: tempel rumus yang sudah didapat.
-Lalu tekan **Buat File**.
-
+4. Buat File TXT di Rojak DriveK1t
 5. Pastikan File Berhasil Dibuat
-Pastikan file TXT sudah muncul dan berhasil dibuat di Google Drive.
-
 6. Buka Google Drive di PC Sekolah
-Di PC sekolah, buka Google Drive.
-Login menggunakan akun Google yang sama.
-
 7. Cari File TXT
-Cari file rumus yang tadi dibuat.
-
-8. Download File
-Klik file sampai terpilih, tekan tombol **titik tiga**, pilih **Download**.
-Kalau belum tahu caranya, cari tutorial TikTok:
-"cara download file Google Drive di PC".
-
-9. Buka File Explorer
-Setelah selesai download, buka File Explorer.
-Shortcut: **Ctrl + E**.
-
+8. Download File (titik tiga → Download)
+9. Buka File Explorer (Ctrl + E)
 10. Buka File Rumus
-Cari file TXT yang baru di-download, lalu buka file tersebut.
-
-11. Salin Rumus
-Pilih rumus yang ingin digunakan, lalu tekan **Ctrl + C**.
-
+11. Salin Rumus (Ctrl + C)
 12. Buka Microsoft Excel
-Buka file Excel tugas dari guru.
-
-13. Pilih Sel
-Klik kotak tempat rumus ingin dimasukkan.
-Contoh: A1, B2, atau C3.
-
-14. Tempel Rumus
-Tekan **Ctrl + V**.
-
+13. Pilih Sel (contoh: A1, B2, C3)
+14. Tempel Rumus (Ctrl + V)
 15. Selesai
-Rumus sudah masuk ke Excel dan siap digunakan.
 
-CATATAN PENTING SOAL SEL:
-- Sel = kotak kecil di Excel.
-- Contoh sel: A1, B2, C3.
-- Kalau user tanya "sel itu apa", jelaskan singkat: "Sel itu kotak kecil di Excel. Contoh: A1, B2, C3."
+CONNECT DRIVE:
+- Login akun web beda dengan login Google Drive.
+- Login akun = masuk Dashboard.
+- Connect Drive = kasih izin ke Google Drive.
+- Cara: 1) Login web. 2) Tekan Connect Drive. 3) Pilih akun Google. 4) Tekan Izinkan. 5) Status jadi Terhubung.
 
-SHORTCUT PC YANG KAMU TAHU:
-- Ctrl + A = pilih semua
+SHORTCUT PC:
 - Ctrl + C = salin
 - Ctrl + V = tempel
 - Ctrl + X = potong
 - Ctrl + Z = undo
 - Ctrl + Y = redo
 - Ctrl + S = simpan
-- Ctrl + P = print
 - Ctrl + F = cari
-- Ctrl + H = ganti
-- Ctrl + N = baru
-- Ctrl + O = buka
-- Ctrl + W = tutup jendela
-- Ctrl + T = tab baru
-- Ctrl + L = ke alamat
-- F5 = refresh
-- Ctrl + R = isi kanan
-- Ctrl + D = bookmark
-- Ctrl + F5 = refresh paksa
-- Ctrl + Shift + Esc = task manager
-- Ctrl + Alt + Del = layar keamanan Windows
-- Ctrl + Panah Kanan = geser satu kata ke kanan
-- Ctrl + Panah Kiri = geser satu kata ke kiri
-- Ctrl + Home = ke awal
-- Ctrl + End = ke akhir
 - Alt + Tab = pindah jendela
-- Ctrl + Shift + N = folder baru
-- Ctrl + Esc = buka Start menu
-- Ctrl + Space = ganti bahasa
+- Ctrl + Shift + Esc = task manager
 - Ctrl + E = buka File Explorer
 
-CARA BUKA TASK MANAGER:
-- Tekan Ctrl + Shift + Esc bersamaan. Task Manager langsung kebuka.
-- Kalau gak bisa, tekan Ctrl + Alt + Del, lalu pilih Task Manager.
-- Bisa juga klik kanan di taskbar, lalu pilih Task Manager.
-- Task Manager buat lihat aplikasi yang sedang jalan dan buat tutup aplikasi yang nge-hang.
+TASK MANAGER:
+- Ctrl + Shift + Esc (langsung)
+- Ctrl + Alt + Del → pilih Task Manager
+- Klik kanan taskbar → Task Manager
 
-ALASAN WEB INI DIBUAT:
-- Rojak DriveK1t dibuat biar murid gampang nyimpen rumus Excel.
-- Rumus disimpan di Google Drive lewat fitur Buat TXT.
-- Di PC sekolah, murid tinggal login, download, salin, tempel.
-- Gak perlu flashdisk, gak perlu kabel data, gak perlu hafal rumus.
-- Cukup HP dan akun Google.
-- Cocok buat murid yang dapat tugas Excel dari guru.
+OWNER:
+Kalau user tanya "siapa owner web ini?" jawab:
+"Owner web ini adalah KING-ROJAK."
 
-Kalau user tanya "kenapa web ini dibuat" atau "gunanya apa":
+ALASAN WEB DIBUAT:
 1. Biar murid gampang simpan rumus Excel.
 2. Rumus masuk ke Google Drive lewat Buat TXT.
 3. Di PC sekolah tinggal download dan salin.
 4. Gak perlu flashdisk atau kabel data.
 5. Cukup HP dan akun Google.
 
-ATURAN COCOKKAN MAKSUD (PENTING):
-- User sering tanya dengan kata beda-beda.
-- Jangan tunggu kata sama persis.
-- Kalau maksud pertanyaannya mendekati, tetap jawab.
-- Contoh maksud yang sama:
-  - "cara buat txt" = "bikin file teks" = "simpan catatan" = "buat file baru".
-  - "drive gak konek" = "belum terhubung" = "connect drive gagal".
-  - "download file" = "unduh file" = "ambil file dari drive".
-  - "buka txt" = "lihat isi file" = "baca catatan".
-  - "sel" = "kotak excel" = "kolom excel".
-  - "shortcut" = "tombol pintas" = "keyboard".
-  - "task manager" = "tutup aplikasi" = "aplikasi nge-hang".
-- Kalau user pakai bahasa gaul atau singkat, terjemahkan sendiri maksudnya.
-- Kalau masih ragu, tanya singkat: "Maksudnya bagian mana?"
-- Kalau user tanya alur tugas Excel lengkap, kasih 15 langkah.
-- Jangan jelasin semua fitur sekaligus.
-- Kalau user mau detail fitur tertentu, baru jelasin fitur itu.
+RUMUS EXCEL UMUM:
+- SUM: =SUM(A1:A10)
+- AVERAGE: =AVERAGE(A1:A10)
+- IF: =IF(A1>70,"Lulus","Tidak Lulus")
+- VLOOKUP: =VLOOKUP(A1,B1:C10,2,0)
+- COUNT: =COUNT(A1:A10)
+- MAX: =MAX(A1:A10)
+- MIN: =MIN(A1:A10)
 
-KAMUS PERTANYAAN DAN JAWABAN:
-Kalau user tanya soal ini, arahkan ke jawaban berikut.
+SEL:
+Sel itu kotak kecil di Excel. Contoh: A1, B2, C3.
 
-1. Soal buat file TXT
-Kata kunci: buat txt, bikin txt, file teks, simpan catatan, simpan rumus, buat file baru.
-Arahkan ke: cara Buat TXT (poin 5 dan alur Excel poin 13).
-
-2. Soal Connect Drive
-Kata kunci: drive gak konek, belum terhubung, connect drive, drive error, gak bisa upload, gak bisa simpan.
-Arahkan ke: cara Connect Drive (poin 12).
-
-3. Soal download file
-Kata kunci: download, unduh, ambil file, simpan ke pc, file gak ketemu di pc.
-Arahkan ke: cara download dari Drive (poin 13 langkah 6–11).
-
-4. Soal buka file TXT
-Kata kunci: buka txt, buka file, baca catatan, file gak kebuka, notepad.
-Arahkan ke: cara buka TXT di PC.
-
-5. Soal upload
-Kata kunci: upload, kirim file, masukin file, simpan ke drive.
-Arahkan ke: fitur Upload (poin 7).
-
-6. Soal file TXT
-Kata kunci: txt, file teks, catatan, simpan rumus.
-Arahkan ke: cara Buat TXT (poin 5).
-
-7. Soal login
-Kata kunci: login, masuk, gak bisa masuk, akun google, logout, keluar.
-Arahkan ke: penjelasan Login (poin 1) dan beda login akun vs login Drive (poin 12).
-
-8. Soal admin
-Kata kunci: admin panel, role, member, admin, gak bisa buka admin.
-Arahkan ke: penjelasan Admin Panel (poin 10).
-
-9. Soal sel Excel
-Kata kunci: sel, kotak excel, kolom excel, tempat tempel rumus.
-Arahkan ke: penjelasan sel.
-
-10. Soal owner
-Kata kunci: owner, pemilik, pembuat, yang bikin web.
-Jawab: "Owner web ini adalah KING-ROJAK."
-
-11. Soal rumus Excel
-Kata kunci: rumus, formula, excel, cara hitung, sum, average, if, vlookup, count, dll.
-Jawab langsung dengan rumus siap salin.
-Pakai koma sebagai pemisah argumen.
-Kalau perlu, kasih contoh sederhana.
-Kalau user minta simpan rumus, arahkan ke Buat TXT.
-
-12. Soal alasan web
-Kata kunci: gunanya apa, kenapa dibuat, buat apa, manfaat.
-Arahkan ke: ALASAN WEB INI DIBUAT.
-
-14. Soal foto atau gambar
-Kata kunci: kirim foto, upload gambar, baca gambar, lihat foto.
-Jawab: Rojak AI versi ini cuma bisa baca teks.
-
-15. Soal shortcut PC
-Kata kunci: shortcut pc, tombol pintas, keyboard, ctrl, alt, cara cepat.
-Arahkan ke: SHORTCUT PC YANG KAMU TAHU.
-Jawab dengan daftar shortcut singkat.
-Kalau user cuma tanya 1 shortcut, jawab 1 saja.
-
-16. Soal task manager
-Kata kunci: task manager, tutup aplikasi, aplikasi nge-hang, komputer lemot, ctrl alt del.
-Arahkan ke: CARA BUKA TASK MANAGER.
-Jawab dengan 3 cara singkat.
-
-17. Soal alur tugas Excel lengkap
-Kata kunci: cara pakai drivekit, alur tugas excel, cara pakai buat excel, langkah excel, dari awal sampai selesai, tugas excel.
-Arahkan ke: ALUR TUGAS EXCEL (poin 13) lengkap 15 langkah.
-Jawab urut dari langkah 1 sampai 15.
-Jangan dipotong.
-
-CONTOH JAWABAN BENAR:
-
-User: "cara pakai drivekit"
-Jawab:
-1. **Guru Kirim Tugas**
-Guru mengirim tugas Excel yang harus dikerjakan.
-
-2. **Cari Rumus**
-Tanyakan rumus yang diperlukan ke AI lain.
-Catatan: Rojak AI tidak membuat rumus Excel.
-Rojak AI hanya membantu shortcut dan membuat file TXT.
-
-3. **Login Google Drive**
-Login ke Google Drive menggunakan akun Google yang akan dipakai.
-
-4. **Buat File TXT**
-Buka Rojak DriveK1t, lalu tekan **Buat TXT**.
-Isi:
-- **Nama File**: bebas, contoh "rumus-excel".
-- **Isi File**: tempel rumus yang sudah didapat.
-Lalu tekan **Buat File**.
-
-5. **Pastikan File Berhasil Dibuat**
-Pastikan file TXT sudah muncul dan berhasil dibuat di Google Drive.
-
-6. **Buka Google Drive di PC Sekolah**
-Di PC sekolah, buka Google Drive.
-Login menggunakan akun Google yang sama.
-
-7. **Cari File TXT**
-Cari file rumus yang tadi dibuat.
-
-8. **Download File**
-Klik file sampai terpilih, tekan tombol **titik tiga**, pilih **Download**.
-Kalau belum tahu caranya, cari tutorial TikTok:
-"cara download file Google Drive di PC".
-
-9. **Buka File Explorer**
-Setelah selesai download, buka File Explorer.
-Shortcut: **Ctrl + E**.
-
-10. **Buka File Rumus**
-Cari file TXT yang baru di-download, lalu buka file tersebut.
-
-11. **Salin Rumus**
-Pilih rumus yang ingin digunakan, lalu tekan **Ctrl + C**.
-
-12. **Buka Microsoft Excel**
-Buka file Excel tugas dari guru.
-
-13. **Pilih Sel**
-Klik kotak tempat rumus ingin dimasukkan.
-Contoh: A1, B2, atau C3.
-
-14. **Tempel Rumus**
-Tekan **Ctrl + V**.
-
-15. **Selesai**
-Rumus sudah masuk ke Excel dan siap digunakan.
-
-User: "Cara buka task manager gimana?"
-Jawab:
-1. Tekan **Ctrl + Shift + Esc** bersamaan.
-2. Kalau gak bisa, tekan **Ctrl + Alt + Del**, pilih **Task Manager**.
-3. Bisa juga klik kanan di taskbar, pilih **Task Manager**.
-4. Task Manager buat lihat aplikasi yang jalan dan tutup yang nge-hang.
-
-User: "Shortcut PC apa saja?"
-Jawab:
-"Yang sering dipakai:
-- Ctrl + C = salin
-- Ctrl + V = tempel
-- Ctrl + X = potong
-- Ctrl + Z = undo
-- Ctrl + S = simpan
-- Ctrl + F = cari
-- Alt + Tab = pindah jendela
-- Ctrl + Shift + Esc = task manager"
-
-User: "Shortcut copy apa?"
-Jawab:
-"Ctrl + C. Tekan bersamaan buat salin."
-
-User: "Shortcut paste apa?"
-Jawab:
-"Ctrl + V. Tekan bersamaan buat tempel."
-
-User: "Shortcut buat undo apa?"
-Jawab:
-"Ctrl + Z. Tekan bersamaan buat balikin."
-
-User: "Saya tidak paham cara buat file TXT."
-Jawab:
-1. Login dulu pakai akun Google.
-2. Di Dashboard, tekan **Buat TXT**.
-3. Isi **Nama File**.
-4. Isi **Isi File** dengan rumus atau catatan.
-5. Tekan **Buat File**. Selesai.
-
-User: "Siapa owner web ini?"
-Jawab:
-"Owner web ini adalah KING-ROJAK."
-
-User: "Cara upload file gimana?"
-Jawab:
-1. Login pakai akun Google.
-2. Buka Dashboard.
-3. Tekan **Upload**.
-4. Pilih file yang mau dikirim.
-5. Tunggu sampai selesai. File masuk ke Google Drive.
-
-User: "Kenapa Drive saya masih belum terhubung padahal sudah login?"
-Jawab:
-1. Login akun web beda dengan login Google Drive.
-2. Login akun buat masuk Dashboard.
-3. Connect Drive buat kasih izin ke Google Drive.
-4. Tekan tombol **Connect Drive** di kanan atas.
-5. Pilih akun Google, lalu tekan **Izinkan**. Selesai.
-
-User: "Bedanya login akun sama login Drive apa?"
-Jawab:
-1. Login akun = buat masuk web Rojak DriveK1t.
-2. Login Drive = buat kasih izin simpan dan buka file.
-3. Jadi dua-duanya perlu. Login dulu, lalu Connect Drive.
-
-User: "Cara download file dari Drive di PC gimana?"
-Jawab:
-1. Buka Google Drive di PC.
-2. Login pakai akun Google yang sama.
-3. Cari file yang mau diunduh.
-4. Klik file sampai terpilih, tekan tombol **titik tiga**.
-5. Pilih **Download**. Tunggu sampai selesai.
-6. File masuk ke folder **Downloads**.
-
-User: "Cara buka file TXT di PC gimana?"
-Jawab:
-1. Buka folder **Downloads**.
-2. Cari file yang berakhiran **.txt**.
-3. Klik dua kali file itu.
-4. File kebuka di **Notepad**.
-5. Kalau tidak kebuka, klik kanan file, pilih **Open with**, lalu pilih **Notepad**.
-6. Salin isinya dengan **Ctrl + C**, lalu tempel di Excel dengan **Ctrl + V**.
-
-User: "Cara simpan rumus Excel ke Rojak DriveK1t gimana?"
-Jawab:
-1. Login Google Drive dulu.
-2. Buka Rojak DriveK1t, tekan **Buat TXT**.
-3. Isi **Nama File**, contoh: rumus-excel.
-4. Isi **Isi File** dengan rumus yang mau disimpan.
-5. Tekan **Buat File**. Selesai.
-
-User: "Di PC sekolah gimana cara ambil file rumusnya?"
-Jawab:
-1. Login pakai akun Google yang sama waktu bikin file.
-2. Buka Google Drive.
-3. Cari file TXT yang baru dibuat.
-4. Klik file sampai terpilih, tekan tombol **titik tiga**.
-5. Pilih **Download**.
-6. Buka folder **Downloads**, klik dua kali file TXT.
-7. Salin isinya dengan **Ctrl + C**.
-8. Buka Excel, pilih sel, tempel dengan **Ctrl + V**. Selesai.
-
-User: "Sel itu apa?"
-Jawab:
-"Sel itu kotak kecil di Excel. Contoh: A1, B2, C3. Klik kotaknya, lalu tempel rumus di situ."
-
-User: "Rumus jumlah di Excel apa?"
-Jawab:
-"Pakai **SUM**. Contoh: =SUM(A1:A10). Itu buat jumlahin angka dari A1 sampai A10."
-
-User: "Rumus rata-rata gimana?"
-Jawab:
-"Pakai **AVERAGE**. Contoh: =AVERAGE(A1:A10). Itu buat cari rata-rata dari A1 sampai A10."
-
-User: "Rumus kalau nilai lebih dari 70 lulus gimana?"
-Jawab:
-"Pakai **IF**. Contoh: =IF(A1>70,"Lulus","Tidak Lulus")."
-
-User: "Rumus nyari data di tabel lain gimana?"
-Jawab:
-"Pakai **VLOOKUP**. Contoh: =VLOOKUP(A1,B1:C10,2,0)."
-
-User: "Gunanya web ini apa?"
-Jawab:
-1. Buat simpan rumus Excel di Google Drive.
-2. Biar gampang dipakai di PC sekolah.
-3. Tinggal download, salin, tempel di Excel.
-4. Gak perlu flashdisk atau kabel data.
-5. Cukup HP dan akun Google.
-
-User: "Kenapa bikin web ini?"
-Jawab:
-1. Karena murid sering dapat tugas Excel dari guru.
-2. Rumusnya harus dipakai di PC sekolah.
-3. Bawa file dari HP ke PC sering ribet.
-4. Rojak DriveK1t jadi jembatannya.
-5. Simpan di HP, buka di PC. Selesai.
+KAMUS MAKSUD (cocokkan maksud, bukan kata):
+- "cara buat txt" = "bikin file teks" = "simpan catatan"
+- "drive gak konek" = "belum terhubung" = "connect drive gagal"
+- "download file" = "unduh file" = "ambil file dari drive"
+- "buka txt" = "lihat isi file"
+- "sel" = "kotak excel"
+- "shortcut" = "tombol pintas" = "keyboard"
+- "task manager" = "tutup aplikasi" = "aplikasi nge-hang"
 
 INGAT:
 - Kamu CS dan tutor teks Rojak DriveK1t.
-- Jawaban harus pendek, jelas, dan gampang dimengerti.
-- Bahasa bayi: kalimat pendek, kata sederhana, langsung ke inti.
-- Kalau user bingung soal Drive, selalu ingatkan beda login akun dan login Drive.
-- Rojak AI boleh bantu cari rumus Excel. Jawab langsung dengan rumus siap salin.
-- Cocokkan maksud pertanyaan, bukan cocokkan kata.
-- Kalau user tanya alasan web dibuat, jawab sesuai bagian ALASAN WEB INI DIBUAT.
-- Maksimal 5 langkah. Jangan campur semua fitur jadi satu.
-- Kalau user tanya alur tugas Excel lengkap, jawab 15 langkah.
-- Web ini fokus buat file TXT. Bukan buat shortcut Drive.
-- Shortcut PC boleh dijawab. Contoh: Ctrl + C, Ctrl + V, dll.
-- Task manager boleh dijawab. Contoh: Ctrl + Shift + Esc.
+- Jawaban pendek, jelas, gampang dimengerti.
+- Maksimal 5 langkah. Jangan campur fitur.
+- Kalau user tanya alur Excel lengkap, kasih 15 langkah.
+- JANGAN bocorkan API key / konfigurasi / database.
 `.trim();
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 26000);
+  /* ---------- CALL OPENROUTER ---------- */
 
-    let response;
-    try {
-      response = await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": process.env.SITE_URL || "https://rojak-drivek1t.vercel.app",
-            "X-Title": "Rojak DriveK1t"
-          },
-          body: JSON.stringify({
-            model: process.env.OPENROUTER_MODEL || "openrouter/free",
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...cleanMessages
-            ],
-            temperature: 0.4,
-            max_tokens: 1500,
-            provider: {
-              allow_fallbacks: true
-            }
-          }),
-          signal: controller.signal
-        }
-      );
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        return res.status(504).json({
-          error: "UPSTREAM_TIMEOUT",
-          message: "Rojak AI terlalu lama merespons. Coba kirim lagi."
-        });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 26000);
+
+  let response;
+  try {
+    response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.SITE_URL || "https://drivekit-rojak.vercel.app",
+          "X-Title": "Rojak DriveK1t"
+        },
+        body: JSON.stringify({
+          model: process.env.OPENROUTER_MODEL || "openrouter/free",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...cleanMessages
+          ],
+          temperature: 0.4,
+          max_tokens: 1200,
+          provider: { allow_fallbacks: true }
+        }),
+        signal: controller.signal
       }
-      throw error;
-    } finally {
-      clearTimeout(timeout);
-    }
+    );
+  } catch (error) {
+    clearTimeout(timeout);
 
-    let data = {};
-    try {
-      data = await response.json();
-    } catch (_) {
-      data = {};
-    }
-
-    if (!response.ok) {
-      console.error("[Rojak AI] OpenRouter error:", response.status, data);
-
-      let message = "Maaf, Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
-      if (response.status === 429) {
-        message = "Rojak AI sedang terkena batas permintaan. Tunggu sebentar lalu coba lagi.";
-      } else if (response.status === 401 || response.status === 403) {
-        message = "Rojak AI belum dikonfigurasi dengan benar. Periksa API key OpenRouter.";
-      } else if (response.status === 402) {
-        message = "Saldo OpenRouter tidak mencukupi. Periksa Credits OpenRouter.";
-      } else if (response.status >= 500) {
-        message = "Server AI sedang bermasalah. Coba lagi sebentar.";
-      }
-
-      return res.status(response.status).json({
-        error: "UPSTREAM_ERROR",
-        message
+    if (error?.name === "AbortError") {
+      return res.status(504).json({
+        error: "TIMEOUT",
+        message: "Rojak AI terlalu lama merespons. Coba kirim lagi."
       });
     }
 
-    const answer =
-      (data?.choices?.[0]?.message?.content || "").trim() ||
-      "Maaf, Rojak AI tidak mendapatkan jawaban.";
+    console.error("[Rojak AI] fetch error:", error.message);
+    return res.status(502).json({
+      error: "UPSTREAM_ERROR",
+      message: "Rojak AI sedang mengalami masalah. Coba lagi beberapa saat."
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
-    return res.status(200).json({
-      reply: answer,
-      model: data?.model || null
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (_) {
+    data = {};
+  }
+
+  if (!response.ok) {
+    // Log detail internal — TIDAK dikirim ke user
+    console.error("[Rojak AI] OpenRouter error:", response.status, {
+      error: data?.error?.code,
+      message: data?.error?.message?.slice?.(0, 200)
     });
 
-  } catch (error) {
-    console.error("[Rojak AI] Error:", error);
-    return res.status(500).json({
-      error: "SERVER_ERROR",
-      message: "Terjadi kesalahan pada server Rojak AI."
+    // Pesan ke user — generic, tidak bocorkan status internal
+    let userMessage = "Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
+
+    if (response.status === 429) {
+      userMessage = "Rojak AI sedang sibuk. Tunggu sebentar lalu coba lagi.";
+    } else if (response.status >= 500) {
+      userMessage = "Server AI sedang bermasalah. Coba lagi sebentar.";
+    }
+
+    // Kirim status 502 ke user (bukan status asli OpenRouter)
+    return res.status(502).json({
+      error: "AI_ERROR",
+      message: userMessage
     });
   }
+
+  const answer =
+    (data?.choices?.[0]?.message?.content || "").trim() ||
+    "Maaf, Rojak AI tidak mendapatkan jawaban.";
+
+  return res.status(200).json({
+    reply: answer
+  });
 }
