@@ -451,9 +451,7 @@
       gap: 14px; padding: 14px 16px;
       border: 1px solid var(--line); border-radius: 6px;
       background: var(--panel); position: relative;
-      transition: border-color var(--dur-base) ease;
     }
-    .drive-card:hover { border-color: var(--line); }
 
     .drive-info { min-width: 0; }
 
@@ -560,7 +558,6 @@
       border: 1px solid var(--line); border-radius: 5px;
       background: transparent; color: var(--text-soft);
       font-size: 11px; font-weight: 500;
-      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
     .refresh-button:hover { background: var(--panel-2); border-color: var(--line-bright); color: var(--text); }
 
@@ -578,7 +575,6 @@
       border: 1px solid var(--line); border-radius: 5px;
       background: var(--input); color: var(--text);
       font-size: 12.5px;
-      transition: border-color var(--dur-fast) ease, box-shadow var(--dur-base) var(--ease);
     }
 
     .input { height: 40px; padding: 0 12px; }
@@ -609,7 +605,6 @@
       border: 1px solid var(--line); border-radius: 5px;
       background: transparent; color: var(--text-soft);
       font-size: 12.5px; font-weight: 500;
-      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
     .clear-button:hover { background: var(--panel-2); border-color: var(--line-bright); color: var(--text); }
 
@@ -624,10 +619,8 @@
       gap: 12px; min-height: 56px; padding: 10px 12px; margin-bottom: 4px;
       border: 1px solid var(--line-soft); border-radius: 5px;
       background: var(--bg-soft);
-      transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
     }
     .file-row:last-child { margin-bottom: 0; }
-    .file-row:hover { border-color: var(--line-soft); background: var(--bg-soft); }
 
     .file-info { min-width: 0; }
 
@@ -643,7 +636,6 @@
       border: 1px solid var(--line); border-radius: 5px;
       background: transparent; color: var(--text-soft);
       font-size: 11px; font-weight: 500;
-      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
     .open-file:hover { background: var(--panel-3); border-color: var(--line-bright); color: var(--text); }
 
@@ -658,7 +650,6 @@
       border: 1px solid var(--accent); border-radius: 5px;
       background: var(--accent); color: #fff;
       font-size: 12px; font-weight: 600;
-      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
     .open-drive-button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
@@ -701,7 +692,6 @@
       border: 1px solid var(--line); border-radius: 5px;
       background: transparent; color: var(--text-muted);
       font-size: 16px; line-height: 1;
-      transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
     }
     .close-button:hover { background: var(--panel-2); color: var(--text); }
 
@@ -754,7 +744,7 @@
     #profileStatus { min-height: 14px; margin-top: 10px; }
 
     /* ============================================================
-       LOG CONSOLE FAB (admin only)
+       LOG CONSOLE FAB
     ============================================================ */
 
     .rdk-log-fab {
@@ -770,7 +760,6 @@
       color: var(--text-soft);
       font-size: 12px; font-weight: 600;
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease);
     }
 
     .rdk-log-fab:hover {
@@ -828,7 +817,6 @@
       border: 1px solid var(--line); border-radius: 4px;
       background: transparent; color: var(--text-soft);
       font: inherit; font-size: 11px; font-weight: 500;
-      transition: background var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
     .rdk-log-btn:hover { background: var(--panel-3); border-color: var(--line-bright); color: var(--text); }
 
@@ -897,7 +885,6 @@
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 140ms ease, border-color 140ms ease;
     }
 
     .rdk-login-console-fab:hover {
@@ -973,7 +960,6 @@
       font-size: 10px;
       font-weight: 500;
       cursor: pointer;
-      transition: background 140ms ease, color 140ms ease;
     }
 
     .rdk-login-console-btn:hover {
@@ -1034,7 +1020,7 @@
     }
 
     /* ============================================================
-       ROJAK AI — INLINE
+       ROJAK AI
     ============================================================ */
 
     .rojak-ai-fab {
@@ -1232,7 +1218,6 @@
       font-size: 16px;
       line-height: 1;
       cursor: pointer;
-      transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
     }
 
     .rojak-ai-icon-button:hover {
@@ -1364,7 +1349,6 @@
       font-weight: 500;
       letter-spacing: -.005em;
       cursor: pointer;
-      transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
     }
 
     .rojak-ai-chip:hover {
@@ -1444,7 +1428,6 @@
       border: 1px solid var(--line-bright) !important;
       border-radius: 12px;
       background: var(--input);
-      transition: border-color 140ms ease, background 140ms ease;
       outline: none !important;
       box-shadow: none !important;
     }
@@ -1526,7 +1509,6 @@
       background: #e45632;
       color: #fff;
       cursor: pointer;
-      transition: background 140ms ease, transform 140ms ease, border-color 140ms ease;
     }
 
     .rojak-ai-send:hover { background: #f0643f; border-color: #f0643f; }
@@ -1582,11 +1564,6 @@
         flex-basis: 28px;
       }
 
-      .rojak-ai-fab-dot {
-        top: -1px;
-        right: -1px;
-      }
-
       .rojak-ai-header { padding: 0 10px 0 12px; }
       .rojak-ai-body { padding: 12px 10px 6px; }
       .rojak-ai-footer { padding: 9px 10px 11px; }
@@ -1621,6 +1598,166 @@
       }
 
       .rojak-ai-hint { margin-top: 7px; font-size: 9.5px; }
+    }
+
+    /* ============================================================
+       CONFIRM MODAL
+    ============================================================ */
+
+    .rdk-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, .72);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 220ms var(--ease), visibility 220ms ease;
+    }
+
+    .rdk-confirm-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .rdk-confirm-box {
+      width: min(400px, 100%);
+      overflow: hidden;
+      border: 1px solid var(--line-bright);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .7);
+      transform: translateY(14px) scale(.96);
+      opacity: 0;
+      transition:
+        transform 340ms var(--ease-spring),
+        opacity 240ms var(--ease);
+    }
+
+    .rdk-confirm-overlay.open .rdk-confirm-box {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .rdk-confirm-head {
+      padding: 20px 22px 0;
+    }
+
+    .rdk-confirm-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      border: 1px solid var(--accent-line);
+      border-radius: 10px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .rdk-confirm-icon svg {
+      width: 20px !important;
+      height: 20px !important;
+      max-width: 20px !important;
+      max-height: 20px !important;
+      display: block !important;
+    }
+
+    .rdk-confirm-icon.rdk-confirm-danger {
+      border-color: rgba(217, 101, 92, .35);
+      background: rgba(217, 101, 92, .08);
+      color: var(--red);
+    }
+
+    .rdk-confirm-title {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      line-height: 1.3;
+    }
+
+    .rdk-confirm-message {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 12.5px;
+      line-height: 1.55;
+      letter-spacing: -.005em;
+    }
+
+    .rdk-confirm-message strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .rdk-confirm-body {
+      padding: 20px 22px 22px;
+    }
+
+    .rdk-confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .rdk-confirm-btn {
+      height: 42px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -.005em;
+      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+
+    .rdk-confirm-btn:active {
+      transform: scale(.98);
+    }
+
+    .rdk-confirm-cancel {
+      border: 1px solid var(--line-bright);
+      background: transparent;
+      color: var(--text-soft);
+    }
+
+    .rdk-confirm-cancel:hover {
+      background: var(--panel-2);
+      border-color: #3a3b3c;
+      color: var(--text);
+    }
+
+    .rdk-confirm-ok {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .rdk-confirm-ok:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .rdk-confirm-ok.rdk-confirm-ok-danger {
+      border-color: var(--red);
+      background: var(--red);
+      color: #fff;
+    }
+
+    .rdk-confirm-ok.rdk-confirm-ok-danger:hover {
+      background: #e07a72;
+      border-color: #e07a72;
+    }
+
+    @media (max-width: 380px) {
+      .rdk-confirm-actions { grid-template-columns: 1fr; }
+      .rdk-confirm-cancel { order: 2; }
+      .rdk-confirm-ok { order: 1; }
     }
 
     /* ============================================================
@@ -1666,21 +1803,15 @@
       outline: none !important;
     }
 
-    .login-box {
-      box-shadow: none !important;
-    }
+    .login-box { box-shadow: none !important; }
 
     .google-login::after,
-    .google-login::before {
-      display: none !important;
-    }
+    .google-login::before { display: none !important; }
 
     /* ============================================================
-       GLOBAL FORCE OVERRIDE — hapus hover/focus border di card,
-       panel, tombol, dan focus ring
+       GLOBAL FORCE OVERRIDE
     ============================================================ */
 
-    /* Card: tidak ada efek hover/focus */
     .drive-card,
     .drive-card:hover,
     .drive-card:focus,
@@ -1693,7 +1824,6 @@
       outline: none !important;
     }
 
-    /* Panel: tidak ada efek hover/focus */
     .panel,
     .panel:hover,
     .panel:focus,
@@ -1705,7 +1835,6 @@
       outline: none !important;
     }
 
-    /* Tab: tidak ada outline atau underline accent */
     .tab,
     .tab:hover,
     .tab:focus,
@@ -1715,14 +1844,12 @@
       box-shadow: none !important;
     }
 
-    /* Tab wrapper tidak punya accent line */
     .tabs::after,
     .tab::after,
     .tab::before {
       display: none !important;
     }
 
-    /* Tombol umum: tidak ada focus ring */
     button,
     button:hover,
     button:focus,
@@ -1731,7 +1858,6 @@
       outline: none !important;
     }
 
-    /* Input & textarea di form (bukan AI): tidak ada ring oranye */
     .input:focus,
     .input:focus-visible,
     .textarea:focus,
@@ -1741,7 +1867,6 @@
       outline: none !important;
     }
 
-    /* File row: tidak ada hover shift */
     .file-row,
     .file-row:hover {
       transform: none !important;
@@ -1749,19 +1874,6 @@
       background: var(--bg-soft) !important;
     }
 
-    /* Card lain: user-card, summary-card, broadcast-item */
-    .user-card,
-    .user-card:hover,
-    .summary-card,
-    .summary-card:hover,
-    .broadcast-item,
-    .broadcast-item:hover {
-      transform: none !important;
-      border-color: var(--line) !important;
-      box-shadow: none !important;
-    }
-
-    /* Paksa :focus-visible di seluruh dokumen jadi tidak ada outline */
     *:focus,
     *:focus-visible {
       outline: none !important;
@@ -1920,6 +2032,128 @@
     })();
   </script>
 
+  <!-- ================= RDK CONFIRM ================= -->
+  <script>
+    window.RDKConfirm = (function () {
+      let overlay = null;
+      let iconEl = null;
+      let titleEl = null;
+      let messageEl = null;
+      let okBtn = null;
+      let cancelBtn = null;
+
+      let currentOnConfirm = null;
+      let isOpen = false;
+
+      const ICON_INFO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>`;
+
+      const ICON_WARNING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>`;
+
+      function buildModal() {
+        if (document.getElementById("rdkConfirm")) return;
+
+        overlay = document.createElement("div");
+        overlay.id = "rdkConfirm";
+        overlay.className = "rdk-confirm-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+
+        overlay.innerHTML = `
+          <div class="rdk-confirm-box">
+            <div class="rdk-confirm-head">
+              <div class="rdk-confirm-icon" id="rdkConfirmIcon">${ICON_INFO}</div>
+              <h2 class="rdk-confirm-title" id="rdkConfirmTitle">Konfirmasi</h2>
+              <p class="rdk-confirm-message" id="rdkConfirmMessage">Yakin ingin melanjutkan?</p>
+            </div>
+            <div class="rdk-confirm-body">
+              <div class="rdk-confirm-actions">
+                <button id="rdkConfirmCancel" class="rdk-confirm-btn rdk-confirm-cancel" type="button">Batal</button>
+                <button id="rdkConfirmOk" class="rdk-confirm-btn rdk-confirm-ok" type="button">Lanjutkan</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        iconEl = document.getElementById("rdkConfirmIcon");
+        titleEl = document.getElementById("rdkConfirmTitle");
+        messageEl = document.getElementById("rdkConfirmMessage");
+        okBtn = document.getElementById("rdkConfirmOk");
+        cancelBtn = document.getElementById("rdkConfirmCancel");
+
+        okBtn.addEventListener("click", confirm);
+        cancelBtn.addEventListener("click", close);
+        overlay.addEventListener("click", function (e) {
+          if (e.target === overlay) close();
+        });
+
+        document.addEventListener("keydown", function (e) {
+          if (!isOpen) return;
+          if (e.key === "Escape") close();
+          if (e.key === "Enter") confirm();
+        });
+      }
+
+      function show(options) {
+        if (!overlay) buildModal();
+
+        options = options || {};
+
+        titleEl.textContent = options.title || "Konfirmasi";
+        messageEl.innerHTML = options.message || "Yakin ingin melanjutkan?";
+        okBtn.textContent = options.confirmText || "Lanjutkan";
+        cancelBtn.textContent = options.cancelText || "Batal";
+
+        const isDanger = options.danger === true;
+
+        if (isDanger) {
+          iconEl.innerHTML = ICON_WARNING;
+          iconEl.classList.add("rdk-confirm-danger");
+          okBtn.classList.add("rdk-confirm-ok-danger");
+        } else {
+          iconEl.innerHTML = ICON_INFO;
+          iconEl.classList.remove("rdk-confirm-danger");
+          okBtn.classList.remove("rdk-confirm-ok-danger");
+        }
+
+        currentOnConfirm = options.onConfirm || null;
+
+        overlay.classList.add("open");
+        isOpen = true;
+      }
+
+      function close() {
+        if (!overlay) return;
+        overlay.classList.remove("open");
+        isOpen = false;
+        currentOnConfirm = null;
+      }
+
+      function confirm() {
+        const cb = currentOnConfirm;
+        close();
+        if (typeof cb === "function") {
+          setTimeout(cb, 100);
+        }
+      }
+
+      return {
+        show: show,
+        close: close,
+        isOpen: function () { return isOpen; }
+      };
+    })();
+  </script>
+
   <div id="broadcastNotif" class="broadcast-notif">
     <div class="broadcast-header">
       <div class="broadcast-icon">
@@ -1953,25 +2187,28 @@
   </div>
 
   <script>
+    /* Loading screen TIDAK auto-hide pakai timer.
+       Akan di-hide oleh onAuthStateChanged di module script
+       supaya tidak ada flash login screen saat pindah dari admin panel. */
     window.__RDK_LOADING_DONE__ = false;
-    window.__RDK_LOADING_HIDE_TIMER__ = null;
 
-    window.__RDK_LOADING_HIDE_TIMER__ = window.setTimeout(function () {
+    /* Fallback: kalau Firebase butuh waktu lama / hang,
+       hide loading setelah 6 detik biar user tidak stuck selamanya. */
+    window.__RDK_LOADING_FALLBACK_TIMER__ = window.setTimeout(function () {
       if (window.__RDK_LOADING_DONE__) return;
       window.__RDK_LOADING_DONE__ = true;
       const loading = document.getElementById("loadingScreen");
       if (loading) loading.style.display = "none";
       const login = document.getElementById("loginScreen");
-      const app = document.getElementById("app");
-      const loginVisible = login && login.style.display === "flex";
-      const appVisible = app && app.style.display === "block";
-      if (!loginVisible && !appVisible && login) login.style.display = "flex";
-    }, 1000);
+      if (login && login.style.display !== "flex") {
+        login.style.display = "flex";
+      }
+    }, 6000);
 
     window.__RDK_FINISH_LOADING__ = function () {
       if (window.__RDK_LOADING_DONE__) return;
       window.__RDK_LOADING_DONE__ = true;
-      clearTimeout(window.__RDK_LOADING_HIDE_TIMER__);
+      clearTimeout(window.__RDK_LOADING_FALLBACK_TIMER__);
       const loading = document.getElementById("loadingScreen");
       if (loading) loading.style.display = "none";
     };
@@ -2106,10 +2343,7 @@
       }
 
       function escapeHtml(s) {
-        return String(s)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;");
+        return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
       }
 
       function add(msg, type) {
@@ -2445,10 +2679,15 @@
       if (loading && loading.style.display !== "none") loading.style.display = "none";
     }
 
+    let authResolvedOnce = false;
+
     function showLogin() {
       LOG.add("showLogin()", "warn");
-      hideLoading();
+
+      if (window.__RDK_FINISH_LOADING__) window.__RDK_FINISH_LOADING__();
+
       $("app").style.display = "none";
+      $("app").classList.remove("visible");
       $("loginScreen").style.display = "flex";
 
       if (window.RDK_LOGIN_LOG) {
@@ -2459,9 +2698,12 @@
 
     function showApp() {
       LOG.add("showApp() → masuk app", "ok");
-      hideLoading();
+
+      if (window.__RDK_FINISH_LOADING__) window.__RDK_FINISH_LOADING__();
+
       $("loginScreen").style.display = "none";
       $("app").style.display = "block";
+      $("app").classList.add("visible");
 
       if (window.RDK_LOGIN_LOG) {
         window.RDK_LOGIN_LOG.hide();
@@ -2746,27 +2988,31 @@
     $("loginButton").onclick = loginGoogle;
 
     onAuthStateChanged(auth, function (user) {
+      const loadingTextEl = $("loadingText");
+      if (loadingTextEl && !authResolvedOnce) {
+        loadingTextEl.textContent = user ? "Memuat profil" : "Menyiapkan login";
+      }
+
       if (!user) {
+        authResolvedOnce = true;
         if (window.RDK_LOG && window.RDK_LOG.setAdmin) window.RDK_LOG.setAdmin(false);
         LOG.add("onAuthStateChanged: user NULL → showLogin", "warn");
         showLogin();
         return;
       }
 
+      authResolvedOnce = true;
+
       LOG.add("onAuthStateChanged: USER MASUK", "ok");
       LLOG.add("Auth state: user masuk", "ok");
       LOG.add("  uid: " + user.uid.slice(0, 10) + "...", "ok");
       LOG.add("  email: " + (user.email || "-"), "ok");
-
-      $("loadingText").textContent = "Memuat profil";
 
       loadProfile(user).then(function () {
         restoreDriveToken();
       }).catch(function (error) {
         LOG.add("loadProfile GAGAL", "error");
         LLOG.add("loadProfile GAGAL: " + (error.code || "") + " " + (error.message || ""), "error");
-        LOG.add("  code: " + (error.code || "(no code)"), "error");
-        LOG.add("  message: " + (error.message || "(no message)"), "error");
 
         if (error && (
           error.code === "permission-denied" ||
@@ -2788,9 +3034,8 @@
       if (result && result.user) {
         LOG.add("getRedirectResult OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
         LLOG.add("getRedirectResult OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
-        LOG.add("  Login via redirect berhasil", "ok");
       } else {
-        LOG.add("getRedirectResult: tidak ada hasil (normal kalau bukan dari redirect)", "info");
+        LOG.add("getRedirectResult: tidak ada hasil", "info");
       }
     }).catch(function (error) {
       const code = error.code || "";
@@ -3054,18 +3299,38 @@
     $("adminButton").onclick = function () { window.location.href = "./admin.html"; };
 
     $("logoutButton").onclick = function () {
-      if (window.RDK_LOG && window.RDK_LOG.setAdmin) window.RDK_LOG.setAdmin(false);
-      if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
-        try { window.google.accounts.oauth2.revoke(accessToken, function () {}); } catch (e) {}
+      if (window.RDKConfirm) {
+        window.RDKConfirm.show({
+          title: "Logout?",
+          message: "Kamu akan keluar dari akun ini. Yakin ingin melanjutkan?",
+          confirmText: "Ya, Logout",
+          cancelText: "Batal",
+          danger: true,
+          onConfirm: async function () {
+            if (window.RDK_LOG && window.RDK_LOG.setAdmin) window.RDK_LOG.setAdmin(false);
+
+            if (accessToken && window.google && window.google.accounts && window.google.accounts.oauth2) {
+              try { window.google.accounts.oauth2.revoke(accessToken, function () {}); } catch (e) {}
+            }
+
+            accessToken = null;
+            clearDriveToken();
+            if (window.gapi && window.gapi.client) window.gapi.client.setToken(null);
+
+            try { localStorage.removeItem(ROLE_CACHE_KEY); } catch (e) {}
+
+            try {
+              await signOut(auth);
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        });
+      } else {
+        if (confirm("Yakin ingin logout?")) {
+          signOut(auth);
+        }
       }
-      accessToken = null;
-      clearDriveToken();
-      if (window.gapi && window.gapi.client) window.gapi.client.setToken(null);
-      $("connectDriveButton").classList.remove("connected");
-      $("connectDriveButton").textContent = "Connect Drive";
-      setDriveStatus("Belum terhubung");
-      try { localStorage.removeItem(ROLE_CACHE_KEY); } catch (e) {}
-      signOut(auth);
     };
 
     document.querySelectorAll(".tab").forEach(function (tab, idx) {
@@ -3132,7 +3397,8 @@
       const RIPPLE_TARGETS =
         ".google-login, .create-button, .open-drive-button, .drive-button, " +
         ".refresh-button, .clear-button, .top-button, .profile-button, " +
-        ".rojak-ai-send, .rojak-ai-chip, .rdk-music-play, .rdk-music-iconbtn";
+        ".rojak-ai-send, .rojak-ai-chip, .rdk-music-play, .rdk-music-iconbtn, " +
+        ".rdk-confirm-btn, .rdk-confirm-cancel, .rdk-confirm-ok";
 
       document.addEventListener("click", function (e) {
         const btn = e.target.closest(RIPPLE_TARGETS);
