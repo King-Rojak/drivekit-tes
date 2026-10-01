@@ -988,10 +988,7 @@
       }
     }
 
-    /* ============================================================
-       FORCE OVERRIDE
-    ============================================================ */
-
+    /* FORCE OVERRIDE */
     .user-card, .user-card:hover, .user-card:focus, .user-card.self,
     .summary-card, .summary-card:hover,
     .broadcast-item, .broadcast-item:hover, .broadcast-item.active-broadcast,
@@ -1180,7 +1177,7 @@
     </div>
   </div>
 
-  <!-- ================= RDK CONFIRM SCRIPT (WAJIB SEBELUM MODULE) ================= -->
+  <!-- ================= RDK CONFIRM SCRIPT ================= -->
   <script>
     (function () {
       "use strict";
@@ -1208,10 +1205,7 @@
       </svg>`;
 
       function show(options) {
-        if (!overlay) {
-          console.error("[RDKConfirm] Element #rdkConfirm tidak ditemukan");
-          return;
-        }
+        if (!overlay) return;
 
         options = options || {};
 
@@ -1344,11 +1338,44 @@
       return null;
     }
 
-    async function getRole(uid) {
-      const snap = await getDoc(doc(db, "users", uid));
-      if (!snap.exists()) return null;
-      return snap.data().role === "admin" ? "admin" : "member";
+    /* ============================================================
+       ADMIN AUTHORIZATION — SERVER-VERIFIED
+       Selalu baca ulang dari Firestore. JANGAN pakai cache.
+       Backend (Firestore Rules) yang jadi security boundary asli.
+    ============================================================ */
+
+    async function getRoleFromFirestore(uid) {
+      // Cek UID valid
+      if (!uid || typeof uid !== "string" || uid.length < 10) {
+        return null;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, "users", uid));
+
+        if (!snap.exists()) {
+          return null;
+        }
+
+        const data = snap.data();
+
+        // Verify UID di dokumen sama dengan UID yang diminta
+        if (data.uid !== uid) {
+          console.error("UID mismatch in user document");
+          return null;
+        }
+
+        return data.role === "admin" ? "admin" : "member";
+
+      } catch (error) {
+        console.error("getRoleFromFirestore error:", error.code || error.message);
+        return null;
+      }
     }
+
+    /* ============================================================
+       RENDER — APPLY FILTERS
+    ============================================================ */
 
     function applyFiltersAndRender() {
       const keyword = ($("searchInput").value || "").trim().toLowerCase();
@@ -1454,7 +1481,7 @@
 
           if (newRole === oldRole) return;
 
-          select.value = oldRole; // balik dulu, biar tampilan tidak berubah sebelum konfirmasi
+          select.value = oldRole;
 
           const target = allUsers.find(u => u.id === userId);
           const targetName = target ? (target.name || target.email || "user ini") : "user ini";
@@ -1469,7 +1496,35 @@
               setStatus("Menyimpan perubahan role...");
 
               try {
-                await updateDoc(doc(db, "users", userId), { role: newRole });
+                // --- Validasi input ---
+                if (!userId || typeof userId !== "string" || userId.length < 10) {
+                  throw new Error("INVALID_UID");
+                }
+
+                if (newRole !== "admin" && newRole !== "member") {
+                  throw new Error("INVALID_ROLE");
+                }
+
+                // --- Verify admin SEBELUM operasi ---
+                const selfRole = await getRoleFromFirestore(currentUser.uid);
+                if (selfRole !== "admin") {
+                  throw new Error("NOT_ADMIN");
+                }
+
+                // --- Cegah self-demotion tidak sengaja ---
+                if (userId === currentUser.uid && newRole !== "admin") {
+                  setStatus("Tidak bisa mengubah role sendiri.", "error");
+                  select.value = oldRole;
+                  select.disabled = false;
+                  return;
+                }
+
+                // --- Update role ---
+                await updateDoc(doc(db, "users", userId), {
+                  role: newRole,
+                  updatedAt: serverTimestamp()
+                });
+
                 setStatus("Role berhasil diubah.", "success");
 
                 const user = allUsers.find(u => u.id === userId);
@@ -1477,9 +1532,23 @@
 
                 updateSummary();
                 applyFiltersAndRender();
+
               } catch (error) {
-                console.error(error);
-                setStatus("Gagal mengubah role. Periksa Firestore Rules.", "error");
+                console.error("Role change error:", error.code || error.message);
+                select.value = oldRole;
+
+                const code = error.code || "";
+                const msg = error.message || "";
+
+                if (msg === "NOT_ADMIN") {
+                  setStatus("Akses admin sudah tidak valid. Refresh halaman.", "error");
+                  setTimeout(() => window.location.reload(), 2000);
+                } else if (code === "permission-denied" || msg === "INVALID_UID" || msg === "INVALID_ROLE") {
+                  setStatus("Operasi ditolak.", "error");
+                } else {
+                  setStatus("Gagal mengubah role. Coba lagi.", "error");
+                }
+
                 select.disabled = false;
               }
             }
@@ -1503,9 +1572,9 @@
         updateSummary();
         applyFiltersAndRender();
       } catch (error) {
-        console.error(error);
+        console.error("Load users error:", error.code || error.message);
         $("usersList").innerHTML = '<div class="message error">Gagal memuat pengguna.</div>';
-        setStatus("Tidak bisa membaca user. Pastikan akun ini memiliki role admin.", "error");
+        setStatus("Tidak bisa membaca data. Coba refresh halaman.", "error");
       }
     }
 
@@ -1529,11 +1598,22 @@
       setBroadcastStatus("Mengirim broadcast...");
 
       try {
+        // --- Verify admin SEBELUM operasi ---
+        const selfRole = await getRoleFromFirestore(currentUser.uid);
+        if (selfRole !== "admin") {
+          throw new Error("NOT_ADMIN");
+        }
+
         const existingSnap = await getDocs(collection(db, "broadcasts"));
         const deactivatePromises = [];
         existingSnap.forEach(function (docSnap) {
           if (docSnap.data().active === true) {
-            deactivatePromises.push(updateDoc(doc(db, "broadcasts", docSnap.id), { active: false }));
+            deactivatePromises.push(
+              updateDoc(doc(db, "broadcasts", docSnap.id), {
+                active: false,
+                updatedAt: serverTimestamp()
+              })
+            );
           }
         });
         if (deactivatePromises.length) await Promise.all(deactivatePromises);
@@ -1543,16 +1623,28 @@
           active: true,
           createdAt: serverTimestamp(),
           createdBy: currentUser.uid,
-          createdByName: currentUser.displayName || currentUser.email || "Admin"
+          createdByName: (currentUser.displayName || currentUser.email || "Admin").slice(0, 100)
         });
 
         setBroadcastStatus("Broadcast berhasil dikirim!", "success");
         textarea.value = "";
         updateBroadcastCount();
         await loadBroadcasts();
+
       } catch (error) {
-        console.error(error);
-        setBroadcastStatus("Gagal mengirim broadcast: " + (error.code || error.message), "error");
+        console.error("Send broadcast error:", error.code || error.message);
+
+        const code = error.code || "";
+        const msg = error.message || "";
+
+        if (msg === "NOT_ADMIN") {
+          setBroadcastStatus("Akses admin sudah tidak valid.", "error");
+          setTimeout(() => window.location.reload(), 2000);
+        } else if (code === "permission-denied") {
+          setBroadcastStatus("Operasi ditolak.", "error");
+        } else {
+          setBroadcastStatus("Gagal mengirim broadcast. Coba lagi.", "error");
+        }
       } finally {
         button.disabled = false;
       }
@@ -1567,12 +1659,33 @@
         danger: true,
         onConfirm: async function () {
           try {
+            if (!id || typeof id !== "string" || id.length < 5) {
+              throw new Error("INVALID_ID");
+            }
+
+            const selfRole = await getRoleFromFirestore(currentUser.uid);
+            if (selfRole !== "admin") {
+              throw new Error("NOT_ADMIN");
+            }
+
             await deleteDoc(doc(db, "broadcasts", id));
             setBroadcastStatus("Broadcast dihapus.", "success");
             await loadBroadcasts();
+
           } catch (error) {
-            console.error(error);
-            setBroadcastStatus("Gagal menghapus: " + (error.code || error.message), "error");
+            console.error("Delete broadcast error:", error.code || error.message);
+
+            const code = error.code || "";
+            const msg = error.message || "";
+
+            if (msg === "NOT_ADMIN") {
+              setBroadcastStatus("Akses admin sudah tidak valid.", "error");
+              setTimeout(() => window.location.reload(), 2000);
+            } else if (code === "permission-denied" || msg === "INVALID_ID") {
+              setBroadcastStatus("Operasi ditolak.", "error");
+            } else {
+              setBroadcastStatus("Gagal menghapus broadcast. Coba lagi.", "error");
+            }
           }
         }
       });
@@ -1580,22 +1693,53 @@
 
     async function toggleBroadcastActive(id, currentActive) {
       try {
+        if (!id || typeof id !== "string" || id.length < 5) {
+          throw new Error("INVALID_ID");
+        }
+
+        const selfRole = await getRoleFromFirestore(currentUser.uid);
+        if (selfRole !== "admin") {
+          throw new Error("NOT_ADMIN");
+        }
+
         if (!currentActive) {
           const existingSnap = await getDocs(collection(db, "broadcasts"));
           const deactivatePromises = [];
           existingSnap.forEach(function (docSnap) {
             if (docSnap.id !== id && docSnap.data().active === true) {
-              deactivatePromises.push(updateDoc(doc(db, "broadcasts", docSnap.id), { active: false }));
+              deactivatePromises.push(
+                updateDoc(doc(db, "broadcasts", docSnap.id), {
+                  active: false,
+                  updatedAt: serverTimestamp()
+                })
+              );
             }
           });
           if (deactivatePromises.length) await Promise.all(deactivatePromises);
         }
-        await updateDoc(doc(db, "broadcasts", id), { active: !currentActive });
+
+        await updateDoc(doc(db, "broadcasts", id), {
+          active: !currentActive,
+          updatedAt: serverTimestamp()
+        });
+
         setBroadcastStatus(currentActive ? "Broadcast dinonaktifkan." : "Broadcast diaktifkan.", "success");
         await loadBroadcasts();
+
       } catch (error) {
-        console.error(error);
-        setBroadcastStatus("Gagal update: " + (error.code || error.message), "error");
+        console.error("Toggle broadcast error:", error.code || error.message);
+
+        const code = error.code || "";
+        const msg = error.message || "";
+
+        if (msg === "NOT_ADMIN") {
+          setBroadcastStatus("Akses admin sudah tidak valid.", "error");
+          setTimeout(() => window.location.reload(), 2000);
+        } else if (code === "permission-denied" || msg === "INVALID_ID") {
+          setBroadcastStatus("Operasi ditolak.", "error");
+        } else {
+          setBroadcastStatus("Gagal update broadcast. Coba lagi.", "error");
+        }
       }
     }
 
@@ -1654,7 +1798,7 @@
         });
 
       } catch (error) {
-        console.error(error);
+        console.error("Load broadcasts error:", error.code || error.message);
         $("broadcastList").innerHTML = '<div class="message error">Gagal memuat broadcast.</div>';
       }
     }
@@ -1714,26 +1858,98 @@
     };
     $("broadcastMessage").addEventListener("input", updateBroadcastCount);
 
+    /* ============================================================
+       AUTH STATE — VERIFY ADMIN ROLE SETIAP LOAD
+    ============================================================ */
+
     onAuthStateChanged(auth, async user => {
-      if (!user) { window.location.href = "./index.html"; return; }
+
+      // 1. Belum login → redirect
+      if (!user) {
+        window.location.href = "./index.html";
+        return;
+      }
 
       currentUser = user;
 
       try {
-        const role = await getRole(user.uid);
+        // 2. Verify admin role LANGSUNG dari Firestore
+        const role = await getRoleFromFirestore(user.uid);
+
+        // 3. Bukan admin → tolak akses
         if (role !== "admin") {
-          await signOut(auth);
-          window.location.href = "./index.html";
+          document.body.innerHTML = `
+            <div style="
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #08090a;
+              color: #f0f0ee;
+              font-family: Inter, system-ui, sans-serif;
+              padding: 24px;
+              text-align: center;
+            ">
+              <div style="max-width: 400px;">
+                <div style="
+                  width: 56px; height: 56px;
+                  margin: 0 auto 20px;
+                  display: grid; place-items: center;
+                  border: 1px solid rgba(217,101,92,.35);
+                  border-radius: 12px;
+                  background: rgba(217,101,92,.08);
+                  color: #d9655c;
+                ">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                  </svg>
+                </div>
+                <h1 style="
+                  margin: 0 0 8px;
+                  font-size: 20px; font-weight: 700;
+                  letter-spacing: -.02em;
+                ">Akses Ditolak</h1>
+                <p style="
+                  margin: 0 0 20px;
+                  color: #a8a9a5; font-size: 13px; line-height: 1.55;
+                ">Akun ini tidak memiliki akses ke Admin Panel.</p>
+                <a href="./index.html" style="
+                  display: inline-flex;
+                  align-items: center;
+                  height: 40px; padding: 0 18px;
+                  border: 1px solid #e45632;
+                  border-radius: 6px;
+                  background: #e45632; color: #fff;
+                  font-size: 12.5px; font-weight: 600;
+                  text-decoration: none;
+                ">Kembali ke Dashboard</a>
+              </div>
+            </div>
+          `;
+
+          setTimeout(async () => {
+            try { await signOut(auth); } catch (e) {}
+            window.location.href = "./index.html";
+          }, 3000);
+
           return;
         }
+
+        // 4. Admin valid → load data
         await loadUsers();
+
       } catch (error) {
-        console.error(error);
+        console.error("Admin auth error:", error.code || error.message);
         window.location.href = "./index.html";
       }
     });
 
-    getRedirectResult(auth).catch(error => console.error(error));
+    getRedirectResult(auth).catch(error => {
+      console.error("Redirect error:", error.code || error.message);
+    });
   </script>
 
 </body>
