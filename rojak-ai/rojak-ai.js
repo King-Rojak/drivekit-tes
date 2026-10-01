@@ -9,6 +9,7 @@
    - Dot hijau FAB DIPINDAH ke dalam .rojak-ai-fab-icon
    - Auto-focus HANYA di desktop (pointer: fine)
      → HP tidak auto-buka keyboard saat panel dibuka
+   - Reset conversation pakai RDKConfirm modal (fallback ke confirm())
 ============================================================ */
 
 (function () {
@@ -489,12 +490,33 @@
 
   /* ---------- RESET ---------- */
 
-  function resetConversation() {
-    if (!confirm("Reset percakapan Rojak AI?")) return;
+  function performReset() {
     stopTyping();
     state.history = [];
     try { localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (_) {}
     renderHistory();
+  }
+
+  function resetConversation() {
+    // Pakai RDKConfirm kalau tersedia, fallback ke confirm() bawaan
+    if (window.RDKConfirm && typeof window.RDKConfirm.show === "function") {
+      window.RDKConfirm.show({
+        title: "Reset Percakapan?",
+        message: "Semua riwayat chat dengan Rojak AI akan dihapus. Yakin ingin melanjutkan?",
+        confirmText: "Ya, Reset",
+        cancelText: "Batal",
+        danger: true,
+        onConfirm: function () {
+          performReset();
+        }
+      });
+      return;
+    }
+
+    // Fallback
+    if (confirm("Reset percakapan Rojak AI?")) {
+      performReset();
+    }
   }
 
   /* ---------- BUILD ---------- */
