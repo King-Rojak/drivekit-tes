@@ -7,6 +7,7 @@
    - Analyzer muncul hanya saat track aktif (di-klik)
    - Nomor track lebih rapat ke title (18px)
    - Gap track lebih rapat (6px)
+   - Perbaikan override animation yang mematikan EQ
 ============================================================ */
 
 /* ---------- MAIN MUSIC SECTION ---------- */
@@ -513,18 +514,24 @@
 }
 
 /* ============================================================
-   FIX: Track list tidak boleh redup (override stagger)
+   FIX: Track list tidak boleh redup — TAPI jangan matikan
+   animasi EQ bar. Hanya matikan stagger-reveal.
    ============================================================ */
 
 .rdk-music-list,
-.rdk-music-list *,
 .rdk-music-track,
-.rdk-music-track *,
 .rdk-music-track-info,
 .rdk-music-track-title,
 .rdk-music-track-artist {
   opacity: 1 !important;
   transform: none !important;
+}
+
+/* Matikan animasi HANYA pada elemen teks track.
+   JANGAN pakai `.rdk-music-track *` — itu akan mematikan EQ bar. */
+.rdk-music-list .rdk-music-track-num,
+.rdk-music-list .rdk-music-track-title,
+.rdk-music-list .rdk-music-track-artist {
   animation: none !important;
 }
 
