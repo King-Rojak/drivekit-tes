@@ -371,12 +371,36 @@
 
     .top-button {
       height: 30px; padding: 0 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       border: 1px solid var(--line); border-radius: 5px;
       background: transparent; color: var(--text-soft);
       font-size: 11px; font-weight: 500;
       transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
     }
     .top-button:hover { background: var(--panel-2); border-color: var(--line-bright); color: var(--text); }
+
+    /* Icon di dalam top-button (default: hidden) */
+    .top-button .btn-icon {
+      display: none;
+      width: 14px;
+      height: 14px;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 14px;
+    }
+    .top-button .btn-icon svg {
+      width: 14px;
+      height: 14px;
+      display: block;
+      stroke: currentColor;
+      fill: none;
+    }
+    .top-button .btn-label {
+      display: inline;
+    }
 
     .profile-button {
       width: 30px; height: 30px; padding: 0; overflow: hidden;
@@ -1709,9 +1733,7 @@
     @media (max-width: 600px) {
       .topbar { height: 52px; padding: 0 12px; }
       .brand-logo { width: 28px; height: 28px; flex-basis: 28px; }
-      .brand-text { font-size: 11.5px; }
-      .top-button { display: none; }
-      .profile-button { width: 29px; height: 29px; }
+      .brand-text { font-size: 11px; }
       .container { width: calc(100% - 20px); padding-top: 16px; }
       .login-box { padding: 24px 20px 20px; }
       .drive-card { padding: 12px 13px; }
@@ -1719,10 +1741,28 @@
       .form { padding: 14px; }
       .textarea { min-height: 170px; }
       .rdk-log-panel { left: 8px; right: 8px; bottom: 8px; }
+
+      /* FIX: Top button TETAP muncul di HP — icon-only biar compact */
+      .top-button {
+        height: 30px;
+        width: 30px;
+        padding: 0;
+        border-radius: 6px;
+      }
+      .top-button .btn-label {
+        display: none;
+      }
+      .top-button .btn-icon {
+        display: flex;
+      }
+
+      .top-actions { gap: 5px; }
+
+      .profile-button { width: 30px; height: 30px; }
     }
 
     @media (max-width: 380px) {
-      .brand-text { font-size: 11px; }
+      .brand-text { font-size: 10px; }
       .tab { font-size: 11px; }
     }
 
@@ -2126,13 +2166,8 @@
   </div>
 
   <script>
-    /* Loading screen TIDAK auto-hide pakai timer.
-       Akan di-hide oleh onAuthStateChanged di module script
-       supaya tidak ada flash login screen saat pindah dari admin panel. */
     window.__RDK_LOADING_DONE__ = false;
 
-    /* Fallback: kalau Firebase butuh waktu lama / hang,
-       hide loading setelah 6 detik biar user tidak stuck selamanya. */
     window.__RDK_LOADING_FALLBACK_TIMER__ = window.setTimeout(function () {
       if (window.__RDK_LOADING_DONE__) return;
       window.__RDK_LOADING_DONE__ = true;
@@ -2424,8 +2459,27 @@
       </div>
 
       <div class="top-actions">
-        <button id="adminButton" class="top-button" type="button" style="display:none;">Admin Panel</button>
-        <button id="logoutButton" class="top-button" type="button">Logout</button>
+        <button id="adminButton" class="top-button" type="button" style="display:none;">
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l9 4v6c0 5-3.5 8.5-9 10-5.5-1.5-9-5-9-10V6l9-4z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </span>
+          <span class="btn-label">Admin Panel</span>
+        </button>
+
+        <button id="logoutButton" class="top-button" type="button">
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </span>
+          <span class="btn-label">Logout</span>
+        </button>
+
         <button id="profileButton" class="profile-button" type="button" title="Profile">
           <img id="topAvatar" src="https://www.gravatar.com/avatar/?d=mp" alt="Profile">
         </button>
@@ -2792,7 +2846,7 @@
       $("profileUserName").textContent = displayName;
       $("profileUserEmail").textContent = user.email || "-";
       $("profileRole").textContent = role.toUpperCase();
-      $("adminButton").style.display = role === "admin" ? "block" : "none";
+      $("adminButton").style.display = role === "admin" ? "inline-flex" : "none";
     }
 
     function loadProfile(user) {
