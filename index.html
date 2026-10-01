@@ -1034,7 +1034,7 @@
     }
 
     /* ============================================================
-       ROJAK AI — INLINE (FIXED)
+       ROJAK AI — INLINE (FINAL FIXED)
     ============================================================ */
 
     /* ---------- FAB ---------- */
@@ -1095,17 +1095,18 @@
       display: block !important;
     }
 
+    /* Dot hijau — nempel di sudut kanan atas icon */
     .rojak-ai-fab-dot {
       position: absolute;
-      top: -2px;
-      right: 14px;
-      width: 10px;
-      height: 10px;
+      top: -1px;
+      right: -1px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background: var(--green);
       box-shadow:
-        0 0 0 3px var(--panel),
-        0 0 0 4px rgba(107, 184, 124, .2);
+        0 0 0 2.5px var(--panel),
+        0 0 0 3.5px rgba(107, 184, 124, .25);
       animation: rojakAiDotPulse 2.2s ease-in-out infinite;
       pointer-events: none;
     }
@@ -1433,7 +1434,7 @@
       white-space: pre;
     }
 
-    /* ---------- FOOTER (input) — FIXED ---------- */
+    /* ---------- FOOTER (input) — FINAL FIXED ---------- */
 
     .rojak-ai-footer {
       flex: 0 0 auto;
@@ -1571,8 +1572,8 @@
       }
 
       .rojak-ai-fab-dot {
-        top: -2px;
-        right: 12px;
+        top: -1px;
+        right: -1px;
       }
 
       .rojak-ai-header { padding: 0 10px 0 12px; }
@@ -1664,6 +1665,9 @@
     }
   </style>
 
+  <!-- NOTE: rdk-tokens.css & rdk-motion.css & rdk-premium.css tetap dipakai
+       untuk efek ambient (grid, rail, cursor, dll).
+       rojak-ai.css SUDAH TIDAK DIPAKAI karena CSS-nya sudah inline di atas. -->
   <link rel="stylesheet" href="./rojak-ai/rdk-tokens.css">
   <link rel="stylesheet" href="./rojak-ai/rdk-motion.css">
   <link rel="stylesheet" href="./rojak-ai/rdk-premium.css">
@@ -1894,9 +1898,11 @@
       <div class="login-features">
         <div class="login-feature">
           <div class="login-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
+            <!-- Google Drive custom icon: cloud + upload arrow -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.5 18a4 4 0 0 1 0-8 5 5 0 0 1 9.5-1.5 3.5 3.5 0 0 1 3 6.5"/>
+              <path d="M12 21V13"/>
+              <path d="M9 16l3-3 3 3"/>
             </svg>
           </div>
           <div class="login-feature-text">
@@ -1907,8 +1913,12 @@
 
         <div class="login-feature">
           <div class="login-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 11H3v10h6zM21 3h-6v18h6zM15 7H9v14h6z"/>
+            <!-- Excel custom icon: spreadsheet + formula -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="9" y1="9" x2="9" y2="21"/>
+              <path d="M13 13l4 6M17 13l-4 6"/>
             </svg>
           </div>
           <div class="login-feature-text">
@@ -1919,8 +1929,11 @@
 
         <div class="login-feature">
           <div class="login-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <!-- Rojak AI custom icon: chat + text lines -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6.5C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5v8c0 1.4-1.1 2.5-2.5 2.5H9l-3.6 3.2c-.5.5-1.4.1-1.4-.6V6.5z"/>
+              <path d="M8.5 9.5h7"/>
+              <path d="M8.5 12.5h4"/>
             </svg>
           </div>
           <div class="login-feature-text">
