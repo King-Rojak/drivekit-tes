@@ -38,6 +38,7 @@
       --red: #d9655c;
 
       --ease: cubic-bezier(.16, 1, .3, 1);
+      --ease-spring: cubic-bezier(.34, 1.4, .5, 1);
       --dur-fast: 140ms;
       --dur-base: 220ms;
     }
@@ -255,7 +256,6 @@
       border: 1px solid var(--line);
       border-radius: 6px;
       background: var(--panel);
-      transition: border-color var(--dur-base) ease;
     }
 
     .summary-card::before {
@@ -294,7 +294,7 @@
     }
 
     /* ============================================================
-       TOOLBAR — FIXED
+       TOOLBAR
     ============================================================ */
 
     .toolbar {
@@ -413,10 +413,8 @@
       border: 1px solid var(--line);
       border-radius: 6px;
       background: var(--panel);
-      transition: border-color var(--dur-fast) ease;
     }
 
-    /* Card self: TIDAK ada border oranye */
     .user-card.self {
       border-color: var(--line);
       background: var(--panel);
@@ -527,11 +525,10 @@
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      transition: border-color var(--dur-fast) ease;
     }
 
     .role-select:hover { border-color: var(--line-bright); }
-    .role-select:focus { border-color: var(--line-bright); outline: none; box-shadow: none; }
+    .role-select:focus { border-color: var(--line-bright); outline: none; }
     .role-select:disabled { opacity: .5; cursor: not-allowed; }
 
     .user-meta {
@@ -622,12 +619,11 @@
       font-family: inherit;
       line-height: 1.55;
       resize: vertical;
-      transition: border-color var(--dur-fast) ease;
     }
 
     .broadcast-textarea::placeholder { color: var(--text-ghost); }
     .broadcast-textarea:hover { border-color: var(--line-bright); }
-    .broadcast-textarea:focus { border-color: var(--line-bright); outline: none; box-shadow: none; }
+    .broadcast-textarea:focus { border-color: var(--line-bright); outline: none; }
 
     .broadcast-info {
       display: flex;
@@ -653,7 +649,6 @@
       color: white;
       font-size: 12.5px;
       font-weight: 600;
-      transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
 
     .broadcast-send:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -675,8 +670,6 @@
       border-color: var(--line-bright);
       color: var(--text);
     }
-
-    /* ---------- BROADCAST LIST ---------- */
 
     .broadcast-list {
       display: flex;
@@ -764,7 +757,6 @@
       color: var(--text-soft);
       font-size: 11px;
       font-weight: 500;
-      transition: background var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
     }
 
     .broadcast-action-btn:hover {
@@ -808,6 +800,160 @@
     .status.error   { color: var(--red); }
 
     /* ============================================================
+       CONFIRM MODAL
+    ============================================================ */
+
+    .rdk-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, .72);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 220ms var(--ease), visibility 220ms ease;
+    }
+
+    .rdk-confirm-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .rdk-confirm-box {
+      width: min(400px, 100%);
+      overflow: hidden;
+      border: 1px solid var(--line-bright);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .7);
+      transform: translateY(14px) scale(.96);
+      opacity: 0;
+      transition:
+        transform 340ms var(--ease-spring),
+        opacity 240ms var(--ease);
+    }
+
+    .rdk-confirm-overlay.open .rdk-confirm-box {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .rdk-confirm-head {
+      padding: 20px 22px 0;
+    }
+
+    .rdk-confirm-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      border: 1px solid var(--accent-line);
+      border-radius: 10px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .rdk-confirm-icon svg {
+      width: 20px !important;
+      height: 20px !important;
+      max-width: 20px !important;
+      max-height: 20px !important;
+      display: block !important;
+    }
+
+    .rdk-confirm-icon.rdk-confirm-danger {
+      border-color: rgba(217, 101, 92, .35);
+      background: rgba(217, 101, 92, .08);
+      color: var(--red);
+    }
+
+    .rdk-confirm-title {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      line-height: 1.3;
+    }
+
+    .rdk-confirm-message {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 12.5px;
+      line-height: 1.55;
+      letter-spacing: -.005em;
+    }
+
+    .rdk-confirm-message strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .rdk-confirm-body {
+      padding: 20px 22px 22px;
+    }
+
+    .rdk-confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .rdk-confirm-btn {
+      height: 42px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -.005em;
+      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+
+    .rdk-confirm-btn:active {
+      transform: scale(.98);
+    }
+
+    .rdk-confirm-cancel {
+      border: 1px solid var(--line-bright);
+      background: transparent;
+      color: var(--text-soft);
+    }
+
+    .rdk-confirm-cancel:hover {
+      background: var(--panel-2);
+      border-color: #3a3b3c;
+      color: var(--text);
+    }
+
+    .rdk-confirm-ok {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .rdk-confirm-ok:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .rdk-confirm-ok.rdk-confirm-ok-danger {
+      border-color: var(--red);
+      background: var(--red);
+      color: #fff;
+    }
+
+    .rdk-confirm-ok.rdk-confirm-ok-danger:hover {
+      background: #e07a72;
+      border-color: #e07a72;
+    }
+
+    /* ============================================================
        RESPONSIVE
     ============================================================ */
 
@@ -829,6 +975,9 @@
 
     @media (max-width: 380px) {
       .brand-badge { display: none; }
+      .rdk-confirm-actions { grid-template-columns: 1fr; }
+      .rdk-confirm-cancel { order: 2; }
+      .rdk-confirm-ok { order: 1; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -840,16 +989,13 @@
     }
 
     /* ============================================================
-       FORCE OVERRIDE — hapus border oranye & focus ring
+       FORCE OVERRIDE
     ============================================================ */
 
-    .user-card,
-    .user-card:hover,
-    .user-card:focus,
-    .user-card:focus-visible,
-    .user-card.self,
-    .user-card.self:hover,
-    .user-card.self:focus {
+    .user-card, .user-card:hover, .user-card:focus, .user-card.self,
+    .summary-card, .summary-card:hover,
+    .broadcast-item, .broadcast-item:hover, .broadcast-item.active-broadcast,
+    .broadcast-form, .broadcast-form:hover {
       border-color: var(--line) !important;
       background: var(--panel) !important;
       box-shadow: none !important;
@@ -857,67 +1003,20 @@
       outline: none !important;
     }
 
-    .summary-card,
-    .summary-card:hover,
-    .summary-card:focus {
-      border-color: var(--line) !important;
-      box-shadow: none !important;
-      transform: none !important;
-    }
-
-    .broadcast-item,
-    .broadcast-item:hover,
-    .broadcast-item.active-broadcast {
-      border-color: var(--line) !important;
-      background: var(--panel) !important;
-      box-shadow: none !important;
-      transform: none !important;
-    }
-
-    .broadcast-form,
-    .broadcast-form:hover {
-      border-color: var(--line) !important;
-      box-shadow: none !important;
-    }
-
-    .admin-tab,
-    .admin-tab:hover,
-    .admin-tab:focus,
-    .admin-tab:focus-visible,
-    .admin-tab.active {
+    .admin-tab, .admin-tab:hover, .admin-tab:focus, .admin-tab.active {
       outline: none !important;
       box-shadow: none !important;
     }
 
-    .admin-tabs::after,
-    .admin-tab::after,
-    .admin-tab::before {
+    .admin-tabs::after, .admin-tab::after, .admin-tab::before {
       display: none !important;
     }
 
-    button,
-    button:hover,
-    button:focus,
-    button:focus-visible,
-    button:active {
+    button, button:hover, button:focus, button:focus-visible, button:active {
       outline: none !important;
     }
 
-    .search-input:focus,
-    .search-input:focus-visible,
-    .filter-select:focus,
-    .filter-select:focus-visible,
-    .role-select:focus,
-    .role-select:focus-visible,
-    .broadcast-textarea:focus,
-    .broadcast-textarea:focus-visible {
-      border-color: var(--line-bright) !important;
-      box-shadow: none !important;
-      outline: none !important;
-    }
-
-    *:focus,
-    *:focus-visible {
+    *:focus, *:focus-visible {
       outline: none !important;
     }
   </style>
@@ -1058,6 +1157,128 @@
 
   </main>
 
+  <!-- ================= CONFIRM MODAL ================= -->
+  <div id="rdkConfirm" class="rdk-confirm-overlay" role="dialog" aria-modal="true">
+    <div class="rdk-confirm-box">
+      <div class="rdk-confirm-head">
+        <div class="rdk-confirm-icon" id="rdkConfirmIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h2 class="rdk-confirm-title" id="rdkConfirmTitle">Konfirmasi</h2>
+        <p class="rdk-confirm-message" id="rdkConfirmMessage">Yakin ingin melanjutkan?</p>
+      </div>
+      <div class="rdk-confirm-body">
+        <div class="rdk-confirm-actions">
+          <button id="rdkConfirmCancel" class="rdk-confirm-btn rdk-confirm-cancel" type="button">Batal</button>
+          <button id="rdkConfirmOk" class="rdk-confirm-btn rdk-confirm-ok" type="button">Lanjutkan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RDK CONFIRM SCRIPT (WAJIB SEBELUM MODULE) ================= -->
+  <script>
+    (function () {
+      "use strict";
+
+      const overlay = document.getElementById("rdkConfirm");
+      const iconEl = document.getElementById("rdkConfirmIcon");
+      const titleEl = document.getElementById("rdkConfirmTitle");
+      const messageEl = document.getElementById("rdkConfirmMessage");
+      const okBtn = document.getElementById("rdkConfirmOk");
+      const cancelBtn = document.getElementById("rdkConfirmCancel");
+
+      let currentOnConfirm = null;
+      let isOpen = false;
+
+      const ICON_INFO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>`;
+
+      const ICON_WARNING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>`;
+
+      function show(options) {
+        if (!overlay) {
+          console.error("[RDKConfirm] Element #rdkConfirm tidak ditemukan");
+          return;
+        }
+
+        options = options || {};
+
+        titleEl.textContent = options.title || "Konfirmasi";
+        messageEl.innerHTML = options.message || "Yakin ingin melanjutkan?";
+        okBtn.textContent = options.confirmText || "Lanjutkan";
+        cancelBtn.textContent = options.cancelText || "Batal";
+
+        const isDanger = options.danger === true;
+
+        if (isDanger) {
+          iconEl.innerHTML = ICON_WARNING;
+          iconEl.classList.add("rdk-confirm-danger");
+          okBtn.classList.add("rdk-confirm-ok-danger");
+        } else {
+          iconEl.innerHTML = ICON_INFO;
+          iconEl.classList.remove("rdk-confirm-danger");
+          okBtn.classList.remove("rdk-confirm-ok-danger");
+        }
+
+        currentOnConfirm = options.onConfirm || null;
+
+        overlay.classList.add("open");
+        isOpen = true;
+      }
+
+      function close() {
+        if (!overlay) return;
+        overlay.classList.remove("open");
+        isOpen = false;
+        currentOnConfirm = null;
+      }
+
+      function confirm() {
+        const cb = currentOnConfirm;
+        close();
+        if (typeof cb === "function") {
+          setTimeout(cb, 100);
+        }
+      }
+
+      if (okBtn) okBtn.addEventListener("click", confirm);
+      if (cancelBtn) cancelBtn.addEventListener("click", close);
+
+      if (overlay) {
+        overlay.addEventListener("click", function (e) {
+          if (e.target === overlay) close();
+        });
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (!isOpen) return;
+        if (e.key === "Escape") close();
+        if (e.key === "Enter") confirm();
+      });
+
+      window.RDKConfirm = {
+        show: show,
+        close: close,
+        isOpen: function () { return isOpen; }
+      };
+
+      console.log("[RDKConfirm] Ready");
+    })();
+  </script>
+
+  <!-- ================= FIREBASE MODULE ================= -->
   <script type="module">
     import { auth, db } from "./firebase-config.js";
     import {
@@ -1073,10 +1294,6 @@
     let currentUser = null;
     let allUsers = [];
     let allBroadcasts = [];
-
-    function showLogin(message = "") {
-      window.location.href = "./index.html";
-    }
 
     function setStatus(message, type = "") {
       $("status").textContent = message;
@@ -1234,30 +1451,39 @@
           const userId = select.dataset.userId;
           const oldRole = select.dataset.oldRole;
           const newRole = select.value;
+
           if (newRole === oldRole) return;
-          if (!confirm(`Ubah role menjadi ${newRole.toUpperCase()}?`)) {
-            select.value = oldRole;
-            return;
-          }
 
-          select.disabled = true;
-          setStatus("Menyimpan perubahan role...");
+          select.value = oldRole; // balik dulu, biar tampilan tidak berubah sebelum konfirmasi
 
-          try {
-            await updateDoc(doc(db, "users", userId), { role: newRole });
-            setStatus("Role berhasil diubah.", "success");
+          const target = allUsers.find(u => u.id === userId);
+          const targetName = target ? (target.name || target.email || "user ini") : "user ini";
 
-            const target = allUsers.find(u => u.id === userId);
-            if (target) target.role = newRole;
+          window.RDKConfirm.show({
+            title: "Ubah Role?",
+            message: `Yakin ingin mengubah role <strong>${escapeHTML(targetName)}</strong> menjadi <strong>${newRole.toUpperCase()}</strong>?`,
+            confirmText: "Ya, Ubah",
+            cancelText: "Batal",
+            onConfirm: async function () {
+              select.disabled = true;
+              setStatus("Menyimpan perubahan role...");
 
-            updateSummary();
-            applyFiltersAndRender();
-          } catch (error) {
-            console.error(error);
-            select.value = oldRole;
-            setStatus("Gagal mengubah role. Periksa Firestore Rules.", "error");
-            select.disabled = false;
-          }
+              try {
+                await updateDoc(doc(db, "users", userId), { role: newRole });
+                setStatus("Role berhasil diubah.", "success");
+
+                const user = allUsers.find(u => u.id === userId);
+                if (user) user.role = newRole;
+
+                updateSummary();
+                applyFiltersAndRender();
+              } catch (error) {
+                console.error(error);
+                setStatus("Gagal mengubah role. Periksa Firestore Rules.", "error");
+                select.disabled = false;
+              }
+            }
+          });
         });
       });
     }
@@ -1332,16 +1558,24 @@
       }
     }
 
-    async function deleteBroadcast(id) {
-      if (!confirm("Hapus broadcast ini? User tidak akan lihat lagi.")) return;
-      try {
-        await deleteDoc(doc(db, "broadcasts", id));
-        setBroadcastStatus("Broadcast dihapus.", "success");
-        await loadBroadcasts();
-      } catch (error) {
-        console.error(error);
-        setBroadcastStatus("Gagal menghapus: " + (error.code || error.message), "error");
-      }
+    function deleteBroadcast(id) {
+      window.RDKConfirm.show({
+        title: "Hapus Broadcast?",
+        message: "Broadcast ini akan dihapus permanen. User tidak akan melihatnya lagi.",
+        confirmText: "Ya, Hapus",
+        cancelText: "Batal",
+        danger: true,
+        onConfirm: async function () {
+          try {
+            await deleteDoc(doc(db, "broadcasts", id));
+            setBroadcastStatus("Broadcast dihapus.", "success");
+            await loadBroadcasts();
+          } catch (error) {
+            console.error(error);
+            setBroadcastStatus("Gagal menghapus: " + (error.code || error.message), "error");
+          }
+        }
+      });
     }
 
     async function toggleBroadcastActive(id, currentActive) {
@@ -1433,9 +1667,23 @@
     setPersistence(auth, browserLocalPersistence).catch(() => {});
 
     $("backButton").onclick = () => { window.location.href = "./index.html"; };
-    $("logoutButton").onclick = async () => {
-      await signOut(auth);
-      window.location.href = "./index.html";
+
+    $("logoutButton").onclick = () => {
+      window.RDKConfirm.show({
+        title: "Logout?",
+        message: "Kamu akan keluar dari akun ini. Yakin ingin melanjutkan?",
+        confirmText: "Ya, Logout",
+        cancelText: "Batal",
+        danger: true,
+        onConfirm: async function () {
+          try {
+            await signOut(auth);
+          } catch (e) {
+            console.error(e);
+          }
+          window.location.href = "./index.html";
+        }
+      });
     };
 
     document.querySelectorAll(".admin-tab").forEach(function (tab, idx) {
