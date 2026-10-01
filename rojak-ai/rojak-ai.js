@@ -7,7 +7,8 @@
    - Send icon jadi arrow up (clean)
    - Reset icon jadi refresh arrow custom
    - Dot hijau FAB DIPINDAH ke dalam .rojak-ai-fab-icon
-     → supaya nempel di sudut kanan atas icon, bukan di luar card
+   - Auto-focus HANYA di desktop (pointer: fine)
+     → HP tidak auto-buka keyboard saat panel dibuka
 ============================================================ */
 
 (function () {
@@ -117,6 +118,10 @@
     });
 
     return safe;
+  }
+
+  function isDesktopPointer() {
+    return window.matchMedia && window.matchMedia("(pointer: fine)").matches;
   }
 
   /* ---------- STORAGE ---------- */
@@ -344,8 +349,12 @@
     state.scrollY = window.scrollY || window.pageYOffset || 0;
     document.body.classList.add("rojak-ai-no-scroll");
 
+    // Auto-focus HANYA di desktop (mouse/trackpad).
+    // Di HP, keyboard TIDAK muncul otomatis — user tap sendiri kalau mau ngetik.
+    const isDesktop = isDesktopPointer();
+
     setTimeout(() => {
-      if (input) input.focus();
+      if (isDesktop && input) input.focus();
       scrollToBottom();
     }, 60);
   }
@@ -358,6 +367,12 @@
     state.open = false;
 
     document.body.classList.remove("rojak-ai-no-scroll");
+
+    // Blur input biar keyboard turun (kalau ada) saat panel ditutup
+    const input = document.getElementById("rojakAiInput");
+    if (input && document.activeElement === input) {
+      input.blur();
+    }
 
     if (state.scrollY) {
       window.scrollTo(0, state.scrollY);
