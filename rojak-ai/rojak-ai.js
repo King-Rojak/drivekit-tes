@@ -3,9 +3,11 @@
    Fitur: typewriter effect + markdown live render
 
    FIX terbaru:
-   - SVG icon diganti custom (bukan template AI/SaaS)
+   - SVG icon custom (bukan template AI/SaaS)
    - Send icon jadi arrow up (clean)
    - Reset icon jadi refresh arrow custom
+   - Dot hijau FAB DIPINDAH ke dalam .rojak-ai-fab-icon
+     → supaya nempel di sudut kanan atas icon, bukan di luar card
 ============================================================ */
 
 (function () {
@@ -40,7 +42,6 @@
     <path d="M4 6.5C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5v8c0 1.4-1.1 2.5-2.5 2.5H9l-3.6 3.2c-.5.5-1.4.1-1.4-.6V6.5z"/>
     <path d="M8.5 9.5h7"/>
     <path d="M8.5 12.5h4"/>
-    <circle cx="18" cy="6" r="2.2" fill="currentColor" stroke="none"/>
   </svg>`;
 
   const ICON_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -484,6 +485,11 @@
   /* ---------- BUILD ---------- */
 
   function buildWidget() {
+    /* FAB icon — dot hijau dipindah KE DALAM icon */
+    const fabIcon = el("span", { class: "rojak-ai-fab-icon" });
+    fabIcon.innerHTML = ICON_CHAT;
+    fabIcon.appendChild(el("span", { class: "rojak-ai-fab-dot" }));
+
     const fab = el("button", {
       class: "rojak-ai-fab",
       type: "button",
@@ -491,8 +497,7 @@
       title: "Chat dengan Rojak AI",
       "aria-label": "Buka Rojak AI"
     }, [
-      el("span", { class: "rojak-ai-fab-icon", html: ICON_CHAT }),
-      el("span", { class: "rojak-ai-fab-dot" }),
+      fabIcon,
       el("span", { text: "Rojak AI" })
     ]);
 
