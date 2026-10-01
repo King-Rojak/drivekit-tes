@@ -1076,16 +1076,16 @@
     .rojak-ai-fab:active { transform: translateY(0) scale(.98); }
 
     .rojak-ai-fab-icon {
-      position: relative;
-      display: grid;
-      place-items: center;
-      width: 30px;
-      height: 30px;
-      flex: 0 0 30px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-    }
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+}
 
     .rojak-ai-fab-icon svg {
       width: 15px !important;
@@ -1097,19 +1097,19 @@
 
     /* Dot hijau — nempel di sudut kanan atas icon */
     .rojak-ai-fab-dot {
-      position: absolute;
-      top: -1px;
-      right: -1px;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow:
-        0 0 0 2.5px var(--panel),
-        0 0 0 3.5px rgba(107, 184, 124, .25);
-      animation: rojakAiDotPulse 2.2s ease-in-out infinite;
-      pointer-events: none;
-    }
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow:
+    0 0 0 2.5px var(--panel),
+    0 0 0 3.5px rgba(107, 184, 124, .25);
+  animation: rojakAiDotPulse 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
 
     @keyframes rojakAiDotPulse {
       0%, 100% { opacity: 1; transform: scale(1); }
@@ -1459,9 +1459,9 @@
     }
 
     .rojak-ai-input-row:focus-within {
-      border-color: var(--accent-line);
-      background: var(--input);
-    }
+  border-color: var(--line-bright);
+  background: var(--input);
+}
 
     .rojak-ai-textarea {
       box-sizing: border-box;
