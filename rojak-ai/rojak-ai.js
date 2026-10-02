@@ -1,13 +1,11 @@
 /* ============================================================
-   ROJAK AI — CS & Tutor (Text-only)
+   ROJAK AI — CS & Tutor (Text-only) — FIXED VERSION
    Fitur: typewriter effect + markdown live render
-
    Backend: /api/ai (Vercel serverless)
-   - API key OpenRouter ada di server, BUKAN di sini
-   - Frontend hanya kirim { messages: [...] }
-   - Response: { reply: "..." }
-
-   FIX terbaru:
+   
+   FIX:
+   - renderRichText() lebih aman (escaping ganda)
+   - Mencegah teks keluar dari card
    - SVG icon custom
    - Send icon arrow up
    - Reset icon refresh arrow
@@ -103,23 +101,38 @@
     return `${hh}:${mm}`;
   }
 
+  /* ---------- RENDER RICH TEXT (FIXED) ---------- */
   function renderRichText(raw) {
+    if (!raw) return "";
+
+    // 1. Escape semua HTML terlebih dahulu untuk keamanan
     let safe = escapeHtml(raw);
 
+    // 2. Simpan blok kode (```...```) ke dalam array sementara
     const codeBlocks = [];
     safe = safe.replace(/```([\s\S]*?)```/g, (_, code) => {
-      const clean = code.replace(/^\n+|\n+$/g, "");
+      // Hapus newline di awal/akhir blok kode
+      const clean = code.replace(/^\n+|\n+$/g, '');
       codeBlocks.push(clean);
+      // Gunakan placeholder yang tidak akan bentrok dengan teks biasa
       return `\u0000CODEBLOCK${codeBlocks.length - 1}\u0000`;
     });
 
-    safe = safe.replace(/`([^`\n]+)`/g, "<code>$1</code>");
-    safe = safe.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-    safe = safe.replace(/\n/g, "<br>");
+    // 3. Render inline code (`...`)
+    safe = safe.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
+    // 4. Render bold (**...**)
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // 5. Ganti newline dengan <br>
+    safe = safe.replace(/\n/g, '<br>');
+
+    // 6. Kembalikan blok kode ke tempatnya dengan tag <pre><code>
     safe = safe.replace(/\u0000CODEBLOCK(\d+)\u0000/g, (_, idx) => {
       const code = codeBlocks[Number(idx)];
-      return `<pre><code>${code}</code></pre>`;
+      // Escape konten code agar aman di dalam <pre>
+      const escapedCode = escapeHtml(code);
+      return `<pre><code>${escapedCode}</code></pre>`;
     });
 
     return safe;
@@ -249,7 +262,7 @@
     }
 
     if (content) {
-      bubble.appendChild(el("div", { html: renderRichText(content) }));
+      bubble.appendChild(el("div", { class: "rojak-ai-bubble-inner", html: renderRichText(content) }));
     }
 
     msg.appendChild(bubble);

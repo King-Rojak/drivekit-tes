@@ -1,7 +1,9 @@
 /* ============================================================
-   TYPEWRITER CURSOR
+   ROJAK AI — CSS LENGKAP (FIXED)
+   Perbaikan: Teks tidak keluar dari card, blok kode aman.
    ============================================================ */
 
+/* ---------- TYPEWRITER CURSOR ---------- */
 .rojak-ai-cursor {
   display: inline-block;
   width: 2px;
@@ -17,6 +19,7 @@
   51%, 100% { opacity: 0; }
 }
 
+/* ---------- BUBBLE CONTENT ---------- */
 .rojak-ai-bubble-inner {
   word-wrap: break-word;
   overflow-wrap: anywhere;
@@ -27,26 +30,58 @@
 .rojak-ai-bubble-inner p:last-child { margin-bottom: 0; }
 
 .rojak-ai-bubble-inner code {
-  padding: 1px 4px; border-radius: 3px;
-  background: #0b0c0a; color: #f0a48a;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #0b0c0a;
+  color: #f0a48a;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .rojak-ai-bubble-inner pre {
-  margin: 6px 0 2px; padding: 8px 9px; border-radius: 5px;
-  background: #0b0c0a; border: 1px solid #222320;
-  overflow-x: auto; max-width: 100%;
+  margin: 6px 0 2px;
+  padding: 8px 9px;
+  border-radius: 5px;
+  background: #0b0c0a;
+  border: 1px solid #222320;
+  overflow-x: hidden;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .rojak-ai-bubble-inner pre code {
-  background: transparent; color: #d9e0cf;
-  padding: 0; font-size: 10px; line-height: 1.5;
-  white-space: pre;
+  background: transparent;
+  color: #d9e0cf;
+  padding: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ---------- BUBBLE CONTAINER (FIX UTAMA) ---------- */
+.rojak-ai-bubble {
+  max-width: 82%;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.55;
+  letter-spacing: -.005em;
+  
+  /* FIX: Mencegah teks keluar dari card */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 /* ---------- FIX: CHAT INPUT LAYOUT ---------- */
-
 .rojak-ai-footer {
   flex: 0 0 auto;
   padding: 10px 12px 12px;
@@ -56,10 +91,15 @@
 
 .rojak-ai-input-row {
   box-sizing: border-box;
-  display: flex; align-items: flex-end;
-  gap: 8px; width: 100%; min-width: 0; min-height: 44px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
   padding: 5px 5px 5px 12px;
-  border: 1px solid #2a2b2c; border-radius: 10px;
+  border: 1px solid #2a2b2c;
+  border-radius: 10px;
   background: #08090a;
   transition: border-color 140ms ease, background 140ms ease;
 }
@@ -71,20 +111,33 @@
 
 .rojak-ai-textarea {
   box-sizing: border-box;
-  flex: 1 1 auto; min-width: 0; width: 100%;
-  min-height: 32px; max-height: 108px;
-  margin: 0; padding: 7px 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 32px;
+  max-height: 108px;
+  margin: 0;
+  padding: 7px 0;
   display: block;
-  overflow-x: hidden; overflow-y: auto;
-  border: 0; outline: none; background: transparent;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 0;
+  outline: none;
+  background: transparent;
   color: #f0f0ee;
-  font-family: inherit; font-size: 13px; line-height: 1.4;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
   letter-spacing: -.005em;
-  white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   resize: none;
-  -webkit-appearance: none; appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; -ms-overflow-style: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   caret-color: #e45632;
 }
 
@@ -93,11 +146,16 @@
 
 .rojak-ai-send {
   box-sizing: border-box;
-  flex: 0 0 36px; width: 36px; height: 36px;
-  display: grid; place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
   padding: 0;
-  border: 1px solid rgba(228, 86, 50, .5); border-radius: 8px;
-  background: #e45632; color: #fff;
+  border: 1px solid rgba(228, 86, 50, .5);
+  border-radius: 8px;
+  background: #e45632;
+  color: #fff;
   cursor: pointer;
   transition: background 140ms ease, transform 140ms ease, border-color 140ms ease;
 }
@@ -107,31 +165,41 @@
 .rojak-ai-send:disabled { opacity: .45; cursor: not-allowed; }
 
 .rojak-ai-send svg {
-  width: 16px !important; height: 16px !important;
-  max-width: 16px !important; max-height: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
   display: block !important;
 }
 
 .rojak-ai-hint {
   margin-top: 8px;
-  font-size: 10px; line-height: 1.4;
-  color: #4a4b48; text-align: center;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #4a4b48;
+  text-align: center;
   letter-spacing: .01em;
 }
 
 @media (max-width: 480px) {
   .rojak-ai-footer { padding: 9px 10px 11px; }
   .rojak-ai-input-row {
-    min-height: 46px; gap: 7px;
+    min-height: 46px;
+    gap: 7px;
     padding: 5px 5px 5px 12px;
     border-radius: 11px;
   }
   .rojak-ai-textarea {
-    min-height: 34px; max-height: 104px;
-    padding: 8px 0; font-size: 14px; line-height: 1.4;
+    min-height: 34px;
+    max-height: 104px;
+    padding: 8px 0;
+    font-size: 14px;
+    line-height: 1.4;
   }
   .rojak-ai-send {
-    width: 38px; height: 38px; flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
     border-radius: 9px;
   }
   .rojak-ai-send svg { width: 17px !important; height: 17px !important; }
