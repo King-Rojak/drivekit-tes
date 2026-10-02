@@ -62,7 +62,10 @@
     button { cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
     button:focus-visible { outline: none; }
 
-    /* LOADING */
+    /* ============================================================
+       LOADING
+    ============================================================ */
+
     .loading-screen {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; align-items: center; justify-content: center;
@@ -226,7 +229,10 @@
     .loading-bar { display: none; }
     .loading-dots { display: none; }
 
-    /* LOGIN */
+    /* ============================================================
+       LOGIN
+    ============================================================ */
+
     .login-screen {
       min-height: 100vh; display: none;
       align-items: center; justify-content: center;
@@ -365,7 +371,10 @@
       color: var(--text-ghost); font-size: 10px; line-height: 1.6; text-align: left;
     }
 
-    /* BROADCAST */
+    /* ============================================================
+       BROADCAST
+    ============================================================ */
+
     .broadcast-notif {
       position: fixed; top: 14px; left: 14px; right: 14px;
       z-index: 99990; max-width: 460px; margin: 0 auto;
@@ -413,7 +422,10 @@
       word-wrap: break-word; overflow-wrap: anywhere; white-space: pre-wrap;
     }
 
-    /* APP */
+    /* ============================================================
+       APP
+    ============================================================ */
+
     .app { display: none; min-height: 100vh; }
 
     .topbar {
@@ -691,7 +703,10 @@
       letter-spacing: .06em; text-transform: uppercase;
     }
 
-    /* MODAL PROFILE */
+    /* ============================================================
+       MODAL PROFILE
+    ============================================================ */
+
     .modal {
       position: fixed; inset: 0; z-index: 5000;
       display: none; align-items: center; justify-content: center;
@@ -772,7 +787,10 @@
 
     #profileStatus { min-height: 14px; margin-top: 10px; }
 
-    /* LOG CONSOLE FAB */
+    /* ============================================================
+       LOG CONSOLE FAB
+    ============================================================ */
+
     .rdk-log-fab {
       position: fixed;
       right: 16px;
@@ -870,7 +888,10 @@
 
     .rdk-log-empty { padding: 30px 15px; text-align: center; color: var(--text-ghost); font-size: 11px; }
 
-    /* LOGIN DEBUG CONSOLE */
+    /* ============================================================
+       LOGIN DEBUG CONSOLE
+    ============================================================ */
+
     .rdk-login-console {
       position: fixed;
       left: 12px;
@@ -1042,7 +1063,10 @@
       .rdk-login-console-fab { left: 8px; bottom: 8px; height: 30px; font-size: 10.5px; }
     }
 
-    /* ROJAK AI */
+    /* ============================================================
+       ROJAK AI
+    ============================================================ */
+
     .rojak-ai-fab {
       position: fixed;
       right: 16px;
@@ -1620,7 +1644,10 @@
       .rojak-ai-hint { margin-top: 7px; font-size: 9.5px; }
     }
 
-    /* CONFIRM MODAL */
+    /* ============================================================
+       CONFIRM MODAL
+    ============================================================ */
+
     .rdk-confirm-overlay {
       position: fixed;
       inset: 0;
@@ -1777,7 +1804,10 @@
       .rdk-confirm-ok { order: 1; }
     }
 
-    /* RESPONSIVE */
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+
     @media (max-width: 600px) {
       .topbar { height: 52px; padding: 0 12px; }
       .brand-logo { width: 28px; height: 28px; flex-basis: 28px; }
@@ -1837,7 +1867,10 @@
     .google-login::after,
     .google-login::before { display: none !important; }
 
-    /* GLOBAL FORCE OVERRIDE */
+    /* ============================================================
+       GLOBAL FORCE OVERRIDE
+    ============================================================ */
+
     .drive-card,
     .drive-card:hover,
     .drive-card:focus,
@@ -2058,7 +2091,47 @@
     })();
   </script>
 
-  <!-- RDK CONFIRM -->
+  <!-- ================= DEBUG FLAG + REDACT (FASE 6) ================= -->
+  <script>
+    /* ============================================================
+       DEBUG FLAG — hanya true di localhost / LAN
+       Di production (vercel.app), RDK_DEBUG = false
+    ============================================================ */
+
+    window.RDK_DEBUG = (function () {
+      const host = location.hostname;
+      return host === "localhost"
+        || host === "127.0.0.1"
+        || host.startsWith("192.168.")
+        || host.endsWith(".local");
+    })();
+
+    /* ============================================================
+       REDACT HELPER — untuk log yang masih perlu debug
+    ============================================================ */
+
+    window.RDK_REDACT = {
+      uid: function (uid) {
+        if (!uid || typeof uid !== "string") return "(no uid)";
+        if (uid.length < 6) return "***";
+        return uid.slice(0, 4) + "***" + uid.slice(-2);
+      },
+      email: function (email) {
+        if (!email || typeof email !== "string") return "(no email)";
+        const at = email.indexOf("@");
+        if (at < 1) return "***";
+        const name = email.slice(0, at);
+        const domain = email.slice(at);
+        if (name.length <= 2) return "*" + domain;
+        return name.slice(0, 2) + "***" + domain;
+      },
+      token: function () {
+        return "(token hidden)";
+      }
+    };
+  </script>
+
+  <!-- ================= RDK CONFIRM ================= -->
   <script>
     window.RDKConfirm = (function () {
       let overlay = null;
@@ -2647,8 +2720,10 @@
             window.__RDK_RESTORE_DRIVE_TOKEN__();
           }
         }).catch(function (error) {
-          if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
-          if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("GAPI init error: " + (error.message || error), "error");
+          if (window.RDK_DEBUG) {
+            if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
+            if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("GAPI init error: " + (error.message || error), "error");
+          }
         });
       });
     };
@@ -2727,7 +2802,9 @@
         return true;
       })
       .catch(function (e) {
-        LOG.add("Persistence error: " + e.message, "warn");
+        if (window.RDK_DEBUG) {
+          LOG.add("Persistence error: " + e.message, "warn");
+        }
         return false;
       });
 
@@ -2760,7 +2837,9 @@
         const time = Number(localStorage.getItem(DRIVE_TOKEN_TIME_KEY) || 0);
         if (!token) return null;
         if (Date.now() - time > DRIVE_TOKEN_MAX_AGE) {
-          LOG.add("Drive token expired", "warn");
+          if (window.RDK_DEBUG) {
+            LOG.add("Drive token expired", "warn");
+          }
           clearDriveToken();
           return null;
         }
@@ -3049,7 +3128,10 @@
 
     function loadProfile(user) {
       currentUser = user;
-      LOG.add("loadProfile: " + (user.email || user.uid.slice(0, 8)), "info");
+      LOG.add("loadProfile: memuat profil user", "info");
+      if (window.RDK_DEBUG) {
+        LOG.add("  email: " + window.RDK_REDACT.email(user.email), "info");
+      }
 
       return ensureProfile(user).then(function (role) {
         currentRole = role;
@@ -3113,7 +3195,7 @@
 
       function handleError(error) {
         const code = error.code || "";
-        LOG.add("Login ERROR: " + code + " — " + (error.message || ""), "error");
+        LOG.add("Login ERROR: " + code, "error");
 
         if (code === "auth/unauthorized-domain") {
           loginError("Domain '" + location.hostname + "' belum diizinkan di Firebase Console → Authentication → Authorized domains.");
@@ -3126,7 +3208,7 @@
         } else if (code === "auth/cancelled-popup-request") {
           loginError("Login sedang berjalan. Tunggu sebentar.");
         } else {
-          loginError("Login gagal: " + (code || error.message || "Unknown error"));
+          loginError("Login gagal: " + (code || "Unknown error"));
         }
 
         resetButton();
@@ -3141,7 +3223,10 @@
       LOG.add("Coba signInWithPopup...", "info");
 
       signInWithPopup(auth, provider).then(function (result) {
-        LOG.add("signInWithPopup OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
+        LOG.add("signInWithPopup OK", "ok");
+        if (window.RDK_DEBUG) {
+          LOG.add("  user: " + window.RDK_REDACT.email(result.user.email), "ok");
+        }
         loginError("");
         resetButton();
       }).catch(function (error) {
@@ -3179,13 +3264,16 @@
       try {
         const result = await getRedirectResult(auth);
         if (result && result.user) {
-          LOG.add("getRedirectResult OK: " + (result.user.email || result.user.uid.slice(0, 8)), "ok");
+          LOG.add("getRedirectResult OK", "ok");
+          if (window.RDK_DEBUG) {
+            LOG.add("  user: " + window.RDK_REDACT.email(result.user.email), "ok");
+          }
         } else {
           LOG.add("getRedirectResult: tidak ada hasil", "info");
         }
       } catch (error) {
         const code = error.code || "";
-        LOG.add("getRedirectResult ERROR: " + code + " — " + (error.message || ""), "error");
+        LOG.add("getRedirectResult ERROR: " + code, "error");
 
         if (code === "auth/unauthorized-domain") {
           loginError("Domain '" + location.hostname + "' belum diizinkan di Firebase.");
@@ -3215,7 +3303,12 @@
         authResolvedOnce = true;
 
         LOG.add("onAuthStateChanged: USER MASUK", "ok");
-        LOG.add("  email: " + (user.email || "-"), "ok");
+        LLOG.add("Auth state: user masuk", "ok");
+
+        if (window.RDK_DEBUG) {
+          LOG.add("  uid: " + window.RDK_REDACT.uid(user.uid), "ok");
+          LOG.add("  email: " + window.RDK_REDACT.email(user.email), "ok");
+        }
 
         loadProfile(user).then(function () {
           if (!restoreDriveFromStorage()) {
@@ -3533,7 +3626,7 @@
             try {
               await signOut(auth);
             } catch (e) {
-              console.error(e);
+              if (window.RDK_DEBUG) console.error(e);
             }
           }
         });
