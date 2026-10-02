@@ -1325,6 +1325,8 @@
       word-wrap: break-word;
       overflow-wrap: anywhere;
       white-space: normal;
+      overflow: hidden;
+      max-width: 100%;
     }
 
     .rojak-ai-msg-user .rojak-ai-bubble {
@@ -1432,6 +1434,8 @@
       color: #f0a48a;
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       font-size: 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .rojak-ai-bubble-inner pre {
@@ -1440,8 +1444,10 @@
       border-radius: 5px;
       background: #0b0c0a;
       border: 1px solid #222320;
-      overflow-x: auto;
+      overflow-x: hidden;
       max-width: 100%;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
 
     .rojak-ai-bubble-inner pre code {
@@ -1450,7 +1456,8 @@
       padding: 0;
       font-size: 10px;
       line-height: 1.5;
-      white-space: pre;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
 
     .rojak-ai-footer {
@@ -2091,13 +2098,7 @@
     })();
   </script>
 
-  <!-- ================= DEBUG FLAG + REDACT (FASE 6) ================= -->
   <script>
-    /* ============================================================
-       DEBUG FLAG — hanya true di localhost / LAN
-       Di production (vercel.app), RDK_DEBUG = false
-    ============================================================ */
-
     window.RDK_DEBUG = (function () {
       const host = location.hostname;
       return host === "localhost"
@@ -2105,10 +2106,6 @@
         || host.startsWith("192.168.")
         || host.endsWith(".local");
     })();
-
-    /* ============================================================
-       REDACT HELPER — untuk log yang masih perlu debug
-    ============================================================ */
 
     window.RDK_REDACT = {
       uid: function (uid) {
@@ -2131,7 +2128,6 @@
     };
   </script>
 
-  <!-- ================= RDK CONFIRM ================= -->
   <script>
     window.RDKConfirm = (function () {
       let overlay = null;
@@ -2702,51 +2698,76 @@
   </div>
 
   <script>
-    window.RDK_GOOGLE = { gapiInited: false, gisInited: false, tokenClient: null };
+    window.RDK_GOOGLE = {
+      gapiInited: false,
+      gisInited: false,
+      tokenClient: null,
+      ready: null
+    };
 
-    window.gapiLoaded = function () {
-      if (window.RDK_LOG) window.RDK_LOG.add("gapi.js loaded", "ok");
-      if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("gapi.js loaded", "ok");
-      if (typeof window.gapi === "undefined") return;
-      window.gapi.load("client", function () {
-        window.gapi.client.init({
-          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
-        }).then(function () {
+    window.RDK_GOOGLE.ready = new Promise(function (resolve, reject) {
+      var gapiLoaded = false;
+      var gisLoaded = false;
+
+      function checkDone() {
+        if (gapiLoaded && gisLoaded) {
           window.RDK_GOOGLE.gapiInited = true;
-          if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap", "ok");
-          if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("Google Drive API siap", "ok");
-
-          if (window.__RDK_RESTORE_DRIVE_TOKEN__) {
-            window.__RDK_RESTORE_DRIVE_TOKEN__();
-          }
-        }).catch(function (error) {
-          if (window.RDK_DEBUG) {
-            if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
-            if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("GAPI init error: " + (error.message || error), "error");
-          }
-        });
-      });
-    };
-
-    window.gisLoaded = function () {
-      if (window.RDK_LOG) window.RDK_LOG.add("gis client loaded", "ok");
-      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return;
-      window.RDK_GOOGLE.tokenClient = window.google.accounts.oauth2.initTokenClient({
-        client_id: "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
-        scope: "https://www.googleapis.com/auth/drive.file",
-        callback: ""
-      });
-      window.RDK_GOOGLE.gisInited = true;
-      if (window.RDK_LOG) window.RDK_LOG.add("Google OAuth siap", "ok");
-
-      if (window.__RDK_SILENT_DRIVE_RESTORE__) {
-        window.__RDK_SILENT_DRIVE_RESTORE__();
+          window.RDK_GOOGLE.gisInited = true;
+          resolve();
+        }
       }
-    };
-  </script>
 
-  <script src="https://apis.google.com/js/api.js" onload="window.gapiLoaded()"></script>
-  <script src="https://accounts.google.com/gsi/client" onload="window.gisLoaded()"></script>
+      // ---- Load gapi.js ----
+      var gapiScript = document.createElement("script");
+      gapiScript.src = "https://apis.google.com/js/api.js";
+      gapiScript.async = true;
+      gapiScript.onload = function () {
+        if (typeof window.gapi === "undefined") {
+          reject(new Error("gapi.js loaded but window.gapi is undefined"));
+          return;
+        }
+        window.gapi.load("client", function () {
+          window.gapi.client.init({
+            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
+          }).then(function () {
+            if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap", "ok");
+            gapiLoaded = true;
+            checkDone();
+          }).catch(function (error) {
+            if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
+            reject(error);
+          });
+        });
+      };
+      gapiScript.onerror = function () {
+        reject(new Error("Gagal memuat gapi.js dari apis.google.com"));
+      };
+      document.head.appendChild(gapiScript);
+
+      // ---- Load gis client ----
+      var gisScript = document.createElement("script");
+      gisScript.src = "https://accounts.google.com/gsi/client";
+      gisScript.async = true;
+      gisScript.onload = function () {
+        if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+          reject(new Error("gis client loaded but google.accounts.oauth2 is undefined"));
+          return;
+        }
+        window.RDK_GOOGLE.tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
+          scope: "https://www.googleapis.com/auth/drive.file",
+          callback: ""
+        });
+        if (window.RDK_LOG) window.RDK_LOG.add("Google OAuth siap", "ok");
+        gisLoaded = true;
+        checkDone();
+      };
+      gisScript.onerror = function () {
+        reject(new Error("Gagal memuat gis client dari accounts.google.com"));
+      };
+      document.head.appendChild(gisScript);
+    });
+  </script>
 
   <script type="module">
     import { auth, db } from "./firebase-config.js";
@@ -2770,12 +2791,6 @@
 
     const googleState = window.RDK_GOOGLE;
 
-    /* ============================================================
-       STORAGE KEYS
-       ROLE_CACHE_KEY DIHAPUS — role tidak lagi di-cache di frontend.
-       Setiap security decision HARUS baca ulang dari Firestore.
-    ============================================================ */
-
     const DRIVE_TOKEN_KEY = "rdk_drive_token_v2";
     const DRIVE_TOKEN_TIME_KEY = "rdk_drive_token_time_v2";
     const DRIVE_TOKEN_MAX_AGE = 55 * 60 * 1000;
@@ -2791,10 +2806,6 @@
       LLOG.add("Device OFFLINE — cek koneksi internet", "error");
     }
 
-    /* ============================================================
-       FIREBASE PERSISTENCE
-    ============================================================ */
-
     const firebaseReadyPromise = setPersistence(auth, browserLocalPersistence)
       .then(function () {
         LOG.add("Persistence: LOCAL", "ok");
@@ -2807,10 +2818,6 @@
         }
         return false;
       });
-
-    /* ============================================================
-       DRIVE TOKEN HELPERS
-    ============================================================ */
 
     function saveDriveToken(token) {
       try {
@@ -2851,10 +2858,6 @@
       try { return localStorage.getItem(DRIVE_EVER_KEY) === "1"; }
       catch (e) { return false; }
     }
-
-    /* ============================================================
-       UI HELPERS
-    ============================================================ */
 
     function hideLoading() {
       if (window.__RDK_FINISH_LOADING__) window.__RDK_FINISH_LOADING__();
@@ -2938,10 +2941,6 @@
       } catch (e) {}
     }
 
-    /* ============================================================
-       DRIVE TOKEN ATTACH / RESTORE
-    ============================================================ */
-
     function tryAttachDriveToken(token) {
       if (!token) return false;
       if (!window.gapi || !window.gapi.client) return false;
@@ -2978,10 +2977,6 @@
       setDriveButtonConnected();
       return true;
     }
-
-    /* ============================================================
-       DRIVE AUTO-CONNECT — SILENT REFRESH
-    ============================================================ */
 
     function attemptDriveSilentRefresh() {
       if (driveSilentRefreshInFlight) {
@@ -3087,10 +3082,6 @@
       trySilentDriveRestore();
     };
 
-    /* ============================================================
-       FIRESTORE PROFILE
-    ============================================================ */
-
     function ensureProfile(user) {
       const ref = doc(db, "users", user.uid);
       return getDoc(ref).then(function (snapshot) {
@@ -3146,12 +3137,6 @@
       });
     }
 
-    /* ============================================================
-       FALLBACK — KALAU FIRESTORE ERROR
-       SECURITY: Jangan pakai cache role untuk decision.
-       Pakai "member" sebagai default AMAN.
-    ============================================================ */
-
     function loadProfileFallback(user) {
       LOG.add("FALLBACK: masuk app tanpa Firestore", "warn");
       currentUser = user;
@@ -3166,10 +3151,6 @@
 
       showApp();
     }
-
-    /* ============================================================
-       LOGIN
-    ============================================================ */
 
     function loginGoogle() {
       const button = $("loginButton");
@@ -3254,12 +3235,16 @@
 
     $("loginButton").onclick = loginGoogle;
 
-    /* ============================================================
-       INIT — PERSISTENCE → REDIRECT → AUTH LISTENER
-    ============================================================ */
-
     (async function initAuth() {
       await firebaseReadyPromise;
+
+      // Tunggu Google API siap SEBELUM apapun
+      try {
+        await window.RDK_GOOGLE.ready;
+        LOG.add("Google API siap sepenuhnya", "ok");
+      } catch (err) {
+        LOG.add("Google API GAGAL dimuat: " + err.message, "error");
+      }
 
       try {
         const result = await getRedirectResult(auth);
@@ -3286,7 +3271,7 @@
         }
       }
 
-      onAuthStateChanged(auth, function (user) {
+      onAuthStateChanged(auth, async function (user) {
         const loadingTextEl = $("loadingText");
         if (loadingTextEl && !authResolvedOnce) {
           loadingTextEl.textContent = user ? "Memuat profil" : "Menyiapkan login";
@@ -3338,26 +3323,24 @@
       });
     })();
 
-    /* ============================================================
-       WAIT GOOGLE
-    ============================================================ */
-
     function waitForGoogle(timeout) {
       timeout = timeout || 10000;
       const start = Date.now();
       return new Promise(function (resolve) {
         function check() {
-          if (googleState.gapiInited && googleState.gisInited && googleState.tokenClient) { resolve(true); return; }
-          if (Date.now() - start > timeout) { resolve(false); return; }
+          if (googleState.gapiInited && googleState.gisInited && googleState.tokenClient) {
+            resolve(true);
+            return;
+          }
+          if (Date.now() - start > timeout) {
+            resolve(false);
+            return;
+          }
           setTimeout(check, 200);
         }
         check();
       });
     }
-
-    /* ============================================================
-       CONNECT DRIVE — MANUAL
-    ============================================================ */
 
     function connectDrive() {
       const button = $("connectDriveButton");
@@ -3415,10 +3398,6 @@
         if (connected) loadRecentFiles();
       });
     };
-
-    /* ============================================================
-       CREATE TXT
-    ============================================================ */
 
     function createTXT() {
       let name = $("fileName").value.trim();
@@ -3486,10 +3465,6 @@
       setStatus("");
     };
 
-    /* ============================================================
-       RECENT FILES
-    ============================================================ */
-
     function loadRecentFiles() {
       if (!accessToken) {
         $("filesList").innerHTML = '<div class="empty">Hubungkan Google Drive terlebih dahulu.</div>';
@@ -3555,10 +3530,6 @@
       }
     };
 
-    /* ============================================================
-       PROFILE MODAL
-    ============================================================ */
-
     function openProfile() { $("profileModal").classList.add("open"); }
     function closeProfile() {
       $("profileModal").classList.remove("open");
@@ -3599,10 +3570,6 @@
 
     $("adminButton").onclick = function () { window.location.href = "./admin.html"; };
 
-    /* ============================================================
-       LOGOUT
-    ============================================================ */
-
     $("logoutButton").onclick = function () {
       if (window.RDKConfirm) {
         window.RDKConfirm.show({
@@ -3636,10 +3603,6 @@
         }
       }
     };
-
-    /* ============================================================
-       TABS
-    ============================================================ */
 
     document.querySelectorAll(".tab").forEach(function (tab, idx) {
       tab.addEventListener("click", function () {
