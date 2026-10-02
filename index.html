@@ -2698,76 +2698,51 @@
   </div>
 
   <script>
-    window.RDK_GOOGLE = {
-      gapiInited: false,
-      gisInited: false,
-      tokenClient: null,
-      ready: null
+    window.RDK_GOOGLE = { gapiInited: false, gisInited: false, tokenClient: null };
+
+    window.gapiLoaded = function () {
+      if (window.RDK_LOG) window.RDK_LOG.add("gapi.js loaded", "ok");
+      if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("gapi.js loaded", "ok");
+      if (typeof window.gapi === "undefined") return;
+      window.gapi.load("client", function () {
+        window.gapi.client.init({
+          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
+        }).then(function () {
+          window.RDK_GOOGLE.gapiInited = true;
+          if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap", "ok");
+          if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("Google Drive API siap", "ok");
+
+          if (window.__RDK_RESTORE_DRIVE_TOKEN__) {
+            window.__RDK_RESTORE_DRIVE_TOKEN__();
+          }
+        }).catch(function (error) {
+          if (window.RDK_DEBUG) {
+            if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
+            if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("GAPI init error: " + (error.message || error), "error");
+          }
+        });
+      });
     };
 
-    window.RDK_GOOGLE.ready = new Promise(function (resolve, reject) {
-      var gapiLoaded = false;
-      var gisLoaded = false;
+    window.gisLoaded = function () {
+      if (window.RDK_LOG) window.RDK_LOG.add("gis client loaded", "ok");
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return;
+      window.RDK_GOOGLE.tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
+        scope: "https://www.googleapis.com/auth/drive.file",
+        callback: ""
+      });
+      window.RDK_GOOGLE.gisInited = true;
+      if (window.RDK_LOG) window.RDK_LOG.add("Google OAuth siap", "ok");
 
-      function checkDone() {
-        if (gapiLoaded && gisLoaded) {
-          window.RDK_GOOGLE.gapiInited = true;
-          window.RDK_GOOGLE.gisInited = true;
-          resolve();
-        }
+      if (window.__RDK_SILENT_DRIVE_RESTORE__) {
+        window.__RDK_SILENT_DRIVE_RESTORE__();
       }
-
-      // ---- Load gapi.js ----
-      var gapiScript = document.createElement("script");
-      gapiScript.src = "https://apis.google.com/js/api.js";
-      gapiScript.async = true;
-      gapiScript.onload = function () {
-        if (typeof window.gapi === "undefined") {
-          reject(new Error("gapi.js loaded but window.gapi is undefined"));
-          return;
-        }
-        window.gapi.load("client", function () {
-          window.gapi.client.init({
-            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
-          }).then(function () {
-            if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap", "ok");
-            gapiLoaded = true;
-            checkDone();
-          }).catch(function (error) {
-            if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
-            reject(error);
-          });
-        });
-      };
-      gapiScript.onerror = function () {
-        reject(new Error("Gagal memuat gapi.js dari apis.google.com"));
-      };
-      document.head.appendChild(gapiScript);
-
-      // ---- Load gis client ----
-      var gisScript = document.createElement("script");
-      gisScript.src = "https://accounts.google.com/gsi/client";
-      gisScript.async = true;
-      gisScript.onload = function () {
-        if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-          reject(new Error("gis client loaded but google.accounts.oauth2 is undefined"));
-          return;
-        }
-        window.RDK_GOOGLE.tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: "222625790422-7j7nhagd4d7gdpaqhq257deucjjfanva.apps.googleusercontent.com",
-          scope: "https://www.googleapis.com/auth/drive.file",
-          callback: ""
-        });
-        if (window.RDK_LOG) window.RDK_LOG.add("Google OAuth siap", "ok");
-        gisLoaded = true;
-        checkDone();
-      };
-      gisScript.onerror = function () {
-        reject(new Error("Gagal memuat gis client dari accounts.google.com"));
-      };
-      document.head.appendChild(gisScript);
-    });
+    };
   </script>
+
+  <script src="https://apis.google.com/js/api.js" onload="window.gapiLoaded()"></script>
+  <script src="https://accounts.google.com/gsi/client" onload="window.gisLoaded()"></script>
 
   <script type="module">
     import { auth, db } from "./firebase-config.js";
@@ -3238,14 +3213,6 @@
     (async function initAuth() {
       await firebaseReadyPromise;
 
-      // Tunggu Google API siap SEBELUM apapun
-      try {
-        await window.RDK_GOOGLE.ready;
-        LOG.add("Google API siap sepenuhnya", "ok");
-      } catch (err) {
-        LOG.add("Google API GAGAL dimuat: " + err.message, "error");
-      }
-
       try {
         const result = await getRedirectResult(auth);
         if (result && result.user) {
@@ -3271,7 +3238,7 @@
         }
       }
 
-      onAuthStateChanged(auth, async function (user) {
+      onAuthStateChanged(auth, function (user) {
         const loadingTextEl = $("loadingText");
         if (loadingTextEl && !authResolvedOnce) {
           loadingTextEl.textContent = user ? "Memuat profil" : "Menyiapkan login";
