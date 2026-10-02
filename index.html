@@ -3298,7 +3298,9 @@
       const start = Date.now();
       return new Promise(function (resolve) {
         function check() {
-          if (googleState.gapiInited && googleState.gisInited && googleState.tokenClient) {
+          // Connect Drive hanya membutuhkan GIS/token client.
+          // GAPI dipakai setelah token didapat untuk operasi Drive API.
+          if (googleState.gisInited && googleState.tokenClient) {
             resolve(true);
             return;
           }
@@ -3341,7 +3343,7 @@
               return;
             }
             accessToken = response.access_token;
-            window.gapi.client.setToken({ access_token: accessToken });
+            tryAttachDriveToken(accessToken);
             saveDriveToken(accessToken);
             button.textContent = "Connected";
             button.classList.add("connected");
