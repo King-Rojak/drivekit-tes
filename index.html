@@ -3263,12 +3263,15 @@
         }
 
         loadProfile(user).then(function () {
-          if (!restoreDriveFromStorage()) {
-            if (hasEverConnected()) {
-              setTimeout(function () {
-                trySilentDriveRestore();
-              }, 400);
-            }
+          // FIX: Simpan hasil restore dulu, baru cek.
+          // Ini mencegah pengguna baru (belum pernah connect)
+          // memicu silent refresh yang bikin stuck loading.
+          const restored = restoreDriveFromStorage();
+
+          if (!restored && hasEverConnected()) {
+            setTimeout(function () {
+              trySilentDriveRestore();
+            }, 400);
           }
         }).catch(function (error) {
           LOG.add("loadProfile GAGAL", "error");
