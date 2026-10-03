@@ -1,4 +1,8 @@
 {
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/dashboard", "destination": "/index.html" }
+  ],
   "functions": {
     "api/ai.mjs": {
       "maxDuration": 30,
