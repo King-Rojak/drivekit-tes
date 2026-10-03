@@ -1,24 +1,12 @@
 /* ============================================================
    ROJAK AI — VERCEL SERVERLESS FUNCTION
-   Provider: OpenRouter (auto-routing)
+   Provider: OpenRouter (openrouter/auto)
 
-   Fokus utama:
-   - Excel
-   - Rumus Excel
-   - Penyelesaian soal Excel
-   - Troubleshooting Excel
-   - Rojak DriveK1t
-
-   Security:
-   - API key hanya di environment variable
-   - CORS allowlist
-   - Rate limit
-   - Input validation
-   - Timeout
-   - Error handling aman
+   FIX untuk error 500:
+   - Rate limit inline (tidak ada import eksternal)
+   - Timeout 8s (aman di Vercel Hobby plan 10s)
+   - Outer try/catch → selalu return JSON
 ============================================================ */
-
-import { checkRateLimit } from "./_lib/rateLimit.js";
 
 const RATE_LIMIT_PER_MINUTE = 8;
 const RATE_LIMIT_PER_HOUR = 60;
@@ -34,6 +22,60 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://127.0.0.1:3000"
 ];
+
+/* =========================================================
+   RATE LIMIT — INLINE (tidak perlu import)
+========================================================= */
+
+const rateBuckets = new Map();
+let lastCleanup = Date.now();
+
+function cleanupBuckets() {
+  const now = Date.now();
+  if (now - lastCleanup < 5 * 60 * 1000) return;
+  lastCleanup = now;
+
+  for (const [key, data] of rateBuckets.entries()) {
+    if (now - data.lastAccess > 60 * 60 * 1000) {
+      rateBuckets.delete(key);
+    }
+  }
+}
+
+function checkRateLimit(key, limit, windowMs) {
+  cleanupBuckets();
+
+  const now = Date.now();
+  let bucket = rateBuckets.get(key);
+
+  if (!bucket) {
+    bucket = { count: 0, resetAt: now + windowMs, lastAccess: now };
+    rateBuckets.set(key, bucket);
+  }
+
+  if (now >= bucket.resetAt) {
+    bucket.count = 0;
+    bucket.resetAt = now + windowMs;
+  }
+
+  bucket.lastAccess = now;
+
+  if (bucket.count >= limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: bucket.resetAt
+    };
+  }
+
+  bucket.count++;
+
+  return {
+    allowed: true,
+    remaining: limit - bucket.count,
+    resetAt: bucket.resetAt
+  };
+}
 
 /* =========================================================
    ROJAK AI — SYSTEM PROMPT
@@ -435,11 +477,7 @@ function getClientIp(req) {
   const xff = req.headers["x-forwarded-for"] || "";
   const first = String(xff).split(",")[0].trim();
 
-  return (
-    first ||
-    req.socket?.remoteAddress ||
-    "unknown"
-  );
+  return first || req.socket?.remoteAddress || "unknown";
 }
 
 /* =========================================================
@@ -491,10 +529,29 @@ function validateMessages(rawMessages) {
 }
 
 /* =========================================================
-   MAIN HANDLER
+   MAIN HANDLER — dibungkus outer try/catch
 ========================================================= */
 
 export default async function handler(req, res) {
+  try {
+    return await handleRequest(req, res);
+  } catch (fatalError) {
+    console.error("[Rojak AI] FATAL:", fatalError?.message, fatalError?.stack);
+
+    try {
+      if (!res.headersSent) {
+        return res.status(500).json({
+          error: "FATAL",
+          message: "Rojak AI crash. Cek Vercel Logs untuk detail."
+        });
+      }
+    } catch (_) {
+      // benar-benar gagal, biarkan Vercel handle
+    }
+  }
+}
+
+async function handleRequest(req, res) {
   applyCors(req, res);
 
   /* OPTIONS */
@@ -516,44 +573,28 @@ export default async function handler(req, res) {
     console.error("[Rojak AI] OPENROUTER_API_KEY tidak diset");
     return res.status(503).json({
       error: "SERVICE_UNAVAILABLE",
-      message: "Rojak AI belum dikonfigurasi. Coba lagi nanti."
+      message: "Rojak AI belum dikonfigurasi. Hubungi admin."
     });
   }
 
   /* RATE LIMIT */
   const ip = getClientIp(req);
 
-  const rlMin = checkRateLimit(
-    "min:" + ip,
-    RATE_LIMIT_PER_MINUTE,
-    60 * 1000
-  );
-
+  const rlMin = checkRateLimit("min:" + ip, RATE_LIMIT_PER_MINUTE, 60 * 1000);
   if (!rlMin.allowed) {
-    res.setHeader(
-      "Retry-After",
-      String(Math.ceil((rlMin.resetAt - Date.now()) / 1000))
-    );
+    res.setHeader("Retry-After", String(Math.ceil((rlMin.resetAt - Date.now()) / 1000)));
     return res.status(429).json({
       error: "RATE_LIMITED",
-      message: "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
+      message: "Terlalu banyak permintaan. Tunggu sebentar."
     });
   }
 
-  const rlHour = checkRateLimit(
-    "hour:" + ip,
-    RATE_LIMIT_PER_HOUR,
-    60 * 60 * 1000
-  );
-
+  const rlHour = checkRateLimit("hour:" + ip, RATE_LIMIT_PER_HOUR, 60 * 60 * 1000);
   if (!rlHour.allowed) {
-    res.setHeader(
-      "Retry-After",
-      String(Math.ceil((rlHour.resetAt - Date.now()) / 1000))
-    );
+    res.setHeader("Retry-After", String(Math.ceil((rlHour.resetAt - Date.now()) / 1000)));
     return res.status(429).json({
       error: "RATE_LIMITED",
-      message: "Batas permintaan per jam tercapai. Coba lagi nanti."
+      message: "Batas per jam tercapai. Coba lagi nanti."
     });
   }
 
@@ -578,9 +619,8 @@ export default async function handler(req, res) {
     });
   }
 
-  /* VALIDATE MESSAGES */
+  /* VALIDATE */
   const validation = validateMessages(body.messages);
-
   if (!validation.ok) {
     return res.status(400).json({
       error: "INVALID_INPUT",
@@ -590,41 +630,32 @@ export default async function handler(req, res) {
 
   const cleanMessages = validation.messages;
 
-  /* ABORT CONTROLLER */
+  /* FETCH OPENROUTER — TIMEOUT 8s (aman untuk Hobby plan 10s) */
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000);
+  const timeout = setTimeout(() => controller.abort(), 8000);
 
   let response;
 
   try {
-    response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": process.env.SITE_URL || "https://drivekit-rojak.vercel.app",
-          "X-Title": "Rojak DriveK1t"
-        },
-
-        body: JSON.stringify({
-          /* openrouter/auto = auto-routing, biarkan OpenRouter pilih model terbaik */
-          model: "openrouter/auto",
-
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...cleanMessages
-          ],
-
-          temperature: 0.2,
-          max_tokens: 1400
-        }),
-
-        signal: controller.signal
-      }
-    );
+    response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": process.env.SITE_URL || "https://drivekit-rojak.vercel.app",
+        "X-Title": "Rojak DriveK1t"
+      },
+      body: JSON.stringify({
+        model: "openrouter/auto",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...cleanMessages
+        ],
+        temperature: 0.2,
+        max_tokens: 1000
+      }),
+      signal: controller.signal
+    });
   } catch (error) {
     clearTimeout(timeout);
 
@@ -639,7 +670,7 @@ export default async function handler(req, res) {
 
     return res.status(502).json({
       error: "UPSTREAM_ERROR",
-      message: "Rojak AI sedang mengalami masalah. Coba lagi beberapa saat."
+      message: "Tidak dapat menghubungi server AI. Coba lagi."
     });
   } finally {
     clearTimeout(timeout);
@@ -647,14 +678,13 @@ export default async function handler(req, res) {
 
   /* RESPONSE JSON */
   let data = {};
-
   try {
     data = await response.json();
   } catch {
     data = {};
   }
 
-  /* OPENROUTER ERROR */
+  /* ERROR DARI OPENROUTER */
   if (!response.ok) {
     console.error(
       "[Rojak AI] OpenRouter error:",
@@ -662,18 +692,12 @@ export default async function handler(req, res) {
       JSON.stringify(data?.error || {}, null, 2)
     );
 
-    let userMessage =
-      "Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
+    let userMessage = "Rojak AI sedang mengalami masalah. Coba lagi.";
 
-    if (response.status === 429) {
-      userMessage = "Rojak AI sedang sibuk. Tunggu sebentar lalu coba lagi.";
-    } else if (response.status === 401) {
-      userMessage = "Konfigurasi API key bermasalah. Hubungi admin.";
-    } else if (response.status === 402) {
-      userMessage = "Kuota Rojak AI habis. Hubungi admin.";
-    } else if (response.status >= 500) {
-      userMessage = "Server AI sedang bermasalah. Coba lagi sebentar.";
-    }
+    if (response.status === 429) userMessage = "Rojak AI sedang sibuk. Tunggu sebentar.";
+    else if (response.status === 401) userMessage = "API key bermasalah. Hubungi admin.";
+    else if (response.status === 402) userMessage = "Kuota Rojak AI habis. Hubungi admin.";
+    else if (response.status >= 500) userMessage = "Server AI sedang bermasalah. Coba lagi.";
 
     return res.status(502).json({
       error: "AI_ERROR",
@@ -682,9 +706,7 @@ export default async function handler(req, res) {
   }
 
   /* EXTRACT ANSWER */
-  const answer = (
-    data?.choices?.[0]?.message?.content || ""
-  ).trim();
+  const answer = (data?.choices?.[0]?.message?.content || "").trim();
 
   if (!answer) {
     return res.status(200).json({
@@ -692,7 +714,5 @@ export default async function handler(req, res) {
     });
   }
 
-  return res.status(200).json({
-    reply: answer
-  });
+  return res.status(200).json({ reply: answer });
 }
