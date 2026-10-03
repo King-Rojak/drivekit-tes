@@ -651,7 +651,17 @@
       font-weight: 600;
     }
 
-    .broadcast-send:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    /* FIX: hapus glow orange (dari rdk-premium.css) */
+    .broadcast-send:hover,
+    .broadcast-send:focus,
+    .broadcast-send:focus-visible,
+    .broadcast-send:active {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
     .broadcast-send:disabled { opacity: .55; cursor: wait; }
 
     .broadcast-clear {
@@ -1345,7 +1355,6 @@
     ============================================================ */
 
     async function getRoleFromFirestore(uid) {
-      // Cek UID valid
       if (!uid || typeof uid !== "string" || uid.length < 10) {
         return null;
       }
@@ -1359,7 +1368,6 @@
 
         const data = snap.data();
 
-        // Verify UID di dokumen sama dengan UID yang diminta
         if (data.uid !== uid) {
           console.error("UID mismatch in user document");
           return null;
@@ -1496,7 +1504,6 @@
               setStatus("Menyimpan perubahan role...");
 
               try {
-                // --- Validasi input ---
                 if (!userId || typeof userId !== "string" || userId.length < 10) {
                   throw new Error("INVALID_UID");
                 }
@@ -1505,13 +1512,11 @@
                   throw new Error("INVALID_ROLE");
                 }
 
-                // --- Verify admin SEBELUM operasi ---
                 const selfRole = await getRoleFromFirestore(currentUser.uid);
                 if (selfRole !== "admin") {
                   throw new Error("NOT_ADMIN");
                 }
 
-                // --- Cegah self-demotion tidak sengaja ---
                 if (userId === currentUser.uid && newRole !== "admin") {
                   setStatus("Tidak bisa mengubah role sendiri.", "error");
                   select.value = oldRole;
@@ -1519,7 +1524,6 @@
                   return;
                 }
 
-                // --- Update role ---
                 await updateDoc(doc(db, "users", userId), {
                   role: newRole,
                   updatedAt: serverTimestamp()
@@ -1598,7 +1602,6 @@
       setBroadcastStatus("Mengirim broadcast...");
 
       try {
-        // --- Verify admin SEBELUM operasi ---
         const selfRole = await getRoleFromFirestore(currentUser.uid);
         if (selfRole !== "admin") {
           throw new Error("NOT_ADMIN");
@@ -1864,7 +1867,6 @@
 
     onAuthStateChanged(auth, async user => {
 
-      // 1. Belum login → redirect
       if (!user) {
         window.location.href = "./index.html";
         return;
@@ -1873,10 +1875,8 @@
       currentUser = user;
 
       try {
-        // 2. Verify admin role LANGSUNG dari Firestore
         const role = await getRoleFromFirestore(user.uid);
 
-        // 3. Bukan admin → tolak akses
         if (role !== "admin") {
           document.body.innerHTML = `
             <div style="
@@ -1938,7 +1938,6 @@
           return;
         }
 
-        // 4. Admin valid → load data
         await loadUsers();
 
       } catch (error) {
