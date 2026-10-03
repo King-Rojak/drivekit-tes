@@ -2160,7 +2160,8 @@
       signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
     import {
-      doc, getDoc, setDoc, updateDoc, serverTimestamp
+      doc, getDoc, setDoc, updateDoc, serverTimestamp,
+      collection, query, where, orderBy, limit, onSnapshot
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     const LOG = window.RDK_LOG || { add: function(){} };
@@ -2277,6 +2278,8 @@
       }
 
       window.dispatchEvent(new Event("rdk:app-ready"));
+
+      setupBroadcastListener();
     }
 
     function loginError(message) {
@@ -2927,6 +2930,15 @@
       });
     };
 
+    const broadcastCloseBtn = $("broadcastClose");
+    if (broadcastCloseBtn) {
+      broadcastCloseBtn.onclick = function () {
+        const id = currentBroadcastId;
+        hideBroadcastNotif();
+        markBroadcastSeen(id);
+      };
+    }
+
     $("adminButton").onclick = function () { window.location.href = "./admin.html"; };
 
     $("logoutButton").onclick = function () {
@@ -2947,6 +2959,11 @@
             accessToken = null;
             clearDriveToken();
             clearEverConnected();
+
+            if (broadcastUnsubscribe) {
+              try { broadcastUnsubscribe(); } catch (_) {}
+              broadcastUnsubscribe = null;
+            }
 
             try {
               await signOut(auth);
@@ -3008,6 +3025,95 @@
         createTXT();
       }
     });
+
+    /* ============================================================
+       BROADCAST LISTENER
+    ============================================================ */
+
+    let broadcastUnsubscribe = null;
+    let broadcastHideTimer = null;
+    let currentBroadcastId = null;
+
+    function setupBroadcastListener() {
+      if (broadcastUnsubscribe) {
+        try { broadcastUnsubscribe(); } catch (_) {}
+        broadcastUnsubscribe = null;
+      }
+
+      try {
+        const q = query(
+          collection(db, "broadcasts"),
+          where("active", "==", true),
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
+
+        broadcastUnsubscribe = onSnapshot(q, function (snapshot) {
+          if (snapshot.empty) {
+            hideBroadcastNotif();
+            return;
+          }
+
+          snapshot.docChanges().forEach(function (change) {
+            if (change.type === "added" || change.type === "modified") {
+              const data = change.doc.data();
+              showBroadcastNotif(data, change.doc.id);
+            }
+          });
+        }, function (error) {
+          LOG.add("[Broadcast] listener error: " + (error.code || error.message), "error");
+          console.error("[Broadcast] listener error:", error);
+        });
+
+        LOG.add("[Broadcast] listener aktif", "ok");
+
+      } catch (e) {
+        LOG.add("[Broadcast] setup error: " + e.message, "error");
+        console.error("[Broadcast] setup error:", e);
+      }
+    }
+
+    function showBroadcastNotif(data, docId) {
+      const notif = $("broadcastNotif");
+      const body = $("broadcastBody");
+      const time = $("broadcastTime");
+      if (!notif || !body || !time) return;
+
+      const seenKey = "rdk_broadcast_seen_" + docId;
+      try {
+        if (localStorage.getItem(seenKey) === "1") return;
+      } catch (_) {}
+
+      currentBroadcastId = docId;
+
+      body.textContent = data.message || "";
+      time.textContent = "Baru saja";
+
+      notif.classList.add("open");
+
+      if (broadcastHideTimer) clearTimeout(broadcastHideTimer);
+      broadcastHideTimer = setTimeout(function () {
+        hideBroadcastNotif();
+        markBroadcastSeen(docId);
+      }, 8000);
+    }
+
+    function hideBroadcastNotif() {
+      const notif = $("broadcastNotif");
+      if (notif) notif.classList.remove("open");
+
+      if (broadcastHideTimer) {
+        clearTimeout(broadcastHideTimer);
+        broadcastHideTimer = null;
+      }
+    }
+
+    function markBroadcastSeen(docId) {
+      if (!docId) return;
+      try {
+        localStorage.setItem("rdk_broadcast_seen_" + docId, "1");
+      } catch (_) {}
+    }
 
     function escapeHTML(value) {
       return String(value)
