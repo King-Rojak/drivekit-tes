@@ -1,7 +1,6 @@
 {
   "rewrites": [
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/dashboard", "destination": "/index.html" }
+    { "source": "/admin", "destination": "/admin.html" }
   ],
   "functions": {
     "api/ai.mjs": {
