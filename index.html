@@ -1950,6 +1950,226 @@
   <link rel="stylesheet" href="./rojak-ai/rdk-motion.css">
   <link rel="stylesheet" href="./rojak-ai/rdk-premium.css">
   <link rel="stylesheet" href="./rojak-ai/music-player.css">
+
+<style id="rojak-ai-premium-refinement">
+/* ROJAK AI — premium corporate refinement */
+.rojak-ai-panel {
+  width: min(430px, calc(100vw - 28px));
+  height: min(680px, calc(100vh - 28px));
+  border: 1px solid #292b29;
+  border-radius: 10px;
+  background: #111210;
+  box-shadow: 0 20px 55px rgba(0,0,0,.58), 0 2px 8px rgba(0,0,0,.22);
+}
+
+.rojak-ai-header {
+  height: 62px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid #242623;
+  background: #151614;
+}
+
+.rojak-ai-header-left { gap: 11px; }
+
+.rojak-ai-avatar {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+  border: 1px solid #6f3426;
+  border-radius: 8px;
+  background: #1d1613;
+  color: #e45632;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.rojak-ai-title-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -.015em;
+}
+
+.rojak-ai-title-status {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #777a74;
+}
+
+.rojak-ai-status-dot {
+  width: 5px;
+  height: 5px;
+  box-shadow: 0 0 0 2px rgba(107,184,124,.10);
+}
+
+.rojak-ai-header-actions { gap: 5px; }
+
+.rojak-ai-icon-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #292b29;
+  border-radius: 7px;
+  color: #8b8e88;
+  background: #151614;
+  transition: border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.rojak-ai-icon-button:hover {
+  border-color: #3a3c39;
+  background: #1b1d1a;
+  color: #e6e7e3;
+}
+
+.rojak-ai-body {
+  padding: 18px 16px 10px;
+  background: #0e0f0e;
+  scrollbar-color: #292b29 transparent;
+}
+
+.rojak-ai-msg { margin-bottom: 16px; }
+
+.rojak-ai-bubble {
+  max-width: min(86%, 365px);
+  padding: 11px 14px;
+  border: 1px solid #272925;
+  border-radius: 9px;
+  background: #171916;
+  color: #e2e4df;
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: -.004em;
+}
+
+.rojak-ai-msg-user .rojak-ai-bubble {
+  border-color: #633122;
+  background: #211714;
+  border-bottom-right-radius: 3px;
+}
+
+.rojak-ai-msg-bot .rojak-ai-bubble {
+  border-bottom-left-radius: 3px;
+}
+
+.rojak-ai-time {
+  margin-top: 5px;
+  padding: 0 3px;
+  color: #555852;
+  font-size: 9px;
+}
+
+.rojak-ai-suggest {
+  gap: 7px;
+  margin: 3px 0 16px;
+  padding-top: 7px;
+}
+
+.rojak-ai-suggest::before {
+  content: "Saran cepat";
+  display: block;
+  flex: 0 0 100%;
+  margin-bottom: 1px;
+  color: #686b65;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.rojak-ai-chip {
+  padding: 8px 11px;
+  border: 1px solid #292b29;
+  border-radius: 7px;
+  background: #121311;
+  color: #9a9d96;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  transition: border-color .16s ease, background .16s ease, color .16s ease, transform .16s ease;
+}
+
+.rojak-ai-chip:hover {
+  border-color: #633122;
+  background: #1a1614;
+  color: #e0e2dd;
+}
+
+.rojak-ai-chip:active { transform: translateY(1px); }
+
+.rojak-ai-footer {
+  padding: 10px 12px 11px;
+  border-top: 1px solid #242623;
+  background: #121311;
+}
+
+.rojak-ai-input-row {
+  min-height: 46px;
+  gap: 9px;
+  padding: 5px 5px 5px 13px;
+  border: 1px solid #30322f !important;
+  border-radius: 9px;
+  background: #0b0c0b;
+  transition: border-color .16s ease, background .16s ease;
+}
+
+.rojak-ai-input-row:hover,
+.rojak-ai-input-row:focus-within {
+  border-color: #464944 !important;
+  background: #0d0e0d !important;
+}
+
+.rojak-ai-textarea {
+  min-height: 34px;
+  padding: 7px 0;
+  color: #e5e7e2;
+  font-size: 13px;
+}
+
+.rojak-ai-textarea::placeholder { color: #555852; }
+
+.rojak-ai-send {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  border: 1px solid #c84c2f;
+  border-radius: 7px;
+  background: #d95735;
+  box-shadow: none;
+}
+
+.rojak-ai-send:hover {
+  background: #e3603b;
+  border-color: #e3603b;
+}
+
+.rojak-ai-hint {
+  margin-top: 7px;
+  color: #4f524d;
+  font-size: 9px;
+}
+
+@media (max-width: 600px) {
+  .rojak-ai-panel {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    box-shadow: none;
+  }
+
+  .rojak-ai-header { height: 60px; padding: 0 12px 0 15px; }
+  .rojak-ai-body { padding: 17px 14px 9px; }
+  .rojak-ai-bubble { max-width: 91%; font-size: 13.5px; line-height: 1.58; }
+  .rojak-ai-footer { padding: 9px 10px 10px; }
+  .rojak-ai-input-row { border-radius: 9px; }
+  .rojak-ai-chip { font-size: 10.5px; }
+}
+</style>
+
 </head>
 
 <body>
