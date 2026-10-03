@@ -2,10 +2,9 @@
    ROJAK AI — VERCEL SERVERLESS FUNCTION
    Provider: OpenRouter (openrouter/auto)
 
-   FIX untuk error 500:
-   - Rate limit inline (tidak ada import eksternal)
-   - Timeout 8s (aman di Vercel Hobby plan 10s)
-   - Outer try/catch → selalu return JSON
+   FIX SyntaxError 'Ctrl':
+   Backtick di dalam systemPrompt yang tidak ter-escape sudah
+   diganti dengan single quote agar tidak menutup template literal.
 ============================================================ */
 
 const RATE_LIMIT_PER_MINUTE = 8;
@@ -24,7 +23,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 /* =========================================================
-   RATE LIMIT — INLINE (tidak perlu import)
+   RATE LIMIT — INLINE
 ========================================================= */
 
 const rateBuckets = new Map();
@@ -61,11 +60,7 @@ function checkRateLimit(key, limit, windowMs) {
   bucket.lastAccess = now;
 
   if (bucket.count >= limit) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: bucket.resetAt
-    };
+    return { allowed: false, remaining: 0, resetAt: bucket.resetAt };
   }
 
   bucket.count++;
@@ -160,7 +155,7 @@ Untuk tutorial:
 Untuk pertanyaan Excel:
 
 **Rumus**
-\`=SUM(A1:A10)\`
+'=SUM(A1:A10)'
 
 **Penjelasan**
 Jelaskan fungsi rumus secara singkat.
@@ -200,13 +195,13 @@ gunakan alur berikut sebagai referensi:
 5. Pastikan file berhasil dibuat.
 6. Buka Google Drive di PC sekolah.
 7. Cari file TXT.
-8. Download file melalui titik tiga → Download.
-9. Buka File Explorer dengan `Ctrl + E`.
+8. Download file melalui titik tiga -> Download.
+9. Buka File Explorer dengan 'Ctrl + E'.
 10. Buka file rumus.
-11. Salin rumus dengan `Ctrl + C`.
+11. Salin rumus dengan 'Ctrl + C'.
 12. Buka Microsoft Excel.
 13. Pilih sel tujuan, misalnya A1, B2, atau C3.
-14. Tempel rumus dengan `Ctrl + V`.
+14. Tempel rumus dengan 'Ctrl + V'.
 15. Selesai.
 
 Jika pengguna hanya bertanya "cara pakai DriveK1t?",
@@ -296,11 +291,11 @@ Pemisah argumen Excel dapat berbeda berdasarkan regional setting.
 
 Contoh:
 
-\`=IF(A1>75,"Lulus","Tidak Lulus")\`
+'=IF(A1>75,"Lulus","Tidak Lulus")'
 
 atau pada konfigurasi tertentu:
 
-\`=IF(A1>75;"Lulus";"Tidak Lulus")\`
+'=IF(A1>75;"Lulus";"Tidak Lulus")'
 
 Jika pengguna mengalami error formula karena separator, jelaskan kemungkinan penggunaan koma atau titik koma sesuai konfigurasi Excel.
 
@@ -312,7 +307,7 @@ Untuk pencarian exact match, gunakan FALSE atau 0 jika sesuai kebutuhan.
 
 Contoh:
 
-\`=VLOOKUP(A2,$F$2:$H$10,3,FALSE)\`
+'=VLOOKUP(A2,$F$2:$H$10,3,FALSE)'
 
 Jelaskan:
 - A2 = nilai yang dicari.
@@ -422,7 +417,7 @@ PANJANG JAWABAN
 ==================================================
 
 Pertanyaan sederhana:
-1–4 paragraf pendek atau daftar singkat.
+1-4 paragraf pendek atau daftar singkat.
 
 Pertanyaan tutorial:
 Gunakan langkah bernomor.
@@ -529,7 +524,7 @@ function validateMessages(rawMessages) {
 }
 
 /* =========================================================
-   MAIN HANDLER — dibungkus outer try/catch
+   MAIN HANDLER
 ========================================================= */
 
 export default async function handler(req, res) {
@@ -545,21 +540,17 @@ export default async function handler(req, res) {
           message: "Rojak AI crash. Cek Vercel Logs untuk detail."
         });
       }
-    } catch (_) {
-      // benar-benar gagal, biarkan Vercel handle
-    }
+    } catch (_) {}
   }
 }
 
 async function handleRequest(req, res) {
   applyCors(req, res);
 
-  /* OPTIONS */
   if (req.method === "OPTIONS") {
     return res.status(204).end();
   }
 
-  /* METHOD */
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST, OPTIONS");
     return res.status(405).json({
@@ -568,7 +559,6 @@ async function handleRequest(req, res) {
     });
   }
 
-  /* API KEY */
   if (!process.env.OPENROUTER_API_KEY) {
     console.error("[Rojak AI] OPENROUTER_API_KEY tidak diset");
     return res.status(503).json({
@@ -577,7 +567,6 @@ async function handleRequest(req, res) {
     });
   }
 
-  /* RATE LIMIT */
   const ip = getClientIp(req);
 
   const rlMin = checkRateLimit("min:" + ip, RATE_LIMIT_PER_MINUTE, 60 * 1000);
@@ -598,7 +587,6 @@ async function handleRequest(req, res) {
     });
   }
 
-  /* BODY */
   let body = req.body;
 
   if (typeof body === "string") {
@@ -619,7 +607,6 @@ async function handleRequest(req, res) {
     });
   }
 
-  /* VALIDATE */
   const validation = validateMessages(body.messages);
   if (!validation.ok) {
     return res.status(400).json({
@@ -630,7 +617,6 @@ async function handleRequest(req, res) {
 
   const cleanMessages = validation.messages;
 
-  /* FETCH OPENROUTER — TIMEOUT 8s (aman untuk Hobby plan 10s) */
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
@@ -640,7 +626,7 @@ async function handleRequest(req, res) {
     response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Authorization": "Bearer " + process.env.OPENROUTER_API_KEY,
         "Content-Type": "application/json",
         "HTTP-Referer": process.env.SITE_URL || "https://drivekit-rojak.vercel.app",
         "X-Title": "Rojak DriveK1t"
@@ -676,7 +662,6 @@ async function handleRequest(req, res) {
     clearTimeout(timeout);
   }
 
-  /* RESPONSE JSON */
   let data = {};
   try {
     data = await response.json();
@@ -684,7 +669,6 @@ async function handleRequest(req, res) {
     data = {};
   }
 
-  /* ERROR DARI OPENROUTER */
   if (!response.ok) {
     console.error(
       "[Rojak AI] OpenRouter error:",
@@ -693,7 +677,6 @@ async function handleRequest(req, res) {
     );
 
     let userMessage = "Rojak AI sedang mengalami masalah. Coba lagi.";
-
     if (response.status === 429) userMessage = "Rojak AI sedang sibuk. Tunggu sebentar.";
     else if (response.status === 401) userMessage = "API key bermasalah. Hubungi admin.";
     else if (response.status === 402) userMessage = "Kuota Rojak AI habis. Hubungi admin.";
@@ -705,7 +688,6 @@ async function handleRequest(req, res) {
     });
   }
 
-  /* EXTRACT ANSWER */
   const answer = (data?.choices?.[0]?.message?.content || "").trim();
 
   if (!answer) {
