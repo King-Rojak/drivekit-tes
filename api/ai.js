@@ -1,6 +1,6 @@
 /* ============================================================
    ROJAK AI — VERCEL SERVERLESS FUNCTION
-   Provider: OpenRouter
+   Provider: OpenRouter (auto-routing)
 
    Fokus utama:
    - Excel
@@ -422,20 +422,9 @@ function applyCors(req, res) {
     res.setHeader("Vary", "Origin");
   }
 
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "POST, OPTIONS"
-  );
-
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  );
-
-  res.setHeader(
-    "Access-Control-Max-Age",
-    "86400"
-  );
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
 }
 
 /* =========================================================
@@ -459,86 +448,46 @@ function getClientIp(req) {
 
 function validateMessages(rawMessages) {
   if (!Array.isArray(rawMessages)) {
-    return {
-      ok: false,
-      error: "INVALID_MESSAGES"
-    };
+    return { ok: false, error: "INVALID_MESSAGES" };
   }
 
   if (rawMessages.length === 0) {
-    return {
-      ok: false,
-      error: "EMPTY_MESSAGES"
-    };
+    return { ok: false, error: "EMPTY_MESSAGES" };
   }
 
   const trimmed = rawMessages.slice(-MAX_HISTORY_ITEMS);
-
   const clean = [];
   let totalLen = 0;
 
   for (const m of trimmed) {
-    if (!m || typeof m !== "object") {
-      continue;
-    }
-
-    if (
-      m.role !== "user" &&
-      m.role !== "assistant"
-    ) {
-      continue;
-    }
-
-    if (typeof m.content !== "string") {
-      continue;
-    }
+    if (!m || typeof m !== "object") continue;
+    if (m.role !== "user" && m.role !== "assistant") continue;
+    if (typeof m.content !== "string") continue;
 
     const content = m.content.trim();
-
-    if (!content) {
-      continue;
-    }
+    if (!content) continue;
 
     if (content.length > MAX_MESSAGE_LEN) {
-      return {
-        ok: false,
-        error: "MESSAGE_TOO_LONG"
-      };
+      return { ok: false, error: "MESSAGE_TOO_LONG" };
     }
 
     totalLen += content.length;
-
     if (totalLen > MAX_TOTAL_PAYLOAD) {
-      return {
-        ok: false,
-        error: "PAYLOAD_TOO_LARGE"
-      };
+      return { ok: false, error: "PAYLOAD_TOO_LARGE" };
     }
 
-    clean.push({
-      role: m.role,
-      content
-    });
+    clean.push({ role: m.role, content });
   }
 
   if (!clean.length) {
-    return {
-      ok: false,
-      error: "NO_VALID_MESSAGES"
-    };
+    return { ok: false, error: "NO_VALID_MESSAGES" };
   }
 
   if (clean[clean.length - 1].role !== "user") {
-    return {
-      ok: false,
-      error: "LAST_MESSAGE_NOT_USER"
-    };
+    return { ok: false, error: "LAST_MESSAGE_NOT_USER" };
   }
 
-  return {
-    ok: true,
-    messages: clean
-  };
+  return { ok: true, messages: clean };
 }
 
 /* =========================================================
@@ -555,11 +504,7 @@ export default async function handler(req, res) {
 
   /* METHOD */
   if (req.method !== "POST") {
-    res.setHeader(
-      "Allow",
-      "POST, OPTIONS"
-    );
-
+    res.setHeader("Allow", "POST, OPTIONS");
     return res.status(405).json({
       error: "METHOD_NOT_ALLOWED",
       message: "Method tidak diizinkan."
@@ -568,14 +513,10 @@ export default async function handler(req, res) {
 
   /* API KEY */
   if (!process.env.OPENROUTER_API_KEY) {
-    console.error(
-      "[Rojak AI] OPENROUTER_API_KEY tidak diset"
-    );
-
+    console.error("[Rojak AI] OPENROUTER_API_KEY tidak diset");
     return res.status(503).json({
       error: "SERVICE_UNAVAILABLE",
-      message:
-        "Rojak AI belum dikonfigurasi. Coba lagi nanti."
+      message: "Rojak AI belum dikonfigurasi. Coba lagi nanti."
     });
   }
 
@@ -591,17 +532,11 @@ export default async function handler(req, res) {
   if (!rlMin.allowed) {
     res.setHeader(
       "Retry-After",
-      String(
-        Math.ceil(
-          (rlMin.resetAt - Date.now()) / 1000
-        )
-      )
+      String(Math.ceil((rlMin.resetAt - Date.now()) / 1000))
     );
-
     return res.status(429).json({
       error: "RATE_LIMITED",
-      message:
-        "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
+      message: "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
     });
   }
 
@@ -614,17 +549,11 @@ export default async function handler(req, res) {
   if (!rlHour.allowed) {
     res.setHeader(
       "Retry-After",
-      String(
-        Math.ceil(
-          (rlHour.resetAt - Date.now()) / 1000
-        )
-      )
+      String(Math.ceil((rlHour.resetAt - Date.now()) / 1000))
     );
-
     return res.status(429).json({
       error: "RATE_LIMITED",
-      message:
-        "Batas permintaan per jam tercapai. Coba lagi nanti."
+      message: "Batas permintaan per jam tercapai. Coba lagi nanti."
     });
   }
 
@@ -637,8 +566,7 @@ export default async function handler(req, res) {
     } catch {
       return res.status(400).json({
         error: "INVALID_JSON",
-        message:
-          "Format request tidak valid."
+        message: "Format request tidak valid."
       });
     }
   }
@@ -646,34 +574,25 @@ export default async function handler(req, res) {
   if (!body || typeof body !== "object") {
     return res.status(400).json({
       error: "INVALID_BODY",
-      message:
-        "Body request tidak valid."
+      message: "Body request tidak valid."
     });
   }
 
   /* VALIDATE MESSAGES */
-  const validation =
-    validateMessages(body.messages);
+  const validation = validateMessages(body.messages);
 
   if (!validation.ok) {
     return res.status(400).json({
       error: "INVALID_INPUT",
-      message:
-        "Format pesan tidak valid."
+      message: "Format pesan tidak valid."
     });
   }
 
-  const cleanMessages =
-    validation.messages;
+  const cleanMessages = validation.messages;
 
   /* ABORT CONTROLLER */
-  const controller =
-    new AbortController();
-
-  const timeout = setTimeout(
-    () => controller.abort(),
-    20000
-  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
 
   let response;
 
@@ -684,40 +603,23 @@ export default async function handler(req, res) {
         method: "POST",
 
         headers: {
-          "Authorization":
-            `Bearer ${process.env.OPENROUTER_API_KEY}`,
-
-          "Content-Type":
-            "application/json",
-
-          "HTTP-Referer":
-            process.env.SITE_URL ||
-            "https://drivekit-rojak.vercel.app",
-
-          "X-Title":
-            "Rojak DriveK1t"
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.SITE_URL || "https://drivekit-rojak.vercel.app",
+          "X-Title": "Rojak DriveK1t"
         },
 
         body: JSON.stringify({
-          model:
-            process.env.OPENROUTER_MODEL ||
-            "google/gemini-2.0-flash-exp:free",
+          /* openrouter/auto = auto-routing, biarkan OpenRouter pilih model terbaik */
+          model: "openrouter/auto",
 
           messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            },
+            { role: "system", content: systemPrompt },
             ...cleanMessages
           ],
 
           temperature: 0.2,
-
-          max_tokens: 1400,
-
-          provider: {
-            allow_fallbacks: true
-          }
+          max_tokens: 1400
         }),
 
         signal: controller.signal
@@ -729,20 +631,15 @@ export default async function handler(req, res) {
     if (error?.name === "AbortError") {
       return res.status(504).json({
         error: "TIMEOUT",
-        message:
-          "Rojak AI terlalu lama merespons. Coba kirim lagi."
+        message: "Rojak AI terlalu lama merespons. Coba kirim lagi."
       });
     }
 
-    console.error(
-      "[Rojak AI] fetch error:",
-      error?.message
-    );
+    console.error("[Rojak AI] fetch error:", error?.message);
 
     return res.status(502).json({
       error: "UPSTREAM_ERROR",
-      message:
-        "Rojak AI sedang mengalami masalah. Coba lagi beberapa saat."
+      message: "Rojak AI sedang mengalami masalah. Coba lagi beberapa saat."
     });
   } finally {
     clearTimeout(timeout);
@@ -762,25 +659,20 @@ export default async function handler(req, res) {
     console.error(
       "[Rojak AI] OpenRouter error:",
       response.status,
-      {
-        error:
-          data?.error?.code,
-
-        message:
-          data?.error?.message
-            ?.slice?.(0, 200)
-      }
+      JSON.stringify(data?.error || {}, null, 2)
     );
 
     let userMessage =
       "Rojak AI sedang mengalami masalah. Coba lagi beberapa saat.";
 
     if (response.status === 429) {
-      userMessage =
-        "Rojak AI sedang sibuk. Tunggu sebentar lalu coba lagi.";
+      userMessage = "Rojak AI sedang sibuk. Tunggu sebentar lalu coba lagi.";
+    } else if (response.status === 401) {
+      userMessage = "Konfigurasi API key bermasalah. Hubungi admin.";
+    } else if (response.status === 402) {
+      userMessage = "Kuota Rojak AI habis. Hubungi admin.";
     } else if (response.status >= 500) {
-      userMessage =
-        "Server AI sedang bermasalah. Coba lagi sebentar.";
+      userMessage = "Server AI sedang bermasalah. Coba lagi sebentar.";
     }
 
     return res.status(502).json({
@@ -790,16 +682,13 @@ export default async function handler(req, res) {
   }
 
   /* EXTRACT ANSWER */
-  const answer =
-    (
-      data?.choices?.[0]?.message?.content ||
-      ""
-    ).trim();
+  const answer = (
+    data?.choices?.[0]?.message?.content || ""
+  ).trim();
 
   if (!answer) {
     return res.status(200).json({
-      reply:
-        "Maaf, Rojak AI tidak mendapatkan jawaban."
+      reply: "Maaf, Rojak AI tidak mendapatkan jawaban."
     });
   }
 
