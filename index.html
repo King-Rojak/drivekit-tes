@@ -62,10 +62,6 @@
     button { cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
     button:focus-visible { outline: none; }
 
-    /* ============================================================
-       LOADING
-    ============================================================ */
-
     .loading-screen {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; align-items: center; justify-content: center;
@@ -229,10 +225,6 @@
     .loading-bar { display: none; }
     .loading-dots { display: none; }
 
-    /* ============================================================
-       LOGIN
-    ============================================================ */
-
     .login-screen {
       min-height: 100vh; display: none;
       align-items: center; justify-content: center;
@@ -371,10 +363,6 @@
       color: var(--text-ghost); font-size: 10px; line-height: 1.6; text-align: left;
     }
 
-    /* ============================================================
-       BROADCAST
-    ============================================================ */
-
     .broadcast-notif {
       position: fixed; top: 14px; left: 14px; right: 14px;
       z-index: 99990; max-width: 460px; margin: 0 auto;
@@ -421,10 +409,6 @@
       font-size: 12px; line-height: 1.55;
       word-wrap: break-word; overflow-wrap: anywhere; white-space: pre-wrap;
     }
-
-    /* ============================================================
-       APP
-    ============================================================ */
 
     .app { display: none; min-height: 100vh; }
 
@@ -703,10 +687,6 @@
       letter-spacing: .06em; text-transform: uppercase;
     }
 
-    /* ============================================================
-       MODAL PROFILE
-    ============================================================ */
-
     .modal {
       position: fixed; inset: 0; z-index: 5000;
       display: none; align-items: center; justify-content: center;
@@ -786,10 +766,6 @@
     .profile-actions .clear-button  { height: 38px; padding: 0 14px; }
 
     #profileStatus { min-height: 14px; margin-top: 10px; }
-
-    /* ============================================================
-       LOG CONSOLE FAB
-    ============================================================ */
 
     .rdk-log-fab {
       position: fixed;
@@ -887,10 +863,6 @@
     }
 
     .rdk-log-empty { padding: 30px 15px; text-align: center; color: var(--text-ghost); font-size: 11px; }
-
-    /* ============================================================
-       LOGIN DEBUG CONSOLE
-    ============================================================ */
 
     .rdk-login-console {
       position: fixed;
@@ -1062,10 +1034,6 @@
       .rdk-login-console-body { max-height: calc(50vh - 45px); }
       .rdk-login-console-fab { left: 8px; bottom: 8px; height: 30px; font-size: 10.5px; }
     }
-
-    /* ============================================================
-       ROJAK AI
-    ============================================================ */
 
     .rojak-ai-fab {
       position: fixed;
@@ -1651,10 +1619,6 @@
       .rojak-ai-hint { margin-top: 7px; font-size: 9.5px; }
     }
 
-    /* ============================================================
-       CONFIRM MODAL
-    ============================================================ */
-
     .rdk-confirm-overlay {
       position: fixed;
       inset: 0;
@@ -1811,10 +1775,6 @@
       .rdk-confirm-ok { order: 1; }
     }
 
-    /* ============================================================
-       RESPONSIVE
-    ============================================================ */
-
     @media (max-width: 600px) {
       .topbar { height: 52px; padding: 0 12px; }
       .brand-logo { width: 28px; height: 28px; flex-basis: 28px; }
@@ -1873,10 +1833,6 @@
 
     .google-login::after,
     .google-login::before { display: none !important; }
-
-    /* ============================================================
-       GLOBAL FORCE OVERRIDE
-    ============================================================ */
 
     .drive-card,
     .drive-card:hover,
@@ -2704,23 +2660,62 @@
       if (window.RDK_LOG) window.RDK_LOG.add("gapi.js loaded", "ok");
       if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("gapi.js loaded", "ok");
       if (typeof window.gapi === "undefined") return;
-      window.gapi.load("client", function () {
+
+      function markReady(source) {
+        window.RDK_GOOGLE.gapiInited = true;
+        if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap" + (source ? " (" + source + ")" : ""), "ok");
+        if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("Google Drive API siap" + (source ? " (" + source + ")" : ""), "ok");
+
+        if (window.__RDK_RESTORE_DRIVE_TOKEN__) {
+          window.__RDK_RESTORE_DRIVE_TOKEN__();
+        }
+      }
+
+      function tryLoadDriveFallback(attempt) {
+        if (window.RDK_LOG) window.RDK_LOG.add("Mencoba fallback gapi.client.load('drive', 'v3')...", "warn");
+        if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("Fallback gapi.client.load('drive','v3')...", "warn");
+
+        try {
+          window.gapi.client.load("drive", "v3", function () {
+            if (window.gapi.client && window.gapi.client.drive) {
+              markReady("fallback load");
+            } else {
+              if (window.RDK_LOG) window.RDK_LOG.add("Fallback load selesai tapi drive masih undefined", "error");
+              if (attempt < 3) {
+                setTimeout(function () { tryLoadDriveFallback(attempt + 1); }, 2000);
+              }
+            }
+          });
+        } catch (e) {
+          if (window.RDK_LOG) window.RDK_LOG.add("Fallback load exception: " + (e.message || e), "error");
+          if (attempt < 3) {
+            setTimeout(function () { tryLoadDriveFallback(attempt + 1); }, 2000);
+          }
+        }
+      }
+
+      function initGapi(attempt) {
         window.gapi.client.init({
           discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
         }).then(function () {
-          window.RDK_GOOGLE.gapiInited = true;
-          if (window.RDK_LOG) window.RDK_LOG.add("Google Drive API siap", "ok");
-          if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("Google Drive API siap", "ok");
-
-          if (window.__RDK_RESTORE_DRIVE_TOKEN__) {
-            window.__RDK_RESTORE_DRIVE_TOKEN__();
-          }
+          markReady("");
         }).catch(function (error) {
-          if (window.RDK_DEBUG) {
-            if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error: " + (error.message || error), "error");
-            if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("GAPI init error: " + (error.message || error), "error");
+          var msg = (error && (error.message || error.error || error)) || "unknown";
+          if (window.RDK_LOG) window.RDK_LOG.add("GAPI init error (attempt " + attempt + "): " + msg, "error");
+          if (window.RDK_LOGIN_LOG) window.RDK_LOGIN_LOG.add("GAPI init error: " + msg, "error");
+
+          if (attempt === 1) {
+            tryLoadDriveFallback(1);
+          } else if (attempt < 3) {
+            setTimeout(function () { initGapi(attempt + 1); }, 2000);
+          } else {
+            tryLoadDriveFallback(2);
           }
         });
+      }
+
+      window.gapi.load("client", function () {
+        initGapi(1);
       });
     };
 
@@ -3263,9 +3258,6 @@
         }
 
         loadProfile(user).then(function () {
-          // FIX: Simpan hasil restore dulu, baru cek.
-          // Ini mencegah pengguna baru (belum pernah connect)
-          // memicu silent refresh yang bikin stuck loading.
           const restored = restoreDriveFromStorage();
 
           if (!restored && hasEverConnected()) {
@@ -3273,6 +3265,14 @@
               trySilentDriveRestore();
             }, 400);
           }
+
+          setTimeout(function () {
+            if (window.gapi && window.gapi.client && window.gapi.client.drive) {
+              LOG.add("Post-login: gapi.client.drive OK", "ok");
+            } else {
+              LOG.add("Post-login: gapi.client.drive MASIH UNDEFINED", "error");
+            }
+          }, 3000);
         }).catch(function (error) {
           LOG.add("loadProfile GAGAL", "error");
 
@@ -3298,9 +3298,26 @@
       const start = Date.now();
       return new Promise(function (resolve) {
         function check() {
-          // Connect Drive hanya membutuhkan GIS/token client.
-          // GAPI dipakai setelah token didapat untuk operasi Drive API.
           if (googleState.gisInited && googleState.tokenClient) {
+            resolve(true);
+            return;
+          }
+          if (Date.now() - start > timeout) {
+            resolve(false);
+            return;
+          }
+          setTimeout(check, 200);
+        }
+        check();
+      });
+    }
+
+    function waitForGapiReady(timeout) {
+      timeout = timeout || 15000;
+      const start = Date.now();
+      return new Promise(function (resolve) {
+        function check() {
+          if (window.gapi && window.gapi.client && window.gapi.client.drive) {
             resolve(true);
             return;
           }
@@ -3402,7 +3419,7 @@
         }).then(function (response) {
           if (response.status === 401) {
             accessToken = null;
-            window.gapi.client.setToken(null);
+            if (window.gapi && window.gapi.client) window.gapi.client.setToken(null);
             clearDriveToken();
             setDriveButtonDisconnected();
             setStatus("Sesi Google Drive habis. Hubungkan kembali.", "error");
@@ -3414,7 +3431,14 @@
           setStatus("File berhasil dibuat dan disimpan ke Google Drive.", "success");
           $("fileName").value = "";
           $("fileContent").value = "";
-          return loadRecentFiles();
+
+          if (window.gapi && window.gapi.client && window.gapi.client.drive && window.gapi.client.drive.files) {
+            return loadRecentFiles();
+          } else {
+            LOG.add("[Drive] File dibuat, tapi gapi.client.drive belum siap — skip refresh list", "warn");
+            $("filesList").innerHTML = '<div class="empty">File berhasil dibuat. Klik Refresh untuk melihat daftar file.</div>';
+            return Promise.resolve();
+          }
         }).catch(function (error) {
           setStatus("Gagal membuat file: " + error.message, "error");
         }).finally(function () {
@@ -3445,45 +3469,65 @@
 
       $("filesList").innerHTML = '<div class="empty">Memuat file...</div>';
 
-      return window.gapi.client.drive.files.list({
-        pageSize: 10, orderBy: "modifiedTime desc",
-        fields: "files(id,name,mimeType,modifiedTime,webViewLink)",
-        q: "trashed = false"
-      }).then(function (response) {
-        const files = response.result.files || [];
-        if (!files.length) {
-          $("filesList").innerHTML = '<div class="empty">Belum ada file.</div>';
+      return waitForGapiReady(15000).then(function (ready) {
+        if (!ready) {
+          LOG.add("[Drive] gapi.client.drive tidak siap setelah 15s", "error");
+          $("filesList").innerHTML = '<div class="empty">Google Drive API gagal dimuat. Coba refresh halaman.</div>';
           return;
         }
-        $("filesList").innerHTML = files.map(function (file) {
-          const date = file.modifiedTime ? new Date(file.modifiedTime).toLocaleString("id-ID") : "-";
-          return '<div class="file-row">' +
-            '<div class="file-info">' +
-              '<div class="file-name">' + escapeHTML(file.name) + '</div>' +
-              '<div class="file-date">Modified ' + escapeHTML(date) + '</div>' +
-            '</div>' +
-            '<button class="open-file" type="button" data-file-id="' + escapeHTML(file.id) + '">Open</button>' +
-          '</div>';
-        }).join("");
 
-        document.querySelectorAll("[data-file-id]").forEach(function (button) {
-          button.onclick = function () { openFile(button.dataset.fileId); };
-        });
-      }).catch(function (error) {
-        if (error && error.status === 401) {
-          accessToken = null;
-          clearDriveToken();
-          setDriveButtonDisconnected();
-          $("filesList").innerHTML = '<div class="empty">Sesi habis. Hubungkan Drive kembali.</div>';
+        if (!window.gapi || !window.gapi.client || !window.gapi.client.drive || !window.gapi.client.drive.files) {
+          LOG.add("[Drive] double-check gagal: gapi.client.drive.files undefined", "error");
+          $("filesList").innerHTML = '<div class="empty">Google Drive API tidak siap. Coba refresh.</div>';
           return;
         }
-        $("filesList").innerHTML = '<div class="empty">Gagal memuat file.</div>';
+
+        return window.gapi.client.drive.files.list({
+          pageSize: 10, orderBy: "modifiedTime desc",
+          fields: "files(id,name,mimeType,modifiedTime,webViewLink)",
+          q: "trashed = false"
+        }).then(function (response) {
+          const files = response.result.files || [];
+          if (!files.length) {
+            $("filesList").innerHTML = '<div class="empty">Belum ada file.</div>';
+            return;
+          }
+          $("filesList").innerHTML = files.map(function (file) {
+            const date = file.modifiedTime ? new Date(file.modifiedTime).toLocaleString("id-ID") : "-";
+            return '<div class="file-row">' +
+              '<div class="file-info">' +
+                '<div class="file-name">' + escapeHTML(file.name) + '</div>' +
+                '<div class="file-date">Modified ' + escapeHTML(date) + '</div>' +
+              '</div>' +
+              '<button class="open-file" type="button" data-file-id="' + escapeHTML(file.id) + '">Open</button>' +
+            '</div>';
+          }).join("");
+
+          document.querySelectorAll("[data-file-id]").forEach(function (button) {
+            button.onclick = function () { openFile(button.dataset.fileId); };
+          });
+        }).catch(function (error) {
+          if (error && error.status === 401) {
+            accessToken = null;
+            clearDriveToken();
+            setDriveButtonDisconnected();
+            $("filesList").innerHTML = '<div class="empty">Sesi habis. Hubungkan Drive kembali.</div>';
+            return;
+          }
+          LOG.add("[Drive] loadRecentFiles error: " + (error && error.message), "error");
+          $("filesList").innerHTML = '<div class="empty">Gagal memuat file.</div>';
+        });
       });
     }
 
     $("refreshFilesButton").onclick = function () { loadRecentFiles(); };
 
     function openFile(fileId) {
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.drive || !window.gapi.client.drive.files) {
+        LOG.add("[Drive] openFile dipanggil tapi gapi belum siap", "error");
+        alert("Google Drive API belum siap. Coba refresh halaman.");
+        return;
+      }
       window.gapi.client.drive.files.get({
         fileId: fileId, fields: "id,name,mimeType,webViewLink"
       }).then(function (response) {
