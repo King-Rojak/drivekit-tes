@@ -1,17 +1,7 @@
 /* ============================================================
-   ROJAK AI — CS & Tutor (Text-only) — FIXED VERSION
+   ROJAK AI — CS & Tutor (Text-only)
    Fitur: typewriter effect + markdown live render
    Backend: /api/ai (Vercel serverless)
-   
-   FIX:
-   - renderRichText() lebih aman (escaping ganda)
-   - Mencegah teks keluar dari card
-   - SVG icon custom
-   - Send icon arrow up
-   - Reset icon refresh arrow
-   - Dot hijau di dalam .rojak-ai-fab-icon
-   - Auto-focus HANYA di desktop
-   - Reset pakai RDKConfirm
 ============================================================ */
 
 (function () {
@@ -25,10 +15,10 @@
   };
 
   const QUICK_SUGGESTIONS = [
-    "Cara membuat file TXT",
-    "Cara memakai Rojak DriveK1t",
-    "Cara membuat shortcut Drive",
-    "Apa saja fitur Rojak DriveK1t?"
+    "Cara pakai DriveK1t untuk tugas Excel",
+    "Rumus IF untuk menentukan kelulusan",
+    "Kenapa rumus VLOOKUP saya error?",
+    "Perbedaan SUM, SUMIF, dan SUMIFS"
   ];
 
   const state = {
@@ -40,7 +30,7 @@
     typingActive: false
   };
 
-  /* ---------- ICONS (CUSTOM) ---------- */
+  /* ---------- ICONS ---------- */
 
   const ICON_CHAT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4 6.5C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5v8c0 1.4-1.1 2.5-2.5 2.5H9l-3.6 3.2c-.5.5-1.4.1-1.4-.6V6.5z"/>
@@ -101,36 +91,26 @@
     return `${hh}:${mm}`;
   }
 
-  /* ---------- RENDER RICH TEXT (FIXED) ---------- */
+  /* ---------- RENDER RICH TEXT ---------- */
+
   function renderRichText(raw) {
     if (!raw) return "";
 
-    // 1. Escape semua HTML terlebih dahulu untuk keamanan
     let safe = escapeHtml(raw);
 
-    // 2. Simpan blok kode (```...```) ke dalam array sementara
     const codeBlocks = [];
     safe = safe.replace(/```([\s\S]*?)```/g, (_, code) => {
-      // Hapus newline di awal/akhir blok kode
       const clean = code.replace(/^\n+|\n+$/g, '');
       codeBlocks.push(clean);
-      // Gunakan placeholder yang tidak akan bentrok dengan teks biasa
       return `\u0000CODEBLOCK${codeBlocks.length - 1}\u0000`;
     });
 
-    // 3. Render inline code (`...`)
     safe = safe.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-
-    // 4. Render bold (**...**)
     safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // 5. Ganti newline dengan <br>
     safe = safe.replace(/\n/g, '<br>');
 
-    // 6. Kembalikan blok kode ke tempatnya dengan tag <pre><code>
     safe = safe.replace(/\u0000CODEBLOCK(\d+)\u0000/g, (_, idx) => {
       const code = codeBlocks[Number(idx)];
-      // Escape konten code agar aman di dalam <pre>
       const escapedCode = escapeHtml(code);
       return `<pre><code>${escapedCode}</code></pre>`;
     });
