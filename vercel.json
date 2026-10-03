@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/ai.js": {
+    "api/ai.mjs": {
       "maxDuration": 30,
       "memory": 512
     }
