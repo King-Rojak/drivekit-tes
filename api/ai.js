@@ -672,7 +672,7 @@ export default async function handler(req, res) {
 
   const timeout = setTimeout(
     () => controller.abort(),
-    26000
+    20000
   );
 
   let response;
@@ -701,7 +701,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model:
             process.env.OPENROUTER_MODEL ||
-            "openrouter/free",
+            "google/gemini-2.0-flash-exp:free",
 
           messages: [
             {
