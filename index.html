@@ -3042,28 +3042,38 @@
 
       try {
         const q = query(
-          collection(db, "broadcasts"),
-          where("active", "==", true),
-          orderBy("createdAt", "desc"),
-          limit(1)
-        );
+  collection(db, "broadcasts"),
+  where("active", "==", true)
+);
 
-        broadcastUnsubscribe = onSnapshot(q, function (snapshot) {
-          if (snapshot.empty) {
-            hideBroadcastNotif();
-            return;
-          }
+broadcastUnsubscribe = onSnapshot(q, function (snapshot) {
+  if (snapshot.empty) {
+    hideBroadcastNotif();
+    return;
+  }
 
-          snapshot.docChanges().forEach(function (change) {
-            if (change.type === "added" || change.type === "modified") {
-              const data = change.doc.data();
-              showBroadcastNotif(data, change.doc.id);
-            }
-          });
-        }, function (error) {
-          LOG.add("[Broadcast] listener error: " + (error.code || error.message), "error");
-          console.error("[Broadcast] listener error:", error);
-        });
+  // Kumpulkan semua docs
+  const docs = [];
+  snapshot.forEach(function (docSnap) {
+    docs.push({ id: docSnap.id, data: docSnap.data() });
+  });
+
+  // Sort client-side (paling baru di depan)
+  docs.sort(function (a, b) {
+    const ta = a.data.createdAt?.seconds || 0;
+    const tb = b.data.createdAt?.seconds || 0;
+    return tb - ta;
+  });
+
+  // Ambil 1 terbaru
+  if (docs.length > 0) {
+    const latest = docs[0];
+    showBroadcastNotif(latest.data, latest.id);
+  }
+}, function (error) {
+  LOG.add("[Broadcast] listener error: " + (error.code || error.message), "error");
+  console.error("[Broadcast] listener error:", error);
+});
 
         LOG.add("[Broadcast] listener aktif", "ok");
 
