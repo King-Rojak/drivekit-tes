@@ -33,14 +33,13 @@
   /* ---------- ICONS ---------- */
 
   const ICON_CHAT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 6.5C4 5.1 5.1 4 6.5 4h11C18.9 4 20 5.1 20 6.5v8c0 1.4-1.1 2.5-2.5 2.5H9l-3.6 3.2c-.5.5-1.4.1-1.4-.6V6.5z"/>
-    <path d="M8.5 9.5h7"/>
-    <path d="M8.5 12.5h4"/>
+    <path d="M12 3l1.7 5.3a2 2 0 0 0 1.3 1.3L20.3 11l-5.3 1.7a2 2 0 0 0-1.3 1.3L12 19.3l-1.7-5.3a2 2 0 0 0-1.3-1.3L3.7 11l5.3-1.7a2 2 0 0 0 1.3-1.3L12 3z"/>
+    <path d="M19 3.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6.6-1.9z" fill="currentColor" stroke="none"/>
   </svg>`;
 
-  const ICON_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="12" y1="19" x2="12" y2="5"/>
-    <polyline points="5 12 12 5 19 12"/>
+  const ICON_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13"/>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
   </svg>`;
 
   const ICON_RESET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -296,10 +295,11 @@
         onclick: () => {
           const input = document.getElementById("rojakAiInput");
           if (!input) return;
+
+          // Auto-fill lalu langsung kirim
           input.value = text;
-          input.focus();
           autoGrow(input);
-          wrap.remove();
+          sendMessage();
         }
       }));
     });
@@ -447,7 +447,10 @@
           if (j && j.message) {
             errMsg = j.message;
           }
-        } catch (_) { /* ignore */ }
+        } catch (_) {
+          // Response bukan JSON — biasanya HTML error dari Vercel
+          errMsg = "ERROR " + res.status + " — Response bukan JSON. Cek Vercel Logs.";
+        }
         appendMessageEl("assistant", errMsg, Date.now(), { typewriter: true });
         return;
       }
