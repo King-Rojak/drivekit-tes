@@ -721,6 +721,42 @@
 .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #recentFileToast { position:fixed; z-index:10000; right:16px; bottom:16px; max-width:min(360px,calc(100vw - 32px)); padding:12px 16px; border:1px solid var(--line-bright); border-radius:8px; background:var(--panel-2); color:var(--text); font-size:13px; line-height:1.5; box-shadow:0 8px 30px rgba(0,0,0,.35); }
 #recentFileToast[hidden] { display:none; }
+
+/* DownloadToast: dark glass panel, orange accent, SVG-only visuals */
+#downloadToast { position:fixed; right:24px; bottom:24px; z-index:10050; width:min(390px,calc(100vw - 32px)); color:#f4f4f5; background:#1e1e22; border:1px solid #393940; border-radius:16px; overflow:hidden; box-shadow:0 18px 55px rgba(0,0,0,.48),0 0 0 1px rgba(255,107,0,.04); opacity:0; transform:translate3d(28px,18px,0) scale(.97); pointer-events:none; transition:transform .42s cubic-bezier(.2,.8,.2,1),opacity .32s ease; will-change:transform,opacity; }
+#downloadToast.is-visible { opacity:1; transform:translate3d(0,0,0) scale(1); pointer-events:auto; }
+#downloadToast.is-leaving { opacity:0; transform:translate3d(24px,12px,0) scale(.97); pointer-events:none; }
+#downloadToast[hidden] { display:none; }
+.download-toast-main { display:flex; align-items:center; gap:13px; padding:16px 15px 13px; }
+.download-toast-visual { position:relative; flex:0 0 58px; width:58px; height:58px; overflow:visible; border-radius:13px; background:linear-gradient(145deg,#29292f,#202025); border:1px solid #3a3a42; }
+.download-toast-folder { position:absolute; width:38px; height:34px; left:10px; top:15px; color:#f4f4f5; }
+.download-toast-folder-base { position:absolute; inset:0; }
+.download-toast-folder-flap { position:absolute; inset:0; transform-origin:5px 12px; transform:rotateX(0deg); transition:transform .35s cubic-bezier(.2,.8,.2,1); }
+#downloadToast.is-downloading .download-toast-folder-flap { animation:downloadFolderOpen 1.6s ease-in-out infinite alternate; }
+.download-toast-plane { position:absolute; left:20px; top:17px; width:19px; height:19px; color:#fff; opacity:0; transform:translate3d(0,0,0) scale(.55) rotate(-8deg); }
+.download-toast-plane svg { display:block; width:100%; height:100%; }
+#downloadToast.is-downloading .download-toast-plane { opacity:1; animation:downloadPlaneOrbit 1.8s ease-in-out infinite; }
+#downloadToast.is-success .download-toast-plane { animation:downloadPlaneAway .55s cubic-bezier(.2,.8,.2,1) forwards; }
+#downloadToast.is-error .download-toast-plane { opacity:0; animation:none; }
+.download-toast-copy { min-width:0; flex:1 1 auto; }
+.download-toast-title { color:#fff; font-size:13px; font-weight:700; line-height:1.4; margin:0 0 4px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.download-toast-status { color:#a1a1aa; font-size:12px; line-height:1.45; overflow-wrap:anywhere; }
+#downloadToast.is-success .download-toast-status { color:#86efac; }
+#downloadToast.is-error .download-toast-status { color:#fca5a5; }
+.download-toast-close { flex:0 0 28px; display:grid; place-items:center; width:28px; height:28px; padding:0; border:1px solid transparent; border-radius:8px; background:transparent; color:#a1a1aa; cursor:pointer; transition:background .18s,color .18s; }
+.download-toast-close:hover { background:#34343b; color:#fff; }
+.download-toast-close svg { width:16px; height:16px; }
+.download-toast-progress-wrap { height:3px; width:100%; background:#35353c; }
+.download-toast-progress { width:0%; height:100%; border-radius:0 3px 3px 0; background:linear-gradient(90deg,#ff6b00,#ff9a00); box-shadow:0 0 12px rgba(255,107,0,.45); transition:width .18s ease-out; position:relative; overflow:hidden; }
+#downloadToast.is-downloading .download-toast-progress::after { content:""; position:absolute; inset:0 auto 0 -45%; width:40%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent); animation:downloadShimmer 1.15s linear infinite; }
+#downloadToast.is-success .download-toast-progress { background:linear-gradient(90deg,#16a34a,#4ade80); box-shadow:0 0 12px rgba(34,197,94,.25); }
+#downloadToast.is-error .download-toast-progress { background:#ef4444; box-shadow:none; }
+@keyframes downloadFolderOpen { 0%{transform:rotateX(0deg) translateY(0)} 100%{transform:rotateX(36deg) translateY(-2px)} }
+@keyframes downloadPlaneOrbit { 0%{transform:translate3d(0,4px,0) rotate(-10deg) scale(.78)} 25%{transform:translate3d(24px,-8px,0) rotate(24deg) scale(.92)} 50%{transform:translate3d(29px,13px,0) rotate(75deg) scale(.82)} 75%{transform:translate3d(7px,19px,0) rotate(145deg) scale(.92)} 100%{transform:translate3d(0,4px,0) rotate(350deg) scale(.78)} }
+@keyframes downloadPlaneAway { 0%{opacity:1;transform:translate3d(15px,-6px,0) scale(1) rotate(0)} 100%{opacity:0;transform:translate3d(70px,-48px,0) scale(.12) rotate(35deg)} }
+@keyframes downloadShimmer { to{transform:translateX(360%)} }
+@media (max-width:480px) { #downloadToast { right:12px; bottom:12px; width:calc(100vw - 24px); border-radius:14px; } .download-toast-main { gap:11px; padding:14px 12px 12px; } .download-toast-visual { flex-basis:52px; width:52px; height:52px; } .download-toast-folder { left:7px; top:12px; } .download-toast-plane { left:17px; top:14px; } }
+@media (prefers-reduced-motion:reduce) { #downloadToast,#downloadToast * { animation:none !important; transition:none !important; } #downloadToast.is-downloading .download-toast-plane { opacity:1; } }
 @media (max-width:480px) { .file-row { gap:8px; padding:9px 8px; } .file-actions { gap:4px; } .file-action { width:44px; height:44px; } }
 
 .empty { padding: 36px 16px; text-align: center; color: var(--text-muted); font-size: 11.5px; line-height: 1.6; }
@@ -3128,6 +3164,140 @@
       toast._hideTimer = setTimeout(function () { toast.hidden = true; }, 5000);
     }
 
+    // DownloadToast state: isOpen, progress, status (downloading | success | error).
+    const DownloadToast = (() => {
+      const ICON_FOLDER = '<svg class="download-toast-folder-base" viewBox="0 0 40 36" fill="none" aria-hidden="true"><path d="M3.5 9.5A3.5 3.5 0 0 1 7 6h9l4 4h10.5A3.5 3.5 0 0 1 34 13.5v15A3.5 3.5 0 0 1 30.5 32h-23A4 4 0 0 1 3.5 28V9.5Z" fill="#f4f4f5"/><path d="M3.5 14h31l-3.3 14.4A4 4 0 0 1 27.3 31H7.2a4 4 0 0 1-3.9-4.8L3.5 14Z" fill="#d4d4d8"/></svg>';
+      const ICON_FLAP = '<svg class="download-toast-folder-flap" viewBox="0 0 40 36" fill="none" aria-hidden="true"><path d="M3.5 14h31l-3.3 14.4A4 4 0 0 1 27.3 31H7.2a4 4 0 0 1-3.9-4.8L3.5 14Z" fill="#fff" stroke="#d4d4d8" stroke-width=".8"/><path d="M3.5 14h31" stroke="#a1a1aa" stroke-width="1.2"/></svg>';
+      const ICON_PLANE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.7 2.6a.9.9 0 0 0-1-.2L2.3 9.8a1.1 1.1 0 0 0 .1 2.1l7.2 2.3 2.3 7.2a1.1 1.1 0 0 0 2.1.1l7.9-18.4a.9.9 0 0 0-.2-1ZM11 13l7-7-4.9 9.9L11 13Z"/></svg>';
+      const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+      let element = null;
+      let isOpen = false;
+      let progress = 0;
+      let status = "downloading";
+      let hideTimer = null;
+      let closeAnimationTimer = null;
+      let generation = 0;
+
+      function ensureElement() {
+        if (element) return element;
+        element = document.createElement("section");
+        element.id = "downloadToast";
+        element.hidden = true;
+        element.setAttribute("role", "status");
+        element.setAttribute("aria-live", "polite");
+        element.innerHTML = '<div class="download-toast-main"><div class="download-toast-visual" aria-hidden="true"><span class="download-toast-folder">' + ICON_FOLDER + ICON_FLAP + '</span><span class="download-toast-plane">' + ICON_PLANE + '</span></div><div class="download-toast-copy"><div class="download-toast-title" id="downloadToastTitle">Download file</div><div class="download-toast-status" id="downloadToastStatus">Menyiapkan download...</div></div><button class="download-toast-close" id="downloadToastClose" type="button" aria-label="Tutup notifikasi download">' + ICON_CLOSE + '</button></div><div class="download-toast-progress-wrap"><div class="download-toast-progress" id="downloadToastProgress"></div></div>';
+        document.body.appendChild(element);
+        element.querySelector("#downloadToastClose").addEventListener("click", close);
+        return element;
+      }
+
+      function render() {
+        const toast = ensureElement();
+        toast.classList.toggle("is-downloading", status === "downloading");
+        toast.classList.toggle("is-success", status === "success");
+        toast.classList.toggle("is-error", status === "error");
+        const bar = toast.querySelector("#downloadToastProgress");
+        bar.style.width = Math.max(0, Math.min(100, progress)) + "%";
+        bar.setAttribute("role", "progressbar");
+        bar.setAttribute("aria-valuemin", "0");
+        bar.setAttribute("aria-valuemax", "100");
+        bar.setAttribute("aria-valuenow", String(Math.round(progress)));
+      }
+
+      function show(filename) {
+        generation++;
+        if (hideTimer) clearTimeout(hideTimer);
+        if (closeAnimationTimer) clearTimeout(closeAnimationTimer);
+        closeAnimationTimer = null;
+        status = "downloading";
+        progress = 0;
+        isOpen = true;
+        const toast = ensureElement();
+        toast.querySelector("#downloadToastTitle").textContent = filename || "Download file";
+        toast.querySelector("#downloadToastStatus").textContent = "Mendownload...";
+        toast.hidden = false;
+        toast.classList.remove("is-leaving");
+        render();
+        requestAnimationFrame(() => toast.classList.add("is-visible"));
+        return generation;
+      }
+
+      function update(value, message) {
+        if (!isOpen || status !== "downloading") return;
+        progress = Math.max(progress, Math.min(95, Number(value) || 0));
+        const toast = ensureElement();
+        if (message) toast.querySelector("#downloadToastStatus").textContent = message;
+        render();
+      }
+
+      function success(id, filename) {
+        if (id !== generation || !isOpen) return;
+        status = "success";
+        progress = 100;
+        const toast = ensureElement();
+        toast.querySelector("#downloadToastTitle").textContent = filename || "Download";
+        toast.querySelector("#downloadToastStatus").textContent = "Download Selesai!";
+        render();
+        hideTimer = setTimeout(close, 2000);
+      }
+
+      function error(id, message) {
+        if (id !== generation || !isOpen) return;
+        status = "error";
+        const toast = ensureElement();
+        toast.querySelector("#downloadToastStatus").textContent = message || "Download gagal.";
+        render();
+        // Error stays visible until manually closed or another download starts.
+      }
+
+      function close() {
+        if (!element || !isOpen) return;
+        isOpen = false;
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = null;
+        element.classList.remove("is-visible");
+        element.classList.add("is-leaving");
+        if (closeAnimationTimer) clearTimeout(closeAnimationTimer);
+        closeAnimationTimer = setTimeout(() => {
+          if (!isOpen && element) {
+            element.hidden = true;
+            element.classList.remove("is-leaving");
+          }
+          closeAnimationTimer = null;
+        }, 430);
+      }
+
+      function getState() { return { isOpen, progress, status }; }
+      return { show, update, success, error, close, getState };
+    })();
+
+    async function readDownloadBlob(response, toastId) {
+      const headerLength = Number(response.headers.get("content-length")) || 0;
+      if (!response.body || typeof response.body.getReader !== "function") {
+        const blob = await response.blob();
+        DownloadToast.update(90, "Menyiapkan file untuk disimpan...");
+        return blob;
+      }
+      const reader = response.body.getReader();
+      const chunks = [];
+      let received = 0;
+      while (true) {
+        const result = await reader.read();
+        if (result.done) break;
+        chunks.push(result.value);
+        received += result.value.byteLength;
+        if (headerLength > 0) {
+          DownloadToast.update(Math.min(95, received / headerLength * 95), "Mendownload... " + Math.min(95, Math.round(received / headerLength * 100)) + "%");
+        } else {
+          // Unknown length: keep a gentle, bounded progress cue until stream completes.
+          const current = DownloadToast.getState().progress;
+          DownloadToast.update(Math.min(88, current + 2.5), "Mendownload...");
+        }
+      }
+      const mime = response.headers.get("content-type") || "application/octet-stream";
+      return new Blob(chunks, { type: mime });
+    }
+
     function driveErrorMessage(status) {
       if (status === 401) return "Sesi Google Drive habis. Hubungkan kembali.";
       if (status === 403) return "Akses ditolak. Periksa izin file di Google Drive.";
@@ -3303,6 +3473,7 @@
       if (recentFileBusy.has(fileId)) return;
       recentFileBusy.add(fileId);
       setRecentButtonBusy(fileId, "download", true);
+      const toastId = DownloadToast.show("Menyiapkan download...");
       try {
         const file = await getDriveFile(fileId);
         if (file.capabilities && file.capabilities.canDownload === false) {
@@ -3319,6 +3490,9 @@
         } else {
           url = DRIVE_API + "/" + encodeURIComponent(fileId) + "?alt=media";
         }
+        // Update title as soon as Drive metadata is available.
+        const toastElement = document.getElementById("downloadToast");
+        if (toastElement) toastElement.querySelector("#downloadToastTitle").textContent = filename;
         const response = await fetch(url, { headers: { Authorization: "Bearer " + accessToken } });
         if (!response.ok) {
           handleDriveAuthError(response.status);
@@ -3326,8 +3500,7 @@
           error.status = response.status;
           throw error;
         }
-        // Fetch + Blob supports authenticated downloads; very large files should use a server stream.
-        const blob = await response.blob();
+        const blob = await readDownloadBlob(response, toastId);
         const objectUrl = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = objectUrl;
@@ -3337,15 +3510,14 @@
         anchor.click();
         anchor.remove();
         setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 60000);
-        showRecentFileToast("Download dimulai: " + filename);
+        DownloadToast.success(toastId, filename);
       } catch (error) {
         LOG.add("[Drive] downloadFile: " + (error && error.message), "error");
-        if (error.status === 404) {
-          showRecentFileToast("File tidak ditemukan.", "error");
-          await loadRecentFiles();
-        } else {
-          showRecentFileToast(error.message || "Download gagal. Coba lagi.", "error");
-        }
+        const message = error.status === 404
+          ? "File tidak ditemukan."
+          : (error.message || "Download gagal. Coba lagi.");
+        DownloadToast.error(toastId, message);
+        if (error.status === 404) await loadRecentFiles();
       } finally {
         recentFileBusy.delete(fileId);
         setRecentButtonBusy(fileId, "download", false);
