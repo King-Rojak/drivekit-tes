@@ -1396,6 +1396,45 @@
     *:focus-visible {
       outline: none !important;
     }
+
+
+  /* Create TXT loading overlay */
+  .create-loading-overlay{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:20px;background:rgba(8,12,20,.62);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  .create-loading-overlay[hidden]{display:none}
+  .create-loading-card{width:min(100%,440px);padding:26px;border:1px solid #e5e7eb;border-radius:22px;background:#fff;color:#111827;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+  .create-loading-head{display:flex;align-items:center;gap:13px;margin-bottom:20px}
+  .create-loading-mark{display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:14px;background:#eff6ff;color:#2563eb}
+  .create-loading-mark svg{width:24px;height:24px}
+  .create-loading-title{margin:0;font-size:18px;font-weight:750;letter-spacing:-.02em}
+  .create-loading-subtitle{margin:5px 0 0;color:#6b7280;font-size:13px;line-height:1.5}
+  .create-loading-steps{display:grid;gap:13px;margin:0 0 20px;padding:0;list-style:none}
+  .create-loading-step{display:flex;align-items:center;gap:12px;min-height:30px;color:#9ca3af;opacity:.55;transition:opacity .25s,color .25s}
+  .create-loading-step.is-active{color:#1f2937;opacity:1;animation:createTextIn .35s ease both}
+  .create-loading-step.is-done{color:#166534;opacity:1}
+  .create-loading-step.is-error{color:#b91c1c;opacity:1}
+  .create-step-icon{width:27px;height:27px;display:grid;place-items:center;flex:0 0 27px;border:1.5px solid #d1d5db;border-radius:50%;font-size:14px;font-weight:800;color:#9ca3af;background:#f9fafb}
+  .is-done .create-step-icon{border-color:#22c55e;background:#22c55e;color:#fff;animation:createCheckPop .48s cubic-bezier(.2,1.6,.4,1) both}
+  .is-error .create-step-icon{border-color:#ef4444;background:#ef4444;color:#fff}
+  .create-step-spinner{width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#3b82f6;border-radius:50%;animation:createSpin .7s linear infinite}
+  .create-step-label{font-size:14px;font-weight:600;line-height:1.4}
+  .create-loading-progress-meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;color:#6b7280;font-size:12px}
+  .create-loading-track{height:9px;overflow:hidden;border-radius:999px;background:#e5e7eb}
+  .create-loading-bar{position:relative;width:0;height:100%;overflow:hidden;border-radius:inherit;background:linear-gradient(90deg,#3b82f6,#6366f1,#22c55e);transition:width .22s ease}
+  .create-loading-bar::after{position:absolute;inset:0;content:"";background:linear-gradient(100deg,transparent 15%,rgba(255,255,255,.65) 48%,transparent 80%);transform:translateX(-100%);animation:createShimmer 1.25s ease-in-out infinite}
+  .create-loading-success{margin:18px 0 0;text-align:center;color:#15803d;font-size:17px;font-weight:800;animation:createSuccessIn .4s cubic-bezier(.2,1.4,.4,1) both}
+  .create-loading-error{margin:16px 0 0;text-align:center;color:#b91c1c;font-size:14px;line-height:1.5}
+  .create-loading-actions{display:flex;justify-content:center;gap:10px;margin-top:16px}
+  .create-loading-actions button{min-height:42px;padding:9px 16px;border:1px solid #d1d5db;border-radius:10px;background:#fff;color:#111827;font-weight:700;cursor:pointer}
+  .create-loading-actions .create-retry{border-color:#2563eb;background:#2563eb;color:white}
+  .create-loading-actions button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+  @keyframes createCheckPop{0%{transform:scale(0);opacity:.2}70%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+  @keyframes createShimmer{to{transform:translateX(100%)}}
+  @keyframes createSpin{to{transform:rotate(360deg)}}
+  @keyframes createTextIn{from{opacity:0;transform:translateX(-9px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes createSuccessIn{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+  @media(prefers-reduced-motion:reduce){.create-loading-overlay *, .create-loading-overlay *::before,.create-loading-overlay *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+  @media(max-width:480px){.create-loading-card{padding:22px 18px;border-radius:18px}.create-loading-title{font-size:17px}.create-step-label{font-size:13px}}
+
   </style>
 
   <link rel="stylesheet" href="./rojak-ai/rdk-tokens.css">
@@ -2778,62 +2817,244 @@
       });
     };
 
-    function createTXT() {
+    const CREATE_TXT_STEPS = [
+      "Menyiapkan file...",
+      "Menulis konten...",
+      "Menyimpan file .txt...",
+      "Menyelesaikan..."
+    ];
+
+    let createAnimation = null;
+    let createRequestController = null;
+    let createAttempt = null;
+    let createModalPreviousFocus = null;
+
+    function renderCreateLoading() {
+      const overlay = $("createLoadingOverlay");
+      const list = $("createLoadingSteps");
+      list.replaceChildren();
+      CREATE_TXT_STEPS.forEach(function (label, index) {
+        const li = document.createElement("li");
+        li.className = "create-loading-step";
+        const icon = document.createElement("span");
+        icon.className = "create-step-icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = "○";
+        const text = document.createElement("span");
+        text.className = "create-step-label";
+        text.textContent = label;
+        li.append(icon, text);
+        list.appendChild(li);
+      });
+      $("createLoadingSuccess").hidden = true;
+      $("createLoadingError").hidden = true;
+      $("createLoadingActions").hidden = true;
+      $("createLoadingCancelWrap").hidden = false;
+      $("createLoadingProgressText").textContent = "Menyiapkan...";
+      $("createLoadingTitle").textContent = "Membuat file TXT";
+      $("createLoadingDescription").textContent = "Mohon tunggu, file sedang diproses.";
+      overlay.hidden = false;
+      createModalPreviousFocus = document.activeElement;
+      $("createLoadingCancel").focus();
+    }
+
+    function updateCreateLoading(progress, status, errorMessage) {
+      const value = Math.max(0, Math.min(100, Math.round(progress)));
+      const currentStep = Math.min(3, Math.floor(value / 25));
+      const rows = $("createLoadingSteps").children;
+      Array.from(rows).forEach(function (row, index) {
+        row.className = "create-loading-step";
+        const icon = row.querySelector(".create-step-icon");
+        if (status === "success" || index < currentStep) {
+          row.classList.add("is-done");
+          icon.textContent = "✓";
+        } else if (status === "error" && index === currentStep) {
+          row.classList.add("is-error");
+          icon.textContent = "✕";
+        } else if (status === "loading" && index === currentStep) {
+          row.classList.add("is-active");
+          icon.replaceChildren();
+          const spinner = document.createElement("span");
+          spinner.className = "create-step-spinner";
+          spinner.setAttribute("aria-hidden", "true");
+          icon.appendChild(spinner);
+        } else {
+          icon.textContent = "○";
+        }
+      });
+      $("createLoadingBar").style.width = value + "%";
+      $("createLoadingPercent").textContent = value + "%";
+      $("createLoadingTrack").setAttribute("aria-valuenow", String(value));
+      $("createLoadingProgressText").textContent = status === "success" ? "Selesai" : status === "error" ? "Terhenti" : CREATE_TXT_STEPS[currentStep];
+
+      if (status === "success") {
+        $("createLoadingSuccess").hidden = false;
+        $("createLoadingError").hidden = true;
+        $("createLoadingCancelWrap").hidden = true;
+        $("createLoadingTitle").textContent = "Berhasil!";
+        $("createLoadingDescription").textContent = "File TXT sudah tersimpan ke Google Drive.";
+      } else if (status === "error") {
+        $("createLoadingSuccess").hidden = true;
+        $("createLoadingError").textContent = errorMessage || "Gagal membuat file. Silakan coba lagi.";
+        $("createLoadingError").hidden = false;
+        $("createLoadingActions").hidden = false;
+        $("createLoadingCancelWrap").hidden = true;
+        $("createLoadingTitle").textContent = "Pembuatan file gagal";
+        $("createLoadingDescription").textContent = "Periksa koneksi atau izin Google Drive, lalu coba lagi.";
+      }
+    }
+
+    function closeCreateLoading() {
+      if (createAnimation) createAnimation.cancelled = true;
+      if (createRequestController) {
+        createRequestController.abort();
+        createRequestController = null;
+      }
+      $("createLoadingOverlay").hidden = true;
+      $("createButton").disabled = false;
+      if (createModalPreviousFocus && typeof createModalPreviousFocus.focus === "function") createModalPreviousFocus.focus();
+      createModalPreviousFocus = null;
+      createAnimation = null;
+    }
+
+    function waitMs(ms) {
+      return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+
+    function useCreateFileAnimation() {
+      const startedAt = performance.now();
+      const animation = { progress: 0, apiFinished: false, cancelled: false, error: null };
+      createAnimation = animation;
+      let timer = null;
+      const tick = function () {
+        if (animation.cancelled) return;
+        const elapsed = performance.now() - startedAt;
+        // Naik halus sampai 90% dalam ~2.8 detik, lalu menunggu API.
+        animation.progress = Math.min(90, (elapsed / 2800) * 90);
+        updateCreateLoading(animation.progress, "loading");
+        if (animation.progress < 90) timer = requestAnimationFrame(tick);
+      };
+      timer = requestAnimationFrame(tick);
+      return {
+        animation: animation,
+        finish: async function () {
+          animation.apiFinished = true;
+          if (timer) cancelAnimationFrame(timer);
+          const remaining = Math.max(0, 2800 - (performance.now() - startedAt));
+          if (remaining) await waitMs(remaining);
+          if (animation.cancelled) return false;
+          updateCreateLoading(100, "success");
+          return true;
+        },
+        fail: function (message) {
+          animation.error = message;
+          if (timer) cancelAnimationFrame(timer);
+          if (!animation.cancelled) updateCreateLoading(animation.progress, "error", message);
+        }
+      };
+    }
+
+    async function createTXT() {
       let name = $("fileName").value.trim();
       const content = $("fileContent").value;
 
+      // Validasi dilakukan sebelum overlay muncul.
       if (!name) { setStatus("File name belum diisi.", "error"); $("fileName").focus(); return; }
       if (!content.trim()) { setStatus("Content belum diisi.", "error"); $("fileContent").focus(); return; }
+      if (createRequestController) return;
 
-      const doCreate = function () {
-        if (!name.toLowerCase().endsWith(".txt")) name += ".txt";
+      if (!name.toLowerCase().endsWith(".txt")) name += ".txt";
+      createAttempt = { name: name, content: content };
+      $("createButton").disabled = true;
+      renderCreateLoading();
+      const animationController = useCreateFileAnimation();
+      createRequestController = new AbortController();
+      setStatus("Membuat file TXT...");
+
+      try {
+        if (!accessToken) {
+          const connected = await connectDrive();
+          if (!connected) throw new Error("Google Drive belum terhubung. Silakan hubungkan lalu coba lagi.");
+        }
+        if (animationController.animation.cancelled) return;
 
         const metadata = { name: name, mimeType: "text/plain" };
         const boundary = "-------314159265358979323846";
         const delimiter = "\r\n--" + boundary + "\r\n";
         const closeDelimiter = "\r\n--" + boundary + "--";
         const body = delimiter + "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
-          JSON.stringify(metadata) + delimiter + "Content-Type: text/plain\r\n\r\n" +
+          JSON.stringify(metadata) + delimiter + "Content-Type: text/plain; charset=UTF-8\r\n\r\n" +
           content + closeDelimiter;
 
-        $("createButton").disabled = true;
-        setStatus("Menyimpan file...");
-
-        fetch(DRIVE_UPLOAD_API + "?uploadType=multipart&fields=id,name,mimeType,modifiedTime,webViewLink", {
+        const response = await fetch(DRIVE_UPLOAD_API + "?uploadType=multipart&fields=id,name,mimeType,modifiedTime,webViewLink", {
           method: "POST",
           headers: {
             Authorization: "Bearer " + accessToken,
             "Content-Type": "multipart/related; boundary=" + boundary
           },
-          body: body
-        }).then(function (response) {
-          if (response.status === 401) {
-            accessToken = null;
-            clearDriveToken();
-            setDriveButtonDisconnected();
-            setStatus("Sesi Google Drive habis. Hubungkan kembali.", "error");
-            throw new Error("Sesi habis");
-          }
-          if (!response.ok) throw new Error("HTTP " + response.status);
-          return response.json();
-        }).then(function () {
-          setStatus("File berhasil dibuat dan disimpan ke Google Drive.", "success");
-          $("fileName").value = "";
-          $("fileContent").value = "";
-          return loadRecentFiles();
-        }).catch(function (error) {
-          setStatus("Gagal membuat file: " + error.message, "error");
-        }).finally(function () {
-          $("createButton").disabled = false;
+          body: body,
+          signal: createRequestController.signal
         });
-      };
 
-      if (!accessToken) {
-        connectDrive().then(function (connected) { if (connected) doCreate(); });
-      } else {
-        doCreate();
+        if (response.status === 401) {
+          accessToken = null;
+          clearDriveToken();
+          setDriveButtonDisconnected();
+          throw new Error("Sesi Google Drive habis. Hubungkan kembali.");
+        }
+        if (response.status === 403) throw new Error("Akses ditolak. Periksa izin Google Drive.");
+        if (response.status === 404) throw new Error("Endpoint atau lokasi file tidak ditemukan.");
+        if (!response.ok) throw new Error("Server Google Drive merespons HTTP " + response.status + ".");
+        const createdFile = await response.json();
+
+        const finished = await animationController.finish();
+        if (!finished) return;
+        setStatus("File berhasil dibuat dan disimpan ke Google Drive.", "success");
+        $("fileName").value = "";
+        $("fileContent").value = "";
+        await loadRecentFiles();
+        await waitMs(1350);
+        if (!animationController.animation.cancelled) closeCreateLoading();
+      } catch (error) {
+        if (error.name === "AbortError") {
+          setStatus("Pembuatan file dibatalkan.", "error");
+          return;
+        }
+        const message = error.message || "Kesalahan jaringan. Periksa koneksi lalu coba lagi.";
+        setStatus("Gagal membuat file: " + message, "error");
+        animationController.fail(message);
+        createRequestController = null;
+        // Modal tetap terbuka untuk memberi kesempatan mencoba ulang.
+        $("createButton").disabled = false;
+      } finally {
+        createRequestController = null;
+        if (!$("createLoadingOverlay").hidden && !$("createLoadingError").hidden) {
+          $("createButton").disabled = false;
+        }
       }
     }
+
+    $("createLoadingCancel").addEventListener("click", function () {
+      closeCreateLoading();
+      setStatus("Pembuatan file dibatalkan.", "error");
+    });
+    $("createLoadingClose").addEventListener("click", function () {
+      closeCreateLoading();
+    });
+    $("createLoadingRetry").addEventListener("click", function () {
+      closeCreateLoading();
+      if (createAttempt) {
+        $("fileName").value = createAttempt.name.replace(/\.txt$/i, "");
+        $("fileContent").value = createAttempt.content;
+      }
+      createTXT();
+    });
+    $("createLoadingOverlay").addEventListener("click", function (event) {
+      if (event.target === this && !$("createLoadingCancelWrap").hidden) {
+        closeCreateLoading();
+        setStatus("Pembuatan file dibatalkan.", "error");
+      }
+    });
 
     $("createButton").onclick = createTXT;
 
@@ -3477,5 +3698,23 @@ broadcastUnsubscribe = onSnapshot(q, function (snapshot) {
       }
     })();
   </script>
+
+
+<div id="createLoadingOverlay" class="create-loading-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="createLoadingTitle" aria-describedby="createLoadingDescription">
+  <section class="create-loading-card">
+    <div class="create-loading-head">
+      <div class="create-loading-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg></div>
+      <div><h2 id="createLoadingTitle" class="create-loading-title">Membuat file TXT</h2><p id="createLoadingDescription" class="create-loading-subtitle">Mohon tunggu, file sedang diproses.</p></div>
+    </div>
+    <ol id="createLoadingSteps" class="create-loading-steps" aria-label="Tahapan pembuatan file"></ol>
+    <div class="create-loading-progress-meta"><span id="createLoadingProgressText">Menyiapkan...</span><span id="createLoadingPercent">0%</span></div>
+    <div class="create-loading-track" id="createLoadingTrack" role="progressbar" aria-label="Progress pembuatan file" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="createLoadingBar" class="create-loading-bar"></div></div>
+    <p id="createLoadingSuccess" class="create-loading-success" hidden>✓ File berhasil dibuat!</p>
+    <p id="createLoadingError" class="create-loading-error" role="alert" hidden></p>
+    <div id="createLoadingActions" class="create-loading-actions" hidden><button id="createLoadingRetry" class="create-retry" type="button">Coba Lagi</button><button id="createLoadingClose" type="button">Tutup</button></div>
+    <div class="create-loading-actions" id="createLoadingCancelWrap"><button id="createLoadingCancel" type="button">Batalkan</button></div>
+  </section>
+</div>
+
 </body>
 </html>
