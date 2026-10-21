@@ -703,13 +703,25 @@
 }
 .file-date { margin-top: 3px; color: var(--text-muted); font-size: 10.5px; }
 
-.open-file {
-  height: 28px; flex: 0 0 auto; padding: 0 10px;
-  border: 1px solid var(--line); border-radius: 5px;
-  background: transparent; color: var(--text-soft);
-  font-size: 11px; font-weight: 500;
+.file-actions { display:flex; align-items:center; justify-content:flex-end; gap:6px; flex:0 0 auto; }
+.file-action {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:44px; height:44px; min-width:44px; min-height:44px; padding:0;
+  border:1px solid var(--line-bright); border-radius:7px;
+  background:var(--panel-2); color:var(--text-soft); cursor:pointer;
+  transition:background .14s ease,border-color .14s ease,color .14s ease;
 }
-.open-file:hover { background: var(--panel-3); border-color: var(--line-bright); color: var(--text); }
+.file-action:hover:not(:disabled) { background:var(--panel-3); border-color:var(--accent); color:var(--text); }
+.file-action:disabled { opacity:.55; cursor:not-allowed; }
+.file-action svg { display:block; width:19px; height:19px; }
+.file-action .spinner { width:17px; height:17px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:recentFileSpin .7s linear infinite; }
+@keyframes recentFileSpin { to { transform:rotate(360deg); } }
+.file-action:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.file-info { flex:1 1 auto; min-width:0; }
+.file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#recentFileToast { position:fixed; z-index:10000; right:16px; bottom:16px; max-width:min(360px,calc(100vw - 32px)); padding:12px 16px; border:1px solid var(--line-bright); border-radius:8px; background:var(--panel-2); color:var(--text); font-size:13px; line-height:1.5; box-shadow:0 8px 30px rgba(0,0,0,.35); }
+#recentFileToast[hidden] { display:none; }
+@media (max-width:480px) { .file-row { gap:8px; padding:9px 8px; } .file-actions { gap:4px; } .file-action { width:44px; height:44px; } }
 
 .empty { padding: 36px 16px; text-align: center; color: var(--text-muted); font-size: 11.5px; line-height: 1.6; }
 
@@ -2831,84 +2843,299 @@
       setStatus("");
     };
 
+    // Recent Files actions: Google Drive API v3
+    const RECENT_FILE_ICONS = {
+      download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>',
+      open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>'
+    };
+    let recentFilesCache = [];
+    const recentFileBusy = new Set();
+
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "") ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function showRecentFileToast(message, type) {
+      let toast = $("recentFileToast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "recentFileToast";
+        toast.setAttribute("aria-live", "polite");
+        document.body.appendChild(toast);
+      }
+      toast.textContent = message;
+      toast.dataset.type = type || "info";
+      toast.setAttribute("role", type === "error" ? "alert" : "status");
+      toast.hidden = false;
+      if (toast._hideTimer) clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(function () { toast.hidden = true; }, 5000);
+    }
+
+    function driveErrorMessage(status) {
+      if (status === 401) return "Sesi Google Drive habis. Hubungkan kembali.";
+      if (status === 403) return "Akses ditolak. Periksa izin file di Google Drive.";
+      if (status === 404) return "File tidak ditemukan atau sudah dihapus.";
+      if (status === 429) return "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.";
+      if (status >= 500) return "Server Google Drive sedang bermasalah. Coba lagi.";
+      return "Permintaan gagal (HTTP " + status + ").";
+    }
+
+    function handleDriveAuthError(status) {
+      if (status !== 401) return;
+      accessToken = null;
+      clearDriveToken();
+      setDriveButtonDisconnected();
+    }
+
+    function safeDownloadName(name) {
+      return String(name || "download").replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_").trim() || "download";
+    }
+
+    function fileExtension(name) {
+      const match = String(name || "").match(/\.([^.]+)$/);
+      return match ? match[1].toLowerCase() : "";
+    }
+
+    function isGoogleWorkspaceFile(mimeType) {
+      return [
+        "application/vnd.google-apps.document",
+        "application/vnd.google-apps.spreadsheet",
+        "application/vnd.google-apps.presentation",
+        "application/vnd.google-apps.drawing"
+      ].includes(mimeType);
+    }
+
+    function googleExportMime(mimeType) {
+      const map = {
+        "application/vnd.google-apps.document": "application/pdf",
+        "application/vnd.google-apps.spreadsheet": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.google-apps.presentation": "application/pdf",
+        "application/vnd.google-apps.drawing": "image/png"
+      };
+      return map[mimeType] || null;
+    }
+
+    function exportExtension(mimeType) {
+      const map = {
+        "application/pdf": ".pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+        "image/png": ".png"
+      };
+      return map[mimeType] || "";
+    }
+
+    async function getDriveFile(fileId) {
+      const response = await fetch(DRIVE_API + "/" + encodeURIComponent(fileId) +
+        "?fields=" + encodeURIComponent("id,name,mimeType,modifiedTime,webViewLink,size,capabilities(canDownload)"), {
+          headers: { Authorization: "Bearer " + accessToken }
+        });
+      if (!response.ok) {
+        handleDriveAuthError(response.status);
+        const error = new Error(driveErrorMessage(response.status));
+        error.status = response.status;
+        throw error;
+      }
+      return response.json();
+    }
+
+    function setRecentButtonBusy(fileId, action, busy) {
+      const button = Array.from($("filesList").querySelectorAll("[data-file-action]"))
+        .find(function (item) { return item.dataset.fileId === fileId && item.dataset.fileAction === action; });
+      if (!button) return;
+      button.disabled = busy;
+      if (busy) {
+        button.dataset.originalIcon = button.innerHTML;
+        button.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+        button.setAttribute("aria-busy", "true");
+      } else {
+        button.innerHTML = button.dataset.originalIcon || RECENT_FILE_ICONS[action];
+        button.removeAttribute("aria-busy");
+        delete button.dataset.originalIcon;
+      }
+    }
+
+    function renderRecentFiles(files) {
+      const fragment = document.createDocumentFragment();
+      files.forEach(function (file) {
+        const row = document.createElement("div");
+        row.className = "file-row";
+        const info = document.createElement("div");
+        info.className = "file-info";
+        const name = document.createElement("div");
+        name.className = "file-name";
+        name.title = file.name || "Tanpa nama";
+        name.textContent = file.name || "Tanpa nama";
+        const date = document.createElement("div");
+        date.className = "file-date";
+        date.textContent = "Modified " + (file.modifiedTime ? new Date(file.modifiedTime).toLocaleString("id-ID") : "-");
+        info.append(name, date);
+
+        const actions = document.createElement("div");
+        actions.className = "file-actions";
+        [
+          { action: "download", title: "Download", label: "Download " + (file.name || "file") },
+          { action: "open", title: "Buka file", label: "Buka " + (file.name || "file") }
+        ].forEach(function (spec) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "file-action";
+          button.dataset.fileId = file.id;
+          button.dataset.fileAction = spec.action;
+          button.title = spec.title;
+          button.setAttribute("aria-label", spec.label);
+          button.innerHTML = RECENT_FILE_ICONS[spec.action];
+          if (spec.action === "download" && file.capabilities && file.capabilities.canDownload === false) {
+            button.disabled = true;
+            button.title = "Anda tidak memiliki izin download";
+          }
+          actions.appendChild(button);
+        });
+        row.append(info, actions);
+        fragment.appendChild(row);
+      });
+      $("filesList").replaceChildren(fragment);
+    }
+
     function loadRecentFiles() {
       if (!accessToken) {
         $("filesList").innerHTML = '<div class="empty">Hubungkan Google Drive terlebih dahulu.</div>';
         return Promise.resolve();
       }
-
       $("filesList").innerHTML = '<div class="empty">Memuat file...</div>';
-
-      const url = DRIVE_API
-        + "?pageSize=10"
-        + "&orderBy=" + encodeURIComponent("modifiedTime desc")
-        + "&fields=" + encodeURIComponent("files(id,name,mimeType,modifiedTime,webViewLink)")
-        + "&q=" + encodeURIComponent("trashed = false");
-
+      const url = DRIVE_API + "?pageSize=10&orderBy=" + encodeURIComponent("modifiedTime desc") +
+        "&fields=" + encodeURIComponent("files(id,name,mimeType,modifiedTime,webViewLink,size,capabilities(canDownload))") +
+        "&q=" + encodeURIComponent("trashed = false");
       return fetch(url, { headers: { Authorization: "Bearer " + accessToken } })
         .then(function (response) {
-          if (response.status === 401) {
-            accessToken = null;
-            clearDriveToken();
-            setDriveButtonDisconnected();
-            $("filesList").innerHTML = '<div class="empty">Sesi habis. Hubungkan Drive kembali.</div>';
+          if (!response.ok) {
+            handleDriveAuthError(response.status);
+            throw new Error(driveErrorMessage(response.status));
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          recentFilesCache = data.files || [];
+          if (!recentFilesCache.length) {
+            $("filesList").innerHTML = '<div class="empty">Belum ada file.</div>';
             return;
           }
-          if (!response.ok) throw new Error("HTTP " + response.status);
-          return response.json().then(function (data) {
-            const files = data.files || [];
-            if (!files.length) {
-              $("filesList").innerHTML = '<div class="empty">Belum ada file.</div>';
-              return;
-            }
-            $("filesList").innerHTML = files.map(function (file) {
-              const date = file.modifiedTime ? new Date(file.modifiedTime).toLocaleString("id-ID") : "-";
-              return '<div class="file-row">' +
-                '<div class="file-info">' +
-                  '<div class="file-name">' + escapeHTML(file.name) + '</div>' +
-                  '<div class="file-date">Modified ' + escapeHTML(date) + '</div>' +
-                '</div>' +
-                '<button class="open-file" type="button" data-file-id="' + escapeHTML(file.id) + '">Open</button>' +
-              '</div>';
-            }).join("");
-
-            document.querySelectorAll("[data-file-id]").forEach(function (button) {
-              button.onclick = function () { openFile(button.dataset.fileId); };
-            });
-          });
-        }).catch(function (error) {
+          renderRecentFiles(recentFilesCache);
+        })
+        .catch(function (error) {
           LOG.add("[Drive] loadRecentFiles error: " + (error && error.message), "error");
-          $("filesList").innerHTML = '<div class="empty">Gagal memuat file.</div>';
+          $("filesList").replaceChildren();
+          const message = document.createElement("div");
+          message.className = "empty";
+          message.textContent = error.message || "Gagal memuat file.";
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "refresh-button";
+          retry.textContent = "Coba lagi";
+          retry.addEventListener("click", loadRecentFiles);
+          $("filesList").append(message, retry);
         });
     }
 
-    $("refreshFilesButton").onclick = function () { loadRecentFiles(); };
+    $("refreshFilesButton").onclick = loadRecentFiles;
 
-    function openFile(fileId) {
+    async function downloadFile(fileId) {
       if (!accessToken) {
-        alert("Sesi Google Drive habis. Hubungkan kembali.");
+        showRecentFileToast("Sesi Google Drive habis. Hubungkan kembali.", "error");
         return;
       }
-
-      const url = DRIVE_API + "/" + encodeURIComponent(fileId)
-        + "?fields=" + encodeURIComponent("id,name,mimeType,webViewLink");
-
-      fetch(url, { headers: { Authorization: "Bearer " + accessToken } })
-        .then(function (response) {
-          if (response.status === 401) {
-            accessToken = null;
-            clearDriveToken();
-            setDriveButtonDisconnected();
-            alert("Sesi Google Drive habis. Hubungkan kembali.");
-            return;
-          }
-          if (!response.ok) throw new Error("HTTP " + response.status);
-          return response.json();
-        }).then(function (file) {
-          if (!file) return;
-          window.open(file.webViewLink || ("https://drive.google.com/file/d/" + fileId + "/view"), "_blank");
-        }).catch(function () { alert("Gagal membuka file."); });
+      if (recentFileBusy.has(fileId)) return;
+      recentFileBusy.add(fileId);
+      setRecentButtonBusy(fileId, "download", true);
+      try {
+        const file = await getDriveFile(fileId);
+        if (file.capabilities && file.capabilities.canDownload === false) {
+          throw new Error("Anda tidak memiliki izin untuk mengunduh file ini.");
+        }
+        let filename = safeDownloadName(file.name);
+        let url;
+        if (isGoogleWorkspaceFile(file.mimeType)) {
+          const mime = googleExportMime(file.mimeType);
+          if (!mime) throw new Error("Format ekspor file Google ini belum didukung.");
+          url = DRIVE_API + "/" + encodeURIComponent(fileId) + "/export?mimeType=" + encodeURIComponent(mime);
+          const ext = exportExtension(mime);
+          if (ext && !filename.toLowerCase().endsWith(ext)) filename += ext;
+        } else {
+          url = DRIVE_API + "/" + encodeURIComponent(fileId) + "?alt=media";
+        }
+        const response = await fetch(url, { headers: { Authorization: "Bearer " + accessToken } });
+        if (!response.ok) {
+          handleDriveAuthError(response.status);
+          const error = new Error(driveErrorMessage(response.status));
+          error.status = response.status;
+          throw error;
+        }
+        // Fetch + Blob supports authenticated downloads; very large files should use a server stream.
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = filename;
+        anchor.style.display = "none";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 60000);
+        showRecentFileToast("Download dimulai: " + filename);
+      } catch (error) {
+        LOG.add("[Drive] downloadFile: " + (error && error.message), "error");
+        if (error.status === 404) {
+          showRecentFileToast("File tidak ditemukan.", "error");
+          await loadRecentFiles();
+        } else {
+          showRecentFileToast(error.message || "Download gagal. Coba lagi.", "error");
+        }
+      } finally {
+        recentFileBusy.delete(fileId);
+        setRecentButtonBusy(fileId, "download", false);
+      }
     }
+
+    async function openFile(fileId) {
+      if (!accessToken) {
+        showRecentFileToast("Sesi Google Drive habis. Hubungkan kembali.", "error");
+        return;
+      }
+      if (recentFileBusy.has(fileId)) return;
+      recentFileBusy.add(fileId);
+      setRecentButtonBusy(fileId, "open", true);
+      // Open synchronously during click so popup blockers are less likely to interfere.
+      const newTab = window.open("about:blank", "_blank");
+      if (newTab) { try { newTab.opener = null; } catch (_) {} }
+      try {
+        const file = await getDriveFile(fileId);
+        const url = file.webViewLink || ("https://drive.google.com/file/d/" + encodeURIComponent(file.id) + "/view");
+        if (newTab && !newTab.closed) newTab.location.replace(url);
+        else window.location.assign(url);
+        showRecentFileToast("Membuka " + (file.name || "file"));
+      } catch (error) {
+        if (newTab && !newTab.closed) newTab.close();
+        LOG.add("[Drive] openFile: " + (error && error.message), "error");
+        if (error.status === 404) {
+          showRecentFileToast("File tidak ditemukan.", "error");
+          await loadRecentFiles();
+        } else {
+          showRecentFileToast(error.message || "Gagal membuka file. Coba lagi.", "error");
+        }
+      } finally {
+        recentFileBusy.delete(fileId);
+        setRecentButtonBusy(fileId, "open", false);
+      }
+    }
+
+    // Single delegated handler avoids duplicate click listeners after list refresh.
+    $("filesList").addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-file-action]");
+      if (!button || button.disabled) return;
+      const fileId = button.dataset.fileId;
+      if (button.dataset.fileAction === "download") downloadFile(fileId);
+      else if (button.dataset.fileAction === "open") openFile(fileId);
+    });
 
     $("openDriveButton").onclick = function () {
       if (!accessToken) {
